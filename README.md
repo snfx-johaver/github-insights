@@ -4,10 +4,10 @@ GitHub usage, Actions billing, Copilot metrics, and repository insights for
 Home Assistant.
 
 > [!IMPORTANT]
-> GitHub Insights is currently at **Phase 1: research and architecture**.
-> Version `0.0.0` is intentionally nonfunctional and cannot be released.
-> Installation instructions describe the approved target design, not an
-> available integration.
+> GitHub Insights is currently at **Phase 2: core integration development**.
+> Version `0.1.0-beta.1` implements a read-only Home Assistant config flow,
+> GitHub account discovery, rate-limit diagnostics, and account sensors. It is
+> intentionally unreleased while hosted and real-instance validation continues.
 
 ## One integration and one installation
 
@@ -49,9 +49,9 @@ screenshots are presented as completed functionality.
 
 ## Compatibility target
 
-| Surface | Phase 1 position |
+| Surface | Phase 2 position |
 |---|---|
-| Home Assistant | Exact minimum version will be selected and tested in Phase 2 |
+| Home Assistant | Config-entry runtime targets current Home Assistant releases |
 | HACS | Integration repository using a single zip release |
 | GitHub.com | Primary target |
 | GitHub Enterprise Server | Capability-detected; billing/Copilot parity is not assumed |
@@ -90,11 +90,17 @@ be shipped.
 
 ## Setup and permissions
 
-The Phase 2 config flow will request a GitHub server and token, validate the
-authenticated identity, discover accessible organizations and repositories,
-and explain unavailable capabilities. Read-only repository access is the
+The Phase 2 config flow requests a GitHub server and token, validates the
+authenticated identity, discovers accessible organizations and repositories,
+and explains unavailable capabilities. Read-only repository access is the
 baseline. Billing, security, traffic, Copilot, and budget-management data each
 require additional account roles, plans, policies, or token permissions.
+
+Implemented sensors cover the authenticated account, public/private repository
+counts when supplied by GitHub, followers/following, visible organizations,
+core REST rate-limit remaining/reset, and last successful synchronization.
+Repository discovery is bounded metadata for configuration; detailed repository
+entities remain Phase 4 work.
 
 Budget management is always disabled by default. Write-capable entities appear
 only after explicit opt-in and successful capability detection. See

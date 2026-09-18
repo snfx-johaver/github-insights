@@ -1,6 +1,6 @@
 # Configuration
 
-This is a Phase 1 design, not an available setup flow.
+Phase 2 implements this read-only setup flow. No release has been published yet.
 
 The first release will support one config entry containing one GitHub server,
 one authenticated identity, selected organizations, optional enterprise
@@ -15,4 +15,3 @@ and local warning thresholds.
 Unavailable categories remain independently disabled with an explanation. The
 flow will not request write permissions until the user explicitly enables
 budget management.
-
