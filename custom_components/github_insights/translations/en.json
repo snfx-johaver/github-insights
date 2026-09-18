@@ -41,7 +41,7 @@
           "token": "Access token"
         },
         "data_description": {
-          "server": "Use https://github.com or the HTTPS origin of GitHub Enterprise Server",
+          "server": "Use GitHub.com or the HTTPS origin of GitHub Enterprise Server",
           "token": "Stored only in the Home Assistant config entry"
         },
         "description": "Start in read-only mode. Additional permissions are requested only when optional features need them."
