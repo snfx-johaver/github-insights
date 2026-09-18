@@ -90,9 +90,7 @@ async def test_pagination_and_repository_limit() -> None:
         ),
         FakeResponse(200, [{**repo, "id": 2, "full_name": "octocat/second"}]),
     )
-    client = GitHubClient(
-        cast(ClientSession, session), "token", "https://github.com"
-    )
+    client = GitHubClient(cast(ClientSession, session), "token", "https://github.com")
 
     repositories = await client.async_get_repositories()
 
@@ -109,9 +107,7 @@ async def test_etag_uses_last_known_payload() -> None:
         FakeResponse(200, payload, {"ETag": '"abc"'}),
         FakeResponse(304, None),
     )
-    client = GitHubClient(
-        cast(ClientSession, session), "token", "https://github.com"
-    )
+    client = GitHubClient(cast(ClientSession, session), "token", "https://github.com")
 
     first = await client.async_get_rate_limit()
     second = await client.async_get_rate_limit()
