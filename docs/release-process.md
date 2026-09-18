@@ -18,17 +18,18 @@ frontend release, npm publication, plugin artifact, or second HACS lifecycle.
 2. Run frontend lint, typing, tests, accessibility/snapshots, and production
    build without source maps.
 3. Verify repository/manifest/frontend/tag versions.
-4. Copy only runtime integration files and the compiled card bundle into a
+4. Require a committed frontend lockfile and install exactly from that lock.
+5. Copy only runtime integration files and the compiled card bundle into a
    clean staging directory.
-5. Generate `deployment-manifest.json` with paths and SHA-256 hashes.
-6. Create deterministic `github_insights.zip`.
-7. Inspect archive paths and reject tests, fixtures, source, node modules,
+6. Generate `deployment-manifest.json` with paths and SHA-256 hashes.
+7. Create deterministic `github_insights.zip`.
+8. Inspect archive paths and reject tests, fixtures, source, node modules,
    secrets, maps, or extra top-level integrations.
-8. Install-test the archive in an isolated Home Assistant environment.
-9. Scan source, history, and artifact for secrets.
-10. Publish SHA-256 checksum and build provenance/attestation where supported.
-11. Create a full GitHub Release and attach the artifact.
-12. Verify the release page and HACS custom-repository installation.
+9. Install-test the archive in an isolated Home Assistant environment.
+10. Scan source, history, and artifact for secrets.
+11. Publish SHA-256 checksum and build provenance/attestation where supported.
+12. Create a full GitHub Release and attach the artifact.
+13. Verify the release page and HACS custom-repository installation.
 
 The current workflow runs `check_release_readiness.py`, which intentionally
 blocks version `0.0.0`. Later phases must extend artifact validation rather than
