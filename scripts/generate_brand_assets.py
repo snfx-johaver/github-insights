@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 import struct
 import zlib
-from pathlib import Path
 
 
 ROOT = Path(__file__).parents[1]
@@ -48,4 +48,3 @@ def create_png(path: Path, dark: bool) -> None:
 BRAND.mkdir(parents=True, exist_ok=True)
 create_png(BRAND / "icon.png", dark=False)
 create_png(BRAND / "dark_icon.png", dark=True)
-

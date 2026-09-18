@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
+import json
 
 
 ROOT = Path(__file__).parents[2]
@@ -26,4 +26,3 @@ def test_hacs_uses_one_integration_zip() -> None:
     assert hacs["zip_release"] is True
     assert hacs["filename"] == "github_insights.zip"
     assert hacs["hide_default_branch"] is True
-

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
+import shutil
 
 
 ROOT = Path(__file__).parents[1]
@@ -22,4 +22,3 @@ frontend_target = STAGING / "frontend"
 frontend_target.mkdir(exist_ok=True)
 shutil.copy2(FRONTEND_BUILD, frontend_target / FRONTEND_BUILD.name)
 shutil.make_archive(str(DIST / "github_insights"), "zip", DIST, "github_insights")
-
