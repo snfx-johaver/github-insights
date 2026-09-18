@@ -440,8 +440,10 @@ async def _safe_error_message(response: ClientResponse) -> str:
         payload = await response.json(content_type=None)
     except (ClientError, json.JSONDecodeError):
         return "request_failed"
-    if isinstance(payload, dict) and isinstance(payload.get("message"), str):
-        return payload["message"][:160]
+    if isinstance(payload, dict):
+        message = payload.get("message")
+        if isinstance(message, str):
+            return message[:160]
     return "request_failed"
 
 

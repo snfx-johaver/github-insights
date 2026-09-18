@@ -36,5 +36,9 @@ strict = true
 explicit_package_bases = true
 files = ["custom_components", "scripts", "tests/backend"]
 
+[[tool.mypy.overrides]]
+module = "pytest_homeassistant_custom_component.*"
+ignore_missing_imports = true
+
 [tool.setuptools]
 packages = []

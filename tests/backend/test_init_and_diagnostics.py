@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
+from homeassistant.core import HomeAssistant
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.github_insights import async_migrate_entry
@@ -22,7 +23,7 @@ from custom_components.github_insights.diagnostics import (
 from .helpers import snapshot
 
 
-async def test_setup_creates_account_sensors(hass) -> None:
+async def test_setup_creates_account_sensors(hass: HomeAssistant) -> None:
     """A successful first refresh creates account and rate-limit sensors."""
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -50,7 +51,7 @@ async def test_setup_creates_account_sensors(hass) -> None:
     )
 
 
-async def test_diagnostics_redact_token(hass) -> None:
+async def test_diagnostics_redact_token(hass: HomeAssistant) -> None:
     """Diagnostics contain capability summaries but no credential."""
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -75,7 +76,7 @@ async def test_diagnostics_redact_token(hass) -> None:
     assert diagnostics["runtime"]["repository_count"] == 1
 
 
-async def test_migrate_legacy_host_key(hass) -> None:
+async def test_migrate_legacy_host_key(hass: HomeAssistant) -> None:
     """Version 1 entries migrate without network I/O."""
     entry = MockConfigEntry(
         domain=DOMAIN,

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 import pytest
+from aiohttp import ClientSession
 
 from custom_components.github_insights.api import (
     GitHubAuthenticationError,
@@ -60,7 +63,7 @@ async def test_account_parsing_and_scope_capture() -> None:
             {"X-OAuth-Scopes": "repo, read:org"},
         )
     )
-    client = GitHubClient(session, "token", "https://github.com")  # type: ignore[arg-type]
+    client = GitHubClient(cast(ClientSession, session), "token", "https://github.com")
 
     account = await client.async_get_account()
 
@@ -87,7 +90,9 @@ async def test_pagination_and_repository_limit() -> None:
         ),
         FakeResponse(200, [{**repo, "id": 2, "full_name": "octocat/second"}]),
     )
-    client = GitHubClient(session, "token", "https://github.com")  # type: ignore[arg-type]
+    client = GitHubClient(
+        cast(ClientSession, session), "token", "https://github.com"
+    )
 
     repositories = await client.async_get_repositories()
 
@@ -104,7 +109,9 @@ async def test_etag_uses_last_known_payload() -> None:
         FakeResponse(200, payload, {"ETag": '"abc"'}),
         FakeResponse(304, None),
     )
-    client = GitHubClient(session, "token", "https://github.com")  # type: ignore[arg-type]
+    client = GitHubClient(
+        cast(ClientSession, session), "token", "https://github.com"
+    )
 
     first = await client.async_get_rate_limit()
     second = await client.async_get_rate_limit()
@@ -115,16 +122,22 @@ async def test_etag_uses_last_known_payload() -> None:
 
 async def test_authentication_and_rate_limit_errors() -> None:
     """Authentication and backoff responses remain distinct."""
-    auth_client = GitHubClient(  # type: ignore[arg-type]
-        FakeSession(FakeResponse(401, {"message": "Bad credentials"})),
+    auth_client = GitHubClient(
+        cast(
+            ClientSession,
+            FakeSession(FakeResponse(401, {"message": "Bad credentials"})),
+        ),
         "token",
         "https://github.com",
     )
     with pytest.raises(GitHubAuthenticationError):
         await auth_client.async_get_account()
 
-    rate_client = GitHubClient(  # type: ignore[arg-type]
-        FakeSession(FakeResponse(403, {}, {"Retry-After": "30"})),
+    rate_client = GitHubClient(
+        cast(
+            ClientSession,
+            FakeSession(FakeResponse(403, {}, {"Retry-After": "30"})),
+        ),
         "token",
         "https://github.com",
     )

@@ -5,6 +5,7 @@ from __future__ import annotations
 from unittest.mock import patch
 
 from homeassistant.config_entries import SOURCE_REAUTH, SOURCE_USER
+from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
@@ -25,7 +26,7 @@ from custom_components.github_insights.const import (
 from .helpers import snapshot
 
 
-async def test_user_flow(hass) -> None:
+async def test_user_flow(hass: HomeAssistant) -> None:
     """A valid token creates one scoped entry."""
     result = await hass.config_entries.flow.async_init(
         DOMAIN, context={"source": SOURCE_USER}
@@ -59,7 +60,7 @@ async def test_user_flow(hass) -> None:
     assert result["data"][CONF_TOKEN] == "secret-token"
 
 
-async def test_single_entry_only(hass) -> None:
+async def test_single_entry_only(hass: HomeAssistant) -> None:
     """A second config entry is rejected."""
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -80,7 +81,9 @@ async def test_single_entry_only(hass) -> None:
     assert result["reason"] == "single_instance_allowed"
 
 
-async def test_reauthentication_rejects_different_account(hass) -> None:
+async def test_reauthentication_rejects_different_account(
+    hass: HomeAssistant,
+) -> None:
     """A replacement token must represent the original account."""
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -112,7 +115,7 @@ async def test_reauthentication_rejects_different_account(hass) -> None:
     assert result["errors"]["base"] == "wrong_account"
 
 
-async def test_options_flow(hass) -> None:
+async def test_options_flow(hass: HomeAssistant) -> None:
     """Options update repository selection and safe polling interval."""
     entry = MockConfigEntry(
         domain=DOMAIN,

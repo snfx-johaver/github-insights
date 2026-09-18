@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from homeassistant.components.sensor import (
@@ -22,12 +24,14 @@ from .coordinator import GitHubInsightsConfigEntry, GitHubInsightsCoordinator
 from .entity import GitHubInsightsEntity
 from .models import DataClass, GitHubSnapshot
 
+type SensorValue = StateType | date | datetime | Decimal
+
 
 @dataclass(frozen=True, kw_only=True)
 class GitHubInsightsSensorDescription(SensorEntityDescription):
     """Describe a GitHub Insights sensor."""
 
-    value_fn: Callable[[GitHubSnapshot], StateType]
+    value_fn: Callable[[GitHubSnapshot], SensorValue]
     available_fn: Callable[[GitHubSnapshot], bool] = lambda snapshot: True
     attributes_fn: Callable[[GitHubSnapshot], Mapping[str, Any] | None] = (
         lambda snapshot: None
@@ -158,7 +162,7 @@ class GitHubInsightsSensor(GitHubInsightsEntity, SensorEntity):
         )
 
     @property
-    def native_value(self) -> StateType:
+    def native_value(self) -> SensorValue:
         """Return the current native value."""
         return self.entity_description.value_fn(self.coordinator.data)
 
