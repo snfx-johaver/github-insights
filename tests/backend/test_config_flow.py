@@ -112,7 +112,8 @@ async def test_reauthentication_rejects_different_account(
         )
 
     assert result["type"] is FlowResultType.FORM
-    assert result["errors"]["base"] == "wrong_account"
+        assert result["errors"] is not None
+        assert result["errors"]["base"] == "wrong_account"
 
 
 async def test_options_flow(hass: HomeAssistant) -> None:

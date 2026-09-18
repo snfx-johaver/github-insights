@@ -45,10 +45,11 @@ async def test_setup_creates_account_sensors(hass: HomeAssistant) -> None:
         await hass.async_block_till_done()
 
     assert hass.states.get("sensor.github_insights_octocat_account") is not None
-    assert (
-        hass.states.get("sensor.github_insights_octocat_api_rate_limit_remaining").state
-        == "4990"
+    rate_limit_state = hass.states.get(
+        "sensor.github_insights_octocat_api_rate_limit_remaining"
     )
+    assert rate_limit_state is not None
+    assert rate_limit_state.state == "4990"
 
 
 async def test_diagnostics_redact_token(hass: HomeAssistant) -> None:
