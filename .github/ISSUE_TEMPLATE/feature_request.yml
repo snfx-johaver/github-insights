@@ -1,0 +1,30 @@
+name: Feature request
+description: Propose a GitHub Insights capability
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Primary surface
+      options:
+        - Home Assistant integration
+        - Bundled Lovelace cards
+        - Packaging or release
+        - Documentation
+    validations:
+      required: true
+

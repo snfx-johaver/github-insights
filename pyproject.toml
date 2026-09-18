@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "github-insights"
+version = "0.0.0"
+description = "Architecture-phase scaffold for GitHub Insights"
+requires-python = ">=3.13"
+license = "MIT"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.17.1",
+  "pytest>=8.4.2",
+  "ruff>=0.13.1",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests/backend"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.mypy]
+python_version = "3.13"
+strict = true
+files = ["custom_components", "scripts", "tests/backend"]
+
+[tool.setuptools]
+packages = []
+
