@@ -231,7 +231,7 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(data=user_input)
 
-        runtime = self._entry.runtime_data
+        runtime = getattr(self._entry, "runtime_data", None)
         snapshot = runtime.coordinator.data if runtime is not None else None
         organizations = (
             [organization.login for organization in snapshot.organizations]
