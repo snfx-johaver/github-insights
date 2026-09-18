@@ -6,7 +6,7 @@ features.
 
 ## Development
 
-1. Install Python 3.13 and Node.js 22.
+1. Install Python 3.13 and Node.js 24.
 2. Run `python -m pip install -e .[dev]`.
 3. Run `npm install --prefix frontend`.
 4. Run `python scripts/validate_scaffold.py`.
