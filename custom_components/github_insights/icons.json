@@ -1,0 +1,33 @@
+{
+  "entity": {
+    "sensor": {
+      "account": {
+        "default": "mdi:github"
+      },
+      "api_rate_limit_remaining": {
+        "default": "mdi:speedometer"
+      },
+      "api_rate_limit_reset": {
+        "default": "mdi:timer-refresh"
+      },
+      "followers": {
+        "default": "mdi:account-group"
+      },
+      "following": {
+        "default": "mdi:account-arrow-right"
+      },
+      "last_successful_sync": {
+        "default": "mdi:cloud-sync"
+      },
+      "organizations": {
+        "default": "mdi:domain"
+      },
+      "private_repositories": {
+        "default": "mdi:source-repository"
+      },
+      "public_repositories": {
+        "default": "mdi:source-repository"
+      }
+    }
+  }
+}
