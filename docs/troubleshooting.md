@@ -1,6 +1,6 @@
 # Troubleshooting
 
-GitHub Insights is not functional in Phase 1.
+GitHub Insights has a functional Phase 2 core but remains unreleased.
 
 When implementation begins, troubleshooting will distinguish:
 
@@ -17,4 +17,3 @@ When implementation begins, troubleshooting will distinguish:
 Diagnostics must be sanitized before sharing. Never post tokens, authorization
 headers, signed URLs, private repository names, Home Assistant storage, or
 local-network details.
-

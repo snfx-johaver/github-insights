@@ -1,4 +1,4 @@
-"""Validate Phase 0 and Phase 1 repository invariants."""
+"""Validate repository structure and single-artifact invariants."""
 
 from __future__ import annotations
 
@@ -53,14 +53,17 @@ def main() -> None:
     hacs = load_json(ROOT / "hacs.json")
 
     assert manifest["domain"] == DOMAIN
-    assert manifest["version"] == "0.0.0"
-    assert "config_flow" not in manifest
+    assert manifest["version"] == "0.1.0-beta.1"
+    assert manifest["config_flow"] is True
+    assert manifest["single_config_entry"] is True
     assert hacs["zip_release"] is True
     assert hacs["filename"] == "github_insights.zip"
     assert hacs["hide_default_branch"] is True
     assert REQUIRED_DOCS <= {path.name for path in (ROOT / "docs").glob("*.md")}
     assert REQUIRED_MODULES <= {path.name for path in INTEGRATION.glob("*.py")}
     assert (INTEGRATION / "frontend" / "README.md").is_file()
+    frontend = load_json(ROOT / "frontend" / "package.json")
+    assert frontend["version"] == manifest["version"]
 
 
 if __name__ == "__main__":

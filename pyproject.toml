@@ -4,21 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "github-insights"
-version = "0.0.0"
-description = "Architecture-phase scaffold for GitHub Insights"
+version = "0.1.0b1"
+description = "Home Assistant integration for GitHub account insights"
 requires-python = ">=3.13"
 license = "MIT"
 dependencies = []
 
 [project.optional-dependencies]
 dev = [
+  "aiohttp>=3.12.15",
   "mypy>=1.17.1",
   "pytest>=8.4.2",
+  "pytest-homeassistant-custom-component>=0.13.300",
   "ruff>=0.13.1",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests/backend"]
+asyncio_mode = "auto"
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 88
@@ -30,8 +34,12 @@ select = ["E", "F", "I", "UP"]
 [tool.mypy]
 python_version = "3.13"
 strict = true
+explicit_package_bases = true
 files = ["custom_components", "scripts", "tests/backend"]
+
+[[tool.mypy.overrides]]
+module = "pytest_homeassistant_custom_component.*"
+ignore_missing_imports = true
 
 [tool.setuptools]
 packages = []
-

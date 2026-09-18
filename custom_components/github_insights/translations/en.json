@@ -1,4 +1,103 @@
 {
-  "title": "GitHub Insights"
+  "title": "GitHub Insights",
+  "config": {
+    "abort": {
+      "already_configured": "GitHub Insights is already configured",
+      "single_instance_allowed": "Only one GitHub Insights configuration is supported"
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the GitHub server",
+      "invalid_auth": "GitHub rejected the access token",
+      "invalid_server": "Enter a valid HTTPS GitHub or GitHub Enterprise Server origin",
+      "unknown": "Unexpected GitHub API response",
+      "wrong_account": "The token belongs to a different GitHub account"
+    },
+    "step": {
+      "reauth_confirm": {
+        "data": {
+          "token": "Access token"
+        },
+        "data_description": {
+          "token": "Replacement token for the same GitHub account"
+        },
+        "description": "GitHub rejected the existing credential. Enter a replacement token."
+      },
+      "scope": {
+        "data": {
+          "auto_discover": "Automatically discover repositories",
+          "organizations": "Organizations",
+          "repositories": "Repositories"
+        },
+        "data_description": {
+          "auto_discover": "Keep repository discovery synchronized within the configured safety cap",
+          "organizations": "Organizations visible to this token",
+          "repositories": "Repositories to include initially"
+        },
+        "description": "Authenticated as {account}. GitHub reported {repository_count} accessible repositories."
+      },
+      "user": {
+        "data": {
+          "server": "GitHub server",
+          "token": "Access token"
+        },
+        "data_description": {
+          "server": "Use GitHub.com or the HTTPS origin of GitHub Enterprise Server",
+          "token": "Stored only in the Home Assistant config entry"
+        },
+        "description": "Start in read-only mode. Additional permissions are requested only when optional features need them."
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "auto_discover": "Automatically discover repositories",
+          "organizations": "Organizations",
+          "repositories": "Repositories",
+          "update_interval": "Update interval"
+        },
+        "data_description": {
+          "update_interval": "Minutes between account and repository discovery refreshes"
+        }
+      }
+    }
+  },
+  "issues": {
+    "capability_unavailable": {
+      "title": "GitHub capability is unavailable",
+      "description": "The {capability} capability is unavailable because of {reason}. Other GitHub Insights data continues updating."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "account": {
+        "name": "Account"
+      },
+      "api_rate_limit_remaining": {
+        "name": "API rate limit remaining"
+      },
+      "api_rate_limit_reset": {
+        "name": "API rate limit reset"
+      },
+      "followers": {
+        "name": "Followers"
+      },
+      "following": {
+        "name": "Following"
+      },
+      "last_successful_sync": {
+        "name": "Last successful sync"
+      },
+      "organizations": {
+        "name": "Organizations"
+      },
+      "private_repositories": {
+        "name": "Private repositories"
+      },
+      "public_repositories": {
+        "name": "Public repositories"
+      }
+    }
+  }
 }
-
