@@ -6,7 +6,6 @@ import struct
 import zlib
 from pathlib import Path
 
-
 ROOT = Path(__file__).parents[1]
 BRAND = ROOT / "custom_components" / "github_insights" / "brand"
 SIZE = 256

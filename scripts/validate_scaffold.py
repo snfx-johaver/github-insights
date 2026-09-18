@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-
 ROOT = Path(__file__).parents[1]
 DOMAIN = "github_insights"
 INTEGRATION = ROOT / "custom_components" / DOMAIN

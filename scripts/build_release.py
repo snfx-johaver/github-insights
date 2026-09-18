@@ -5,7 +5,6 @@ from __future__ import annotations
 import shutil
 from pathlib import Path
 
-
 ROOT = Path(__file__).parents[1]
 SOURCE = ROOT / "custom_components" / "github_insights"
 DIST = ROOT / "dist"
