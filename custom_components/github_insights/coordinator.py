@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
@@ -78,7 +78,36 @@ class GitHubInsightsCoordinator(DataUpdateCoordinator[GitHubSnapshot]):
         except GitHubInsightsError as err:
             raise UpdateFailed(f"GitHub API error: {err}") from err
 
+        snapshot = _merge_last_known_good(self.data, snapshot)
         async_update_capability_issues(
             self.hass, self.config_entry.entry_id, snapshot.errors
         )
         return snapshot
+
+
+def _merge_last_known_good(
+    previous: GitHubSnapshot | None,
+    current: GitHubSnapshot,
+) -> GitHubSnapshot:
+    """Retain prior category values when an optional endpoint is stale."""
+    if previous is None or not current.errors:
+        return current
+
+    return replace(
+        current,
+        organizations=(
+            previous.organizations
+            if "organizations" in current.errors
+            else current.organizations
+        ),
+        repositories=(
+            previous.repositories
+            if "repositories" in current.errors
+            else current.repositories
+        ),
+        rate_limit=(
+            previous.rate_limit
+            if "rate_limit" in current.errors
+            else current.rate_limit
+        ),
+    )

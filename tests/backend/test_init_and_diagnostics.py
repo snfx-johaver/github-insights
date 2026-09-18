@@ -62,6 +62,10 @@ async def test_diagnostics_redact_token(hass: HomeAssistant) -> None:
             CONF_ACCOUNT_ID: 42,
             CONF_ACCOUNT_LOGIN: "octocat",
         },
+        options={
+            "organizations": ["private-org"],
+            "repositories": ["private-org/private-repo"],
+        },
     )
     entry.add_to_hass(hass)
 
@@ -74,6 +78,7 @@ async def test_diagnostics_redact_token(hass: HomeAssistant) -> None:
 
     diagnostics = await async_get_config_entry_diagnostics(hass, entry)
     assert "secret-token" not in str(diagnostics)
+    assert "private-org" not in str(diagnostics)
     assert diagnostics["runtime"]["repository_count"] == 1
 
 

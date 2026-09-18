@@ -7,7 +7,12 @@ from typing import Any
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_TOKEN
+from .const import (
+    CONF_ORGANIZATIONS,
+    CONF_REPOSITORIES,
+    CONF_SERVER,
+    CONF_TOKEN,
+)
 from .coordinator import GitHubInsightsConfigEntry
 
 TO_REDACT = {
@@ -30,16 +35,33 @@ async def async_get_config_entry_diagnostics(
     return {
         "entry": async_redact_data(
             {
-                "data": dict(entry.data),
-                "options": dict(entry.options),
+                "data": {
+                    CONF_SERVER: (
+                        "github.com"
+                        if entry.runtime_data.client.server.is_dotcom
+                        else "github_enterprise_server"
+                    ),
+                    CONF_TOKEN: entry.data[CONF_TOKEN],
+                },
+                "options": {
+                    "organization_selection_count": len(
+                        entry.options.get(CONF_ORGANIZATIONS, [])
+                    ),
+                    "repository_selection_count": len(
+                        entry.options.get(CONF_REPOSITORIES, [])
+                    ),
+                },
                 "version": entry.version,
                 "minor_version": entry.minor_version,
             },
             TO_REDACT,
         ),
         "runtime": {
-            "account_id": snapshot.account.id,
-            "server": entry.runtime_data.client.server.web_url,
+            "server_type": (
+                "github.com"
+                if entry.runtime_data.client.server.is_dotcom
+                else "github_enterprise_server"
+            ),
             "organization_count": len(snapshot.organizations),
             "repository_count": len(snapshot.repositories),
             "capabilities": {

@@ -188,12 +188,31 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except GitHubInsightsError:
                 errors["base"] = "unknown"
             else:
-                if validated.snapshot.account.id != entry.data[CONF_ACCOUNT_ID]:
+                stored_account_id = entry.data.get(CONF_ACCOUNT_ID)
+                stored_login = entry.data.get(CONF_ACCOUNT_LOGIN)
+                if (
+                    stored_account_id is not None
+                    and validated.snapshot.account.id != stored_account_id
+                ) or (
+                    stored_account_id is None
+                    and stored_login is not None
+                    and validated.snapshot.account.login != stored_login
+                ):
                     errors["base"] = "wrong_account"
                 else:
+                    self.hass.config_entries.async_update_entry(
+                        entry,
+                        unique_id=(
+                            f"{validated.server}:{validated.snapshot.account.id}"
+                        ),
+                    )
                     return self.async_update_reload_and_abort(
                         entry,
-                        data_updates={CONF_TOKEN: validated.token},
+                        data_updates={
+                            CONF_TOKEN: validated.token,
+                            CONF_ACCOUNT_ID: validated.snapshot.account.id,
+                            CONF_ACCOUNT_LOGIN: validated.snapshot.account.login,
+                        },
                     )
 
         return self.async_show_form(
