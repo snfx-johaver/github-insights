@@ -29,3 +29,9 @@ The project uses [Semantic Versioning](https://semver.org/).
   reporting where GitHub exposes authorized data.
 - Release-candidate packaging and deployment metadata for version
   `0.2.0-beta.1`.
+
+### Changed
+
+- The release-candidate dashboard is documented as an exact import template
+  for a user-created, UI-editable Home Assistant storage dashboard instead of
+  a default file-backed YAML dashboard.

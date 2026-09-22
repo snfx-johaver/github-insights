@@ -5,6 +5,18 @@ integration. Mushroom, ApexCharts, Auto Entities, stack-in-card, layout-card,
 card-mod, and mini-graph-card are optional companions and are never packaged
 or required by GitHub Insights.
 
+## UI-editable release-candidate dashboard
+
+[`release-candidate-dashboard.yaml`](release-candidate-dashboard.yaml) is the
+exact import template, not an installed dashboard file. Create a dashboard
+under **Settings > Dashboards**, keep it managed by Home Assistant, and paste
+the template into its **Raw configuration editor**. Automated deployment may
+use the supported, authenticated Lovelace WebSocket API instead.
+
+Do not edit `.storage` directly. Declaring `github-insights` under
+`lovelace: dashboards:` with `mode: yaml` intentionally creates a file-backed
+dashboard that cannot be edited in the UI.
+
 The examples use stable metric keys in `entities`. Omit `entities` to use
 registry discovery when backend entities are available. A missing permission,
 plan feature, or unavailable GitHub capability produces an unavailable/empty
@@ -18,7 +30,7 @@ Register the GitHub Insights bundle once as a JavaScript module:
 /github_insights/frontend/github-insights-cards.js
 ```
 
-The deployable release-candidate dashboard intentionally uses a compact
+The release-candidate import template intentionally uses a compact
 Mushroom, ApexCharts, Auto Entities, and native fallback until this resource is
 registered through a supported Lovelace resource mechanism. Its entity filters
 are dynamic, so GitHub usernames and capability-dependent entity IDs are not

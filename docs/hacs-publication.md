@@ -60,7 +60,12 @@ After a validated prerelease asset is published:
 4. Restart if HACS/Home Assistant requires it.
 5. Configure the integration and register the bundled resource through the
    documented supported method.
-6. Record the exact custom-repository install and upgrade results in
+6. Create a Home Assistant-managed storage dashboard and import
+   `docs/release-candidate-dashboard.yaml` through its Raw configuration editor
+   or the supported authenticated Lovelace WebSocket API.
+7. Confirm the dashboard remains editable in the UI. Do not declare it with
+   `mode: yaml` or edit `.storage` for the default installation.
+8. Record the exact custom-repository install and upgrade results in
    `post-release-validation.json`. Never mark this gate complete before the
    immutable release asset exists.
 
@@ -107,6 +112,7 @@ changes and config-entry migrations. A failed install restores only the prior
 - [ ] Secret scans pass
 - [ ] Isolated install/upgrade/removal tests pass
 - [ ] Safe local validation passes
+- [ ] Exact dashboard template imports into an editable storage dashboard
 - [ ] README permissions and limitations match behavior
 - [ ] Version-matched pre-release evidence records only completed pre-tag gates
 - [ ] Full GitHub Release exists after the validation gates

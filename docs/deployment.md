@@ -11,7 +11,10 @@ authenticated Home Assistant browser/API session is available.
 `release-ready.json` is therefore intentionally absent.
 
 The deployed files are pending a supported configuration check and restart.
-They must not be treated as a completed live validation or HACS installation.
+They must not be treated as a completed live validation, HACS installation, or
+recommended dashboard installation. The file-backed dashboard recorded below
+is legacy candidate evidence; the supported default is now a user-created,
+UI-editable storage dashboard.
 
 ## 0.2.0-beta.1 candidate evidence
 
@@ -142,6 +145,45 @@ user was unavailable to authenticate. The following remain incomplete:
 Do not set `live_home_assistant_validation` or
 `custom_repository_install_test` to true until those exact gates are completed.
 
+## Default dashboard installation
+
+`docs/release-candidate-dashboard.yaml` is the exact import template. It is not
+part of `github_insights.zip` and must not be copied to `dashboards/` as the
+default installation.
+
+1. Install the one GitHub Insights integration and register its one bundled
+   frontend resource.
+2. Open **Settings > Dashboards** and create a dashboard managed by Home
+   Assistant.
+3. Open that dashboard's **Raw configuration editor** and paste the template
+   unchanged.
+4. Save, reload, and verify the dashboard. A deployment tool may perform the
+   same import through Home Assistant's supported, authenticated Lovelace
+   WebSocket API.
+
+This keeps the dashboard in Home Assistant storage mode and editable in the
+UI. Declaring `github-insights` under `lovelace: dashboards:` with
+`mode: yaml` is an intentional opt-in to a file-backed dashboard and makes it
+non-editable in the UI. Never edit `.storage` directly.
+
+## Migrate an existing YAML dashboard
+
+1. Back up the existing YAML dashboard and `configuration.yaml`.
+2. Create a temporary storage dashboard URL such as `github-insights-ui`.
+3. Paste the exact release-candidate template into its **Raw configuration
+   editor**, or import it with the supported authenticated Lovelace WebSocket
+   API.
+4. Verify all views, resources, entities, and available companion cards in the
+   temporary dashboard.
+5. Remove only the `github-insights` YAML dashboard declaration from
+   `configuration.yaml`; keep unrelated Lovelace configuration unchanged.
+6. Run Home Assistant's supported configuration check, then restart.
+7. Verify the storage dashboard again and optionally rename its URL after the
+   old YAML URL is free.
+
+Do not delete the old YAML file until rollback is no longer needed, and never
+edit `.storage` directly.
+
 ## One-install layout
 
 The release artifact contains exactly:
@@ -177,7 +219,7 @@ path is isolated in `custom_components/github_insights/__init__.py` and tested.
 If that supported API changes, the fallback is to copy the same bundled asset
 to `www/` and update the resource URL; no second HACS repository is needed.
 Until registration is completed through a supported Lovelace resource
-mechanism, keep the deployable release-candidate dashboard on its dynamic
+mechanism, keep the release-candidate import template on its dynamic
 Mushroom, ApexCharts, Auto Entities, and native fallback. Reintroduce its full
 `custom:github-insights-*` views only after a supported Home Assistant restart
 or config-entry reload exposes the current entity set and the module
@@ -193,11 +235,13 @@ registration is configured or recorded as release evidence.
 5. If present, back up only that directory and its registered resource record.
 6. Copy the staged `github_insights` directory.
 7. Register the frontend resource only through the selected supported method.
-8. Run a supported Home Assistant configuration check.
-9. Restart only when required and after approval/validation.
-10. Confirm Home Assistant health, integration load, devices, entities,
+8. Create or update a storage dashboard through the UI or supported,
+   authenticated Lovelace WebSocket API; never edit `.storage` directly.
+9. Run a supported Home Assistant configuration check.
+10. Restart only when required and after approval/validation.
+11. Confirm Home Assistant health, integration load, devices, entities,
     availability, resource load, and absence of unrelated changes.
-11. On failure, restore only the backed-up GitHub Insights files/resource.
+12. On failure, restore only the backed-up GitHub Insights files/resource.
 
 Do not copy tests, fixtures, TypeScript source, node modules, source maps,
 coverage output, tokens, or local diagnostics.

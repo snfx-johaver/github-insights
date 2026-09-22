@@ -82,10 +82,19 @@ After a validated prerelease exists:
 6. Add the bundled JavaScript module under
    **Settings > Dashboards > Resources**:
    `/github_insights/frontend/github-insights-cards.js`.
+7. Under **Settings > Dashboards**, create a dashboard managed by Home
+   Assistant, open its **Raw configuration editor**, and paste the exact
+   contents of
+   [`docs/release-candidate-dashboard.yaml`](docs/release-candidate-dashboard.yaml).
 
 The integration serves this installed file through Home Assistant's static-path
 API. Lovelace resource registration remains manual because Home Assistant does
 not provide a stable public API for integrations to mutate dashboard resources.
+The dashboard template may also be imported with Home Assistant's supported,
+authenticated Lovelace WebSocket API. The default guidance is a storage-mode
+dashboard so it remains editable in the UI. Declaring `github-insights` under
+`lovelace: dashboards:` with `mode: yaml` is a valid advanced setup, but it
+makes that dashboard intentionally non-editable in the UI.
 Adding a custom repository is not acceptance into the standard HACS catalog.
 When published, the `0.2.0-beta.1` candidate will be intended only for opt-in
 prerelease/custom-repository validation. It is not currently installable as a
@@ -103,7 +112,8 @@ directory to:
 ```
 
 The directory contains both Python integration files and the frontend bundle.
-Then add the same Lovelace module resource shown above. Source files, tests,
+Then add the same Lovelace module resource and import the dashboard template
+into a user-created storage dashboard as shown above. Source files, tests,
 source maps, and development dependencies are not shipped.
 
 ## Setup and permissions
@@ -260,6 +270,9 @@ actions_limit:
 ## Dashboard companions
 
 GitHub Insights does not require another card package. The
+[release-candidate dashboard](docs/release-candidate-dashboard.yaml) is an
+exact import template for a user-created, UI-editable storage dashboard; it is
+not a file to install under `dashboards/`. The
 [dashboard examples](docs/dashboard-examples.md) also show polished optional
 layouts using separately installed Mushroom cards for headings/status,
 ApexCharts for history, and Auto Entities for registry views, with native Home
