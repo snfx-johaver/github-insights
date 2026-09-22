@@ -520,14 +520,14 @@ async def async_setup_entry(
                 ),
                 ("copilot_code_review_pull_requests", "code_review_pull_requests"),
             ):
-                unique_key = f"copilot:{usage.scope}:{key}"
+                unique_key = f"copilot:{usage.scope_type}:{usage.scope_id}:{key}"
                 if unique_key in known or getattr(usage, attribute) is None:
                     continue
                 known.add(unique_key)
                 entities.append(
                     GitHubCopilotSensor(
                         coordinator,
-                        usage.scope,
+                        usage,
                         key,
                         attribute,
                     )
@@ -1001,16 +1001,18 @@ class GitHubCopilotSensor(GitHubInsightsEntity, SensorEntity):
     def __init__(
         self,
         coordinator: GitHubInsightsCoordinator,
-        scope: str,
+        usage: GitHubCopilotUsage,
         key: str,
         value_attribute: str,
     ) -> None:
         """Initialize a Copilot billing sensor."""
         super().__init__(
             coordinator,
-            f"copilot_{scope.replace(':', '_').replace('/', '_')}_{key}",
+            f"copilot_{usage.scope_type}_{usage.scope_id}_{key}",
         )
-        self.scope = scope
+        self.scope = usage.scope
+        self.scope_id = usage.scope_id
+        self.scope_type = usage.scope_type
         self.key = key
         self.value_attribute = value_attribute
         self._attr_translation_key = key
@@ -1038,7 +1040,8 @@ class GitHubCopilotSensor(GitHubInsightsEntity, SensorEntity):
             (
                 usage
                 for usage in self.coordinator.data.copilot
-                if usage.scope == self.scope
+                if usage.scope_id == self.scope_id
+                and usage.scope_type == self.scope_type
             ),
             None,
         )

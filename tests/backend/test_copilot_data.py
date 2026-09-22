@@ -8,7 +8,28 @@ from custom_components.github_insights.api import GitHubClient
 from custom_components.github_insights.copilot_data import (
     async_collect_copilot_billing,
 )
-from custom_components.github_insights.models import CapabilityStatus
+from custom_components.github_insights.models import (
+    CapabilityStatus,
+    GitHubAccount,
+    GitHubOrganization,
+)
+
+ACCOUNT = GitHubAccount(
+    id=42,
+    login="octocat",
+    name="The Octocat",
+    avatar_url="https://github.com/images/error/octocat_happy.gif",
+    html_url="https://github.com/octocat",
+    public_repos=2,
+    total_private_repos=1,
+    followers=10,
+    following=3,
+)
+ORGANIZATION = GitHubOrganization(
+    id=84,
+    login="example-org",
+    avatar_url="https://github.com/example-org.png",
+)
 
 
 async def test_user_and_org_billing_remain_separate() -> None:
@@ -23,7 +44,7 @@ async def test_user_and_org_billing_remain_separate() -> None:
             if "/copilot/metrics/reports/" in path:
                 return {
                     "download_links": [
-                        "https://copilot-usage.githubusercontent.com/report.json"
+                        "https://copilot-reports.github.com/report.json"
                     ],
                     "report_end_day": "2026-09-18",
                 }
@@ -64,8 +85,8 @@ async def test_user_and_org_billing_remain_separate() -> None:
 
     usage, capabilities, errors = await async_collect_copilot_billing(
         cast(GitHubClient, Client()),
-        "octocat",
-        ("example-org",),
+        ACCOUNT,
+        (ORGANIZATION,),
     )
 
     assert [item.scope for item in usage] == [
@@ -89,7 +110,7 @@ async def test_copilot_billing_is_not_probed_on_ghes() -> None:
 
     usage, capabilities, errors = await async_collect_copilot_billing(
         cast(GitHubClient, Client()),
-        "octocat",
+        ACCOUNT,
         (),
     )
 

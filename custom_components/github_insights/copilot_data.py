@@ -13,12 +13,13 @@ from .api import (
     GitHubClient,
     GitHubConnectionError,
     GitHubPermissionError,
-    GitHubRateLimitError,
 )
 from .models import (
     CapabilityStatus,
+    GitHubAccount,
     GitHubCapability,
     GitHubCopilotUsage,
+    GitHubOrganization,
     JsonObject,
 )
 
@@ -26,7 +27,6 @@ _OPTIONAL_ERRORS = (
     GitHubPermissionError,
     GitHubConnectionError,
     GitHubAPIError,
-    GitHubRateLimitError,
 )
 
 
@@ -44,8 +44,8 @@ class CopilotMetrics:
 
 async def async_collect_copilot_billing(
     client: GitHubClient,
-    username: str,
-    organizations: tuple[str, ...],
+    account: GitHubAccount,
+    organizations: tuple[GitHubOrganization, ...],
 ) -> tuple[
     tuple[GitHubCopilotUsage, ...],
     dict[str, GitHubCapability],
@@ -63,13 +63,14 @@ async def async_collect_copilot_billing(
             {},
         )
 
-    scopes = (("user", username),) + tuple(
-        ("organization", organization) for organization in organizations
+    scopes = (("user", account.login, account.id),) + tuple(
+        ("organization", organization.login, organization.id)
+        for organization in organizations
     )
     results = await asyncio.gather(
         *(
-            _async_collect_scope(client, scope_type, scope_name)
-            for scope_type, scope_name in scopes
+            _async_collect_scope(client, scope_type, scope_name, scope_id)
+            for scope_type, scope_name, scope_id in scopes
         )
     )
     usages = tuple(result[0] for result in results if result[0] is not None)
@@ -81,14 +82,18 @@ async def async_collect_copilot_billing(
 
     usage_by_scope = {usage.scope: usage for usage in usages}
     for organization in organizations:
-        scope = f"organization:{organization}"
-        metrics, capability, error = await _async_collect_metrics(client, organization)
-        capabilities[f"copilot_metrics_{organization}"] = capability
+        scope = f"organization:{organization.login}"
+        metrics, capability, error = await _async_collect_metrics(
+            client, organization.login
+        )
+        capabilities[f"copilot_organization_{organization.id}_metrics"] = capability
         if error:
-            errors[f"copilot_metrics_{organization}"] = error
+            errors[f"copilot_organization_{organization.id}_metrics"] = error
         if metrics:
             existing = usage_by_scope.get(scope) or GitHubCopilotUsage.create(
-                scope=scope
+                scope=scope,
+                scope_id=organization.id,
+                scope_type="organization",
             )
             usage_by_scope[scope] = replace(
                 existing,
@@ -104,8 +109,6 @@ async def async_collect_copilot_billing(
     usages = tuple(usage_by_scope.values())
     if usages:
         capabilities["copilot"] = GitHubCapability(CapabilityStatus.AVAILABLE)
-        if errors:
-            errors["copilot"] = "partial_failure"
     elif "copilot" not in capabilities:
         capabilities["copilot"] = GitHubCapability(
             CapabilityStatus.FORBIDDEN, "missing_billing_permission"
@@ -206,6 +209,7 @@ async def _async_collect_scope(
     client: GitHubClient,
     scope_type: str,
     scope_name: str,
+    scope_id: int,
 ) -> tuple[
     GitHubCopilotUsage | None,
     dict[str, GitHubCapability],
@@ -223,7 +227,7 @@ async def _async_collect_scope(
         "ai_credit": f"{prefix}/settings/billing/ai_credit/usage",
         "premium_request": f"{prefix}/settings/billing/premium_request/usage",
     }.items():
-        key = f"copilot_{scope_type}_{scope_name}_{usage_type}"
+        key = f"copilot_{scope_type}_{scope_id}_{usage_type}"
         try:
             payload = await client.async_get_json(endpoint)
             payloads[usage_type] = _object(payload)
@@ -244,13 +248,27 @@ async def _async_collect_scope(
     return (
         GitHubCopilotUsage.create(
             scope=f"{scope_type}:{scope_name}",
+            scope_id=scope_id,
+            scope_type=scope_type,
             premium_requests_used=_sum(premium_items, "grossQuantity"),
             premium_requests_paid=_sum(premium_items, "netQuantity"),
             ai_credits_used=_sum(ai_items, "grossQuantity"),
-            cost=_sum(all_items, "netAmount"),
+            cost=(
+                _sum(all_items, "netAmount")
+                if {"ai_credit", "premium_request"} <= payloads.keys()
+                else None
+            ),
             currency=None,
-            product_breakdown=_breakdown(all_items, "product", "grossQuantity"),
-            model_breakdown=_breakdown(all_items, "model", "grossQuantity"),
+            product_breakdown=(
+                _breakdown(all_items, "product", "grossQuantity")
+                if {"ai_credit", "premium_request"} <= payloads.keys()
+                else None
+            ),
+            model_breakdown=(
+                _breakdown(all_items, "model", "grossQuantity")
+                if {"ai_credit", "premium_request"} <= payloads.keys()
+                else None
+            ),
             repository_breakdown={},
             reporting_day=reporting_day,
         ),

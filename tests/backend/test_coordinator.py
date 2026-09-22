@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 from custom_components.github_insights.coordinator import (
+    _merge_copilot_usage,
     _merge_last_known_good,
     _merge_repository_insights,
 )
-from custom_components.github_insights.models import GitHubRepositoryInsights
+from custom_components.github_insights.models import (
+    GitHubCopilotUsage,
+    GitHubRepositoryInsights,
+)
 
 from .helpers import snapshot
 
@@ -92,3 +96,30 @@ def test_repository_field_failure_retains_only_failed_field() -> None:
 
     assert merged[0].open_pull_requests == 4
     assert merged[0].open_issues == 2
+
+
+def test_copilot_merge_retains_only_missing_fields_by_immutable_scope() -> None:
+    """A failed report does not freeze fresh billing data for the same scope."""
+    previous = GitHubCopilotUsage.create(
+        scope="organization:old-name",
+        scope_id=84,
+        scope_type="organization",
+        premium_requests_used=2,
+        active_users=5,
+    )
+    current = GitHubCopilotUsage.create(
+        scope="organization:new-name",
+        scope_id=84,
+        scope_type="organization",
+        premium_requests_used=3,
+    )
+
+    merged = _merge_copilot_usage(
+        (previous,),
+        (current,),
+        {"copilot_organization_84_metrics": "temporarily_unavailable"},
+    )
+
+    assert merged[0].scope == "organization:new-name"
+    assert merged[0].premium_requests_used == 3
+    assert merged[0].active_users == 5

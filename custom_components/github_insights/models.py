@@ -185,9 +185,9 @@ class GitHubActivity:
 
     commits: int
     pull_requests_opened: int
-    pull_requests_merged: int
+    pull_requests_merged: int | None
     issues_opened: int
-    issues_closed: int
+    issues_closed: int | None
     reviews: int | None
     releases: int
     active_days: tuple[str, ...]
@@ -267,6 +267,8 @@ class GitHubCopilotUsage:
     """Official Copilot billing, adoption, or activity values."""
 
     scope: str
+    scope_id: int
+    scope_type: str
     premium_requests_used: float | None
     premium_requests_included: float | None
     premium_requests_paid: float | None
@@ -288,6 +290,8 @@ class GitHubCopilotUsage:
         cls,
         *,
         scope: str,
+        scope_id: int,
+        scope_type: str,
         premium_requests_used: float | None = None,
         premium_requests_included: float | None = None,
         premium_requests_paid: float | None = None,
@@ -307,6 +311,8 @@ class GitHubCopilotUsage:
         """Create immutable Copilot usage."""
         return cls(
             scope=scope,
+            scope_id=scope_id,
+            scope_type=scope_type,
             premium_requests_used=premium_requests_used,
             premium_requests_included=premium_requests_included,
             premium_requests_paid=premium_requests_paid,

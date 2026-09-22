@@ -120,7 +120,8 @@ default.
 Copilot billing endpoints require a personal access token (classic);
 fine-grained PATs are not supported for those endpoints. Organization Copilot
 adoption, coding-agent, and code-review reports are collected only from the
-official report API and HTTPS `githubusercontent.com` signed downloads, with no
+official report API and HTTPS `copilot-reports.github.com` or
+`githubusercontent.com` signed downloads, with no
 authorization header sent to the download host and no signed URL retained.
 No GitHub pages or undocumented endpoints are scraped.
 

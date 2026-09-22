@@ -200,7 +200,7 @@ async def test_signed_report_download_is_bounded_and_credential_free() -> None:
     client = GitHubClient(cast(ClientSession, session), "secret", "https://github.com")
 
     report = await client.async_get_signed_report(
-        "https://copilot-usage.githubusercontent.com/report.json"
+        "https://copilot-reports.github.com/report.json"
     )
 
     assert report[0]["daily_active_users"] == 3

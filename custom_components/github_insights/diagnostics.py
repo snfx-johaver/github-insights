@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
@@ -78,14 +79,15 @@ async def async_get_config_entry_diagnostics(
             "repository_count": len(snapshot.repositories),
             "selected_repository_count": len(snapshot.repository_insights),
             "copilot_scope_count": len(snapshot.copilot),
-            "capabilities": {
-                key: {
-                    "status": capability.status,
-                    "reason": capability.reason,
-                }
-                for key, capability in snapshot.capabilities.items()
-            },
-            "errors": dict(snapshot.errors),
+            "capability_status_counts": _value_counts(
+                capability.status for capability in snapshot.capabilities.values()
+            ),
+            "capability_reason_counts": _value_counts(
+                capability.reason
+                for capability in snapshot.capabilities.values()
+                if capability.reason
+            ),
+            "error_reason_counts": _value_counts(snapshot.errors.values()),
             "token_scopes": snapshot.token_scopes,
             "fetched_at": snapshot.fetched_at,
             "rate_limit": (
@@ -129,3 +131,12 @@ async def async_get_config_entry_diagnostics(
             },
         },
     }
+
+
+def _value_counts(values: Iterable[object]) -> dict[str, int]:
+    """Return non-identifying counts for diagnostic capability values."""
+    counts: dict[str, int] = {}
+    for value in values:
+        key = str(value)
+        counts[key] = counts.get(key, 0) + 1
+    return counts

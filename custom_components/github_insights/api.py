@@ -17,7 +17,6 @@ from aiohttp import ClientError, ClientResponse, ClientSession
 from yarl import URL
 
 from .const import (
-    API_VERSION,
     API_VERSION_DOTCOM,
     API_VERSION_GHES,
     MAX_BUDGET_PAGES,
@@ -242,7 +241,8 @@ class GitHubClient:
             or url.password is not None
             or url.fragment
             or not (
-                hostname == "githubusercontent.com"
+                hostname == "copilot-reports.github.com"
+                or hostname == "githubusercontent.com"
                 or hostname.endswith(".githubusercontent.com")
             )
         ):
@@ -443,7 +443,7 @@ class GitHubClient:
                             "billing_usage_failed",
                         )
                     scope_errors["usage"] = usage_capability.reason or ""
-                except (GitHubConnectionError, GitHubRateLimitError):
+                except GitHubConnectionError:
                     usage_capability = GitHubCapability(
                         CapabilityStatus.TEMPORARILY_UNAVAILABLE,
                         "billing_usage_failed",
@@ -482,7 +482,7 @@ class GitHubClient:
                             "budgets_failed",
                         )
                     scope_errors["budgets"] = budget_capability.reason or ""
-                except (GitHubConnectionError, GitHubRateLimitError):
+                except GitHubConnectionError:
                     budget_capability = GitHubCapability(
                         CapabilityStatus.TEMPORARILY_UNAVAILABLE,
                         "budgets_failed",
@@ -539,7 +539,7 @@ class GitHubClient:
             _record_capability_failure(
                 capabilities, errors, "organizations", "missing_permission"
             )
-        except (GitHubConnectionError, GitHubAPIError, GitHubRateLimitError):
+        except (GitHubConnectionError, GitHubAPIError):
             _record_capability_failure(
                 capabilities,
                 errors,
@@ -555,7 +555,7 @@ class GitHubClient:
             _record_capability_failure(
                 capabilities, errors, "repositories", "missing_permission"
             )
-        except (GitHubConnectionError, GitHubAPIError, GitHubRateLimitError):
+        except (GitHubConnectionError, GitHubAPIError):
             _record_capability_failure(
                 capabilities,
                 errors,
@@ -574,11 +574,7 @@ class GitHubClient:
                         repository_insights = await async_collect_repository_insights(
                             self, repositories, repository_options
                         )
-                    except (
-                        GitHubConnectionError,
-                        GitHubAPIError,
-                        GitHubRateLimitError,
-                    ):
+                    except (GitHubConnectionError, GitHubAPIError):
                         _record_capability_failure(
                             capabilities,
                             errors,
@@ -602,8 +598,12 @@ class GitHubClient:
                 copilot_errors,
             ) = await async_collect_copilot_billing(
                 self,
-                account.login,
-                copilot_organizations,
+                account,
+                tuple(
+                    organization
+                    for organization in organizations
+                    if organization.login in set(copilot_organizations)
+                ),
             )
             capabilities.update(copilot_capabilities)
             errors.update(copilot_errors)
@@ -614,7 +614,7 @@ class GitHubClient:
             _record_capability_failure(
                 capabilities, errors, "rate_limit", "missing_permission"
             )
-        except (GitHubConnectionError, GitHubAPIError, GitHubRateLimitError):
+        except (GitHubConnectionError, GitHubAPIError):
             _record_capability_failure(
                 capabilities,
                 errors,
@@ -1105,12 +1105,3 @@ def _optional_int(value: Any) -> int | None:
 
 def _optional_bool(value: Any) -> bool | None:
     return value if isinstance(value, bool) else None
-
-
-def _optional_datetime(value: Any) -> datetime | None:
-    if not isinstance(value, str):
-        return None
-    try:
-        return datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None

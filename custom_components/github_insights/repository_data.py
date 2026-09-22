@@ -14,7 +14,6 @@ from .api import (
     GitHubClient,
     GitHubConnectionError,
     GitHubPermissionError,
-    GitHubRateLimitError,
     _repository,
 )
 from .const import (
@@ -42,7 +41,6 @@ _OPTIONAL_ERRORS = (
     GitHubPermissionError,
     GitHubConnectionError,
     GitHubAPIError,
-    GitHubRateLimitError,
 )
 
 
@@ -427,25 +425,37 @@ def _activity(
     cutoff = datetime.now(UTC) - timedelta(days=90)
     recent_commits = tuple(item for item in commits if _date(item, "commit") >= cutoff)
     recent_pulls = tuple(item for item in pulls if _date(item) >= cutoff)
+    merged_pulls = tuple(
+        item for item in pulls if _date_or_none(item, "merged_at", cutoff) is not None
+    )
     recent_issues = tuple(item for item in issues if _date(item) >= cutoff)
+    closed_issues = tuple(
+        item for item in issues if _date_or_none(item, "closed_at", cutoff) is not None
+    )
     recent_releases = tuple(item for item in releases if _date(item) >= cutoff)
     active_days = sorted(
         {_date(item, "commit").date().isoformat() for item in recent_commits}
         | {_date(item).date().isoformat() for item in recent_pulls}
+        | {
+            closed_at.date().isoformat()
+            for item in merged_pulls
+            if (closed_at := _date_or_none(item, "merged_at", cutoff)) is not None
+        }
         | {_date(item).date().isoformat() for item in recent_issues}
+        | {
+            closed_at.date().isoformat()
+            for item in closed_issues
+            if (closed_at := _date_or_none(item, "closed_at", cutoff)) is not None
+        }
         | {_date(item).date().isoformat() for item in recent_releases}
     )
     current, longest = _streaks(active_days) if complete else (None, None)
     return GitHubActivity(
         commits=len(recent_commits),
         pull_requests_opened=len(recent_pulls),
-        pull_requests_merged=sum(
-            1 for item in recent_pulls if item.get("merged_at") is not None
-        ),
+        pull_requests_merged=len(merged_pulls) if complete else None,
         issues_opened=len(recent_issues),
-        issues_closed=sum(
-            1 for item in recent_issues if item.get("closed_at") is not None
-        ),
+        issues_closed=len(closed_issues) if complete else None,
         reviews=None,
         releases=len(recent_releases),
         active_days=tuple(active_days),
@@ -480,6 +490,19 @@ def _period_total(
         for item in (*commits, *pulls, *issues, *releases)
         if _date(item, "commit" if "commit" in item else None) >= cutoff
     )
+
+
+def _date_or_none(
+    item: JsonObject,
+    key: str,
+    cutoff: datetime,
+) -> datetime | None:
+    """Return an event timestamp only when it falls inside the activity window."""
+    value = item.get(key)
+    if not isinstance(value, str):
+        return None
+    parsed = _datetime(value)
+    return parsed if parsed >= cutoff else None
 
 
 def _weekday_distribution(days: list[str]) -> Mapping[str, int]:

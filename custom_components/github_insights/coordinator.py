@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from datetime import timedelta
 
@@ -19,27 +20,25 @@ from .api import (
 )
 from .const import (
     CONF_ACCOUNT_LOGIN,
+    CONF_AUTO_DISCOVER,
     CONF_BILLING_ENTERPRISE,
     CONF_BILLING_INTERVAL,
     CONF_BILLING_ORGANIZATIONS,
-    CONF_ORGANIZATIONS,
-    CONF_PERSONAL_BILLING,
-    CONF_UPDATE_INTERVAL,
-    DEFAULT_BILLING_INTERVAL_MINUTES,
-    DEFAULT_PERSONAL_BILLING,
-    CONF_AUTO_DISCOVER,
     CONF_ENABLED_CATEGORIES,
     CONF_INCLUDE_ARCHIVED,
     CONF_INCLUDE_FORKS,
     CONF_MAX_REPOSITORIES,
     CONF_ORGANIZATIONS,
+    CONF_PERSONAL_BILLING,
     CONF_REPOSITORIES,
     CONF_UPDATE_INTERVAL,
     DEFAULT_AUTO_DISCOVER,
+    DEFAULT_BILLING_INTERVAL_MINUTES,
     DEFAULT_ENABLED_CATEGORIES,
     DEFAULT_INCLUDE_ARCHIVED,
     DEFAULT_INCLUDE_FORKS,
     DEFAULT_MAX_REPOSITORIES,
+    DEFAULT_PERSONAL_BILLING,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
     LOGGER,
@@ -50,6 +49,7 @@ from .models import (
     BillingScopeData,
     BillingScopeType,
     BillingSnapshot,
+    GitHubCopilotUsage,
     GitHubRepositoryInsights,
     GitHubSecurityAlerts,
     GitHubSnapshot,
@@ -251,7 +251,11 @@ def _merge_last_known_good(
                 current.repository_insights,
             )
         ),
-        copilot=previous.copilot if "copilot" in current.errors else current.copilot,
+        copilot=_merge_copilot_usage(
+            previous.copilot,
+            current.copilot,
+            current.errors,
+        ),
         rate_limit=(
             previous.rate_limit
             if "rate_limit" in current.errors
@@ -392,4 +396,104 @@ def _merge_repository_insights(
                 activity=old.activity if activity_failed else item.activity,
             )
         )
+    return tuple(merged)
+
+
+def _merge_copilot_usage(
+    previous: tuple[GitHubCopilotUsage, ...],
+    current: tuple[GitHubCopilotUsage, ...],
+    errors: Mapping[str, str],
+) -> tuple[GitHubCopilotUsage, ...]:
+    """Retain only unavailable Copilot fields for each immutable billing scope."""
+    previous_by_id = {(usage.scope_type, usage.scope_id): usage for usage in previous}
+    current_ids: set[tuple[str, int]] = set()
+    merged: list[GitHubCopilotUsage] = []
+    for usage in current:
+        key = (usage.scope_type, usage.scope_id)
+        current_ids.add(key)
+        old = previous_by_id.get(key)
+        if old is None:
+            merged.append(usage)
+            continue
+        merged.append(
+            replace(
+                usage,
+                premium_requests_used=(
+                    usage.premium_requests_used
+                    if usage.premium_requests_used is not None
+                    else old.premium_requests_used
+                ),
+                premium_requests_included=(
+                    usage.premium_requests_included
+                    if usage.premium_requests_included is not None
+                    else old.premium_requests_included
+                ),
+                premium_requests_paid=(
+                    usage.premium_requests_paid
+                    if usage.premium_requests_paid is not None
+                    else old.premium_requests_paid
+                ),
+                ai_credits_used=(
+                    usage.ai_credits_used
+                    if usage.ai_credits_used is not None
+                    else old.ai_credits_used
+                ),
+                cost=usage.cost if usage.cost is not None else old.cost,
+                currency=(
+                    usage.currency if usage.currency is not None else old.currency
+                ),
+                active_users=(
+                    usage.active_users
+                    if usage.active_users is not None
+                    else old.active_users
+                ),
+                engaged_users=(
+                    usage.engaged_users
+                    if usage.engaged_users is not None
+                    else old.engaged_users
+                ),
+                coding_agent_pull_requests=(
+                    usage.coding_agent_pull_requests
+                    if usage.coding_agent_pull_requests is not None
+                    else old.coding_agent_pull_requests
+                ),
+                coding_agent_merged_pull_requests=(
+                    usage.coding_agent_merged_pull_requests
+                    if usage.coding_agent_merged_pull_requests is not None
+                    else old.coding_agent_merged_pull_requests
+                ),
+                code_review_pull_requests=(
+                    usage.code_review_pull_requests
+                    if usage.code_review_pull_requests is not None
+                    else old.code_review_pull_requests
+                ),
+                product_breakdown=(
+                    usage.product_breakdown
+                    if usage.product_breakdown
+                    else old.product_breakdown
+                ),
+                model_breakdown=(
+                    usage.model_breakdown
+                    if usage.model_breakdown
+                    else old.model_breakdown
+                ),
+                repository_breakdown=(
+                    usage.repository_breakdown
+                    if usage.repository_breakdown
+                    else old.repository_breakdown
+                ),
+                reporting_day=(
+                    usage.reporting_day
+                    if usage.reporting_day is not None
+                    else old.reporting_day
+                ),
+            )
+        )
+    for key, old in previous_by_id.items():
+        prefix = f"copilot_{old.scope_type}_{old.scope_id}_"
+        if key not in current_ids and (
+            "copilot" in errors
+            or any(error_key.startswith(prefix) for error_key in errors)
+        ):
+            merged.append(old)
     return tuple(merged)

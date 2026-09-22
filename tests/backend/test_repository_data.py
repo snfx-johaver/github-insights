@@ -5,10 +5,13 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any, cast
 
+import pytest
+
 from custom_components.github_insights.api import (
     GitHubClient,
     GitHubPage,
     GitHubPermissionError,
+    GitHubRateLimitError,
 )
 from custom_components.github_insights.models import (
     CapabilityStatus,
@@ -90,6 +93,25 @@ def test_streaks_require_complete_coverage() -> None:
     assert activity.coverage_complete is False
     assert activity.current_streak is None
     assert activity.longest_streak is None
+
+
+def test_merged_activity_uses_merge_date() -> None:
+    """Merged pull requests are counted by merge time, not creation time."""
+    activity = _activity(
+        (),
+        (
+            {
+                "created_at": "2025-01-01T00:00:00Z",
+                "merged_at": datetime.now(UTC).isoformat(),
+            },
+        ),
+        (),
+        (),
+        complete=True,
+    )
+
+    assert activity.pull_requests_opened == 0
+    assert activity.pull_requests_merged == 1
 
 
 async def test_workflow_jobs_produce_runtime_without_billing_claims() -> None:
@@ -191,3 +213,25 @@ async def test_security_permission_failure_is_not_zero_alerts() -> None:
     assert security is None
     assert errors["dependabot"] == "missing_permission"
     assert capabilities["secret_scanning"].status is CapabilityStatus.FORBIDDEN
+
+
+async def test_rate_limits_propagate_from_optional_capabilities() -> None:
+    """Rate limits abort collection so the coordinator can back off."""
+
+    class Client:
+        async def async_get_page(
+            self,
+            path: str,
+            *,
+            params: dict[str, str] | None = None,
+            item_limit: int,
+        ) -> GitHubPage:
+            raise GitHubRateLimitError("rate_limited", retry_after=30)
+
+    with pytest.raises(GitHubRateLimitError):
+        await _async_security(
+            cast(GitHubClient, Client()),
+            "/repos/octocat/example",
+            {},
+            {},
+        )

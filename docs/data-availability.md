@@ -64,7 +64,8 @@ an "authoritative workflow cost" from runtime.
   different products and may have different scopes and reporting delays.
 - Current Copilot adoption, coding-agent, and code-review reports are delivered
   through expiring signed JSON/NDJSON downloads. GitHub Insights accepts only
-  HTTPS `githubusercontent.com` report hosts, sends no authorization header to
+  HTTPS `copilot-reports.github.com` and `githubusercontent.com` report hosts,
+  sends no authorization header to
   the download host, caps each report at 10 MB, parses documented aggregate
   fields, and never persists or exposes the signed URL.
 - Copilot activity does not imply Actions consumption, although Copilot code
