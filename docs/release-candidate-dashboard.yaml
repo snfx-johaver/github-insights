@@ -4,114 +4,47 @@ views:
     path: overview
     icon: mdi:github
     cards:
-      - type: custom:mushroom-title-card
+      - type: custom:github-insights-card
         title: GitHub Insights
-        subtitle: Your GitHub pulse, right at home.
+        preset: dashboard
+        layout: expanded
+        sections:
+          - overview
+          - usage
+          - actions
+          - copilot
+          - activity
+          - contributions
+          - security
+        show_forecast: true
+        show_estimated_minutes: true
 
-      - type: custom:auto-entities
-        show_empty: false
-        card:
-          type: custom:mushroom-chips-card
-          alignment: justify
-        card_param: chips
-        filter:
-          include:
-            - entity_id: sensor.github_insights_*public_repositories
-              options:
-                type: entity
-                icon: mdi:source-repository
-                content_info: state
-            - entity_id: sensor.github_insights_*organizations
-              options:
-                type: entity
-                icon: mdi:account-group
-                content_info: state
-            - entity_id: sensor.github_insights_*followers
-              options:
-                type: entity
-                icon: mdi:account-multiple
-                content_info: state
-            - entity_id: sensor.github_insights_*api_rate_limit_remaining
-              options:
-                type: entity
-                icon: mdi:api
-                content_info: state
-
-      - type: grid
-        columns: 2
-        square: false
-        cards:
-          - type: custom:auto-entities
-            show_empty: false
-            card:
-              type: entities
-              title: Account snapshot
-              show_header_toggle: false
-            filter:
-              include:
-                - entity_id: sensor.github_insights_*account
-                - entity_id: sensor.github_insights_*public_repositories
-                - entity_id: sensor.github_insights_*private_repositories
-                - entity_id: sensor.github_insights_*organizations
-                - entity_id: sensor.github_insights_*followers
-                - entity_id: sensor.github_insights_*following
-                - entity_id: sensor.github_insights_*last_successful_sync
-            sort:
-              method: name
-              ignore_case: true
-
-          - type: custom:auto-entities
-            show_empty: false
-            card:
-              type: entities
-              title: API capacity
-              show_header_toggle: false
-            filter:
-              include:
-                - entity_id: sensor.github_insights_*api_rate_limit_remaining
-                - entity_id: sensor.github_insights_*api_rate_limit_reset
-            sort:
-              method: name
-              ignore_case: true
-
-      - type: custom:auto-entities
-        show_empty: false
-        card:
-          type: custom:apexcharts-card
-          header:
-            show: true
-            title: API capacity over time
-            show_states: true
-            colorize_states: true
-          graph_span: 24h
-          update_interval: 5min
-        card_param: series
-        filter:
-          include:
-            - entity_id: sensor.github_insights_*api_rate_limit_remaining
-              options:
-                name: Requests remaining
-                type: line
-                stroke_width: 3
-                group_by:
-                  duration: 15min
-                  func: last
-
-      - type: markdown
-        content: >-
-          The integration files are updated, but Home Assistant is still running the
-          previous entity set. After a supported Home Assistant restart and config-entry
-          reload, newly available repository, Actions, billing, security, and Copilot
-          entities will appear automatically on the **All entities** tab.
+      - type: custom:github-insights-repository-card
+        title: Repository operations
+        repositories: auto
+        layout: compact
+        group_by: organization
+        sort:
+          - field: workflow_health
+            direction: ascending
+            nulls: last
+          - field: last_push
+            direction: descending
+            nulls: last
+          - field: name
+            direction: ascending
+            nulls: last
+        metrics:
+          - stars
+          - open_issues
+          - open_pull_requests
+          - workflow_health
+          - actions_usage_percent
 
   - title: All entities
     path: entities
     icon: mdi:view-list
     cards:
-      - type: custom:mushroom-title-card
-        title: Available GitHub Insights entities
-        subtitle: This list grows automatically as capabilities become available.
-
       - type: custom:auto-entities
         show_empty: false
         card:
@@ -129,10 +62,3 @@ views:
         sort:
           method: name
           ignore_case: true
-
-      - type: markdown
-        content: >-
-          Bundled GitHub Insights cards remain part of this single integration. They
-          can be added back after `/github_insights/frontend/github-insights-cards.js`
-          is registered as a Lovelace module through Home Assistant's supported UI or
-          WebSocket API.

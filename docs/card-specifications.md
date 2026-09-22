@@ -1,154 +1,128 @@
 # Card specifications
 
-## Implementation status
+## Public card catalog
 
-The bundled frontend registers all eleven cards and eleven visual editors from
-one Lit/TypeScript bundle. Cards tolerate capability-dependent entities that
-are absent or unavailable, and never fabricate backend data.
+The bundled frontend registers exactly two custom elements and two visual
+editors from one deterministic `github-insights-cards.js` artifact:
 
-All cards are custom elements in one deterministic
-`github-insights-cards.js` bundle installed with the `github_insights`
-integration. Each card has a visual editor, `getStubConfig`, card-picker
-metadata, validation, responsive grid options, and explicit
-loading/empty/error/stale/partial states.
+| Card | Purpose |
+|---|---|
+| `custom:github-insights-card` | Account, overview, usage, Actions, Copilot, activity, contributions, security, and dashboard-style content |
+| `custom:github-insights-repository-card` | Auto-discovered repository collection, an explicit repository list, or one selected repository |
+
+Layouts and former card identities are configuration, not registrations.
+The picker therefore remains limited to these two entries.
 
 ## Shared behavior
 
-- Discovery reads Home Assistant entity/device registries, filters entity
-  registry entries whose platform is `github_insights`, and keys metrics by the
-  registry `translation_key`. The stable fallback is the suffix of the
-  backend unique ID (`<immutable-owner-id>_<metric_key>`). Explicit
-  `entities: { metric_key: entity_id }` mappings are available for migrations
-  and unusual installations; discovery never depends on a display name.
-- Concise and detailed YAML normalize into immutable typed config.
-- Card defaults cascade to per-module or per-repository overrides.
-- Repository selectors support auto discovery, explicit lists, include/exclude
-  filters, favorites, search, and bounded results.
-- Sorts are stable, ordered, typed, and configurable for nulls.
-- Links come from backend-validated metadata and support GitHub Enterprise
-  Server.
-- Tap, hold, and double-tap use Home Assistant action semantics.
-- Values include provenance and freshness; estimated values always contain the
-  word "estimated".
-- Optional diagnostics show only normalized card configuration and discovered
-  entity IDs/metric keys. Entity states and attributes are never copied into
-  the panel, preventing tokens, signed URLs, and repository metadata from
-  leaking through debug output.
-- Rendering uses Lit text bindings and validated HTTP(S) links; GitHub content
-  is never injected through unsafe HTML.
-- All card shells are keyboard-focusable, expose progress semantics and status
-  announcements, use touch-sized controls, and disable transitions under
-  `prefers-reduced-motion`.
+- Entity discovery reads Home Assistant entity and device registries, filters
+  the `github_insights` platform, and keys metrics by stable translation keys.
+  Explicit `entities` mappings remain available for unusual installations.
+- GitHub-provided text uses Lit text bindings. External links must pass URL
+  validation and open with `noopener noreferrer`.
+- Missing permissions and unavailable capabilities render explicit empty or
+  unavailable states instead of fabricated values.
+- Configured Actions allowance, GitHub-authoritative gross/discount/net costs,
+  and runner-based estimated equivalent minutes remain distinct and labeled.
+- Card shells are keyboard-focusable; progress, alerts, status, and heatmaps
+  have accessible semantics and reduced-motion support.
+- Optional diagnostics contain normalized configuration and anonymized entity
+  mappings only, never entity states, attributes, tokens, signed URLs, or
+  repository names.
 
-## Shared configuration
+## Account card
 
 ```yaml
-type: custom:github-insights-actions
-title: Actions
-layout: responsive
+type: custom:github-insights-card
+preset: dashboard
+layout: expanded
+sections:
+  - overview
+  - usage
+  - actions
+  - copilot
+  - activity
+  - contributions
+  - security
 metrics:
-  - actions_configured_minutes_remaining
+  - account
   - actions_configured_minutes_used_percent
+  - actions_configured_minutes_remaining
   - actions_gross_cost
   - actions_discount
   - actions_cost
-  - actions_discounted_usage
-  - actions_billable_usage
-show_debug: false
-entities: # optional override; registry discovery is the default
-  actions_discounted_usage: sensor.github_insights_actions_discounted_or_included_consumption
-tap_action:
-  action: more-info
-  entity: sensor.github_insights_actions_discounted_or_included_consumption
+  - copilot_paid_usage
+  - workflow_health
+  - commits
+  - contributions
+  - dependabot_alerts
+  - last_successful_sync
 ```
 
-Every card supports `title`, `layout`, `metrics`, `entities`, `tap_action`,
-`hold_action`, and `double_tap_action`. Editors expose the relevant common and
-card-specific fields. All picker stubs are usable without YAML.
+The editor can enable, disable, and reorder sections and metrics. Presets are
+`overview`, `usage`, `actions`, `copilot`, `activity`, `contributions`,
+`security`, `dashboard`, and `compact`. Selecting a preset seeds editable
+sections, metrics, and presentation. Supported presentations are
+`responsive`, `compact`, and `expanded`.
 
-## Card suite
+Section order controls visual order. Metric order is preserved inside each
+section. Estimated metrics may be hidden without hiding authoritative usage.
 
-| Card | Primary purpose | Default content |
-|---|---|---|
-| `github-insights-overview` | Account landing card | Avatar, account, Actions usage/budget, AI availability, repos, PRs, workflow/security health, freshness |
-| `github-insights-usage` | Flagship billing card | Configured allowance progress, GitHub-reported quantities and gross/discount/net costs, budget/enforcement, AI usage, storage, forecast, estimated equivalent minutes |
-| `github-insights-repositories` | Multi-repository operations | Search, grouping, sorting, favorites, compact/grid rows, workflow/release/security indicators |
-| `github-insights-repository` | One repository | Description, language, KPIs, latest events, workflow, usage, traffic, security, actions |
-| `github-insights-actions` | Workflow and billing detail | Configured allowance progress, authoritative gross/discount/net cost, runtime, failures, usage by SKU/repo/workflow, budget, estimate |
-| `github-insights-copilot` | Authorized AI data | AI credits/premium requests, costs, adoption/activity, coding-agent/review, freshness |
-| `github-insights-activity` | Development activity | Commits, PRs, issues, reviews, releases, selectable periods, simple trends |
-| `github-insights-contributions` | Contribution patterns | Heatmap, totals, reliable streaks, repositories, weekday distribution |
-| `github-insights-security` | Authorized alert posture | Alert counts/severity/repositories and safe GitHub links |
-| `github-insights-compact` | Dense dashboard metric | One primary and secondary metric, icon, optional ring/bar/trend |
-| `github-insights-dashboard` | Composite responsive surface | Prominent configured Actions allowance and authoritative cost modules plus user-selected repository/status modules |
-
-## Usage card rules
-
-Never combine unlike units in one progress bar. Separate:
-
-- workflow runtime;
-- GitHub-reported included usage;
-- GitHub-reported paid usage;
-- gross, discount, and net monetary cost;
-- GitHub-enforced monetary budget and consumed amount;
-- stop-usage status; and
-- estimated equivalent minutes.
-
-Configured included minutes are local input, not GitHub-reported plan limits.
-Configured progress renders only when the backend confirms a single minute unit
-and exposes its source label. GitHub gross, discount, and net monetary amounts
-remain separately labeled authoritative values.
-
-The estimate presents the runner/SKU, price per minute, price source date, and
-formula. It never labels itself as an allowance or hard limit.
-
-## Repository card model
-
-Central metric descriptors define key, translation key, value type, icon,
-format, unit, availability rules, GitHub link relation, sort/filter support, and
-editor options. Compact and expanded modes select from the same descriptors.
-
-Default repository sort is:
-
-1. favorites first;
-2. unavailable/unknown last;
-3. workflow health severity;
-4. last push descending;
-5. full name ascending.
-
-## Visualizations
-
-CSS and lightweight SVG provide progress bars/rings, sparklines, stacked bars,
-heatmaps, status distributions, and trends. Every visualization has a text
-equivalent, tooltip, empty/unknown handling, dark/light tokens, honest axes, and
-reduced-motion behavior.
-
-## Example
+## Repository card
 
 ```yaml
-type: custom:github-insights-repositories
+type: custom:github-insights-repository-card
 repositories: auto
-view: compact
+layout: compact
 group_by: organization
-include:
-  visibility:
-    - public
-    - private
-exclude:
-  archived: true
+favorites:
+  - octo/important
 sort:
-  - field: actions_usage
+  - field: workflow_health
+    direction: ascending
+    nulls: last
+  - field: last_push
     direction: descending
     nulls: last
   - field: name
     direction: ascending
+    nulls: last
 metrics:
   - stars
   - forks
   - open_issues
   - open_pull_requests
-  - workflow_status
-  - actions_usage
-show_forks: true
-show_debug: false
+  - workflow_health
+  - actions_usage_percent
 ```
+
+Set `repository: owner/name` for one repository, `repositories` to a list for
+an explicit collection, or `repositories: auto` for discovery. The editor
+also exposes search, favorites, deterministic sorting, metric ordering, and
+JSON repository overrides. Presentations are `responsive`, `compact`,
+`expanded`, and `detail`. Per-repository overrides can change title,
+presentation, favorite status, metrics, and metric badges.
+
+## Beta migration from the former catalog
+
+No obsolete custom element is registered at runtime. Update YAML before
+loading the new bundle:
+
+| Former type | Replacement |
+|---|---|
+| `custom:github-insights-overview` | `custom:github-insights-card` with `preset: overview` |
+| `custom:github-insights-usage` | `custom:github-insights-card` with `preset: usage` |
+| `custom:github-insights-actions` | `custom:github-insights-card` with `preset: actions` |
+| `custom:github-insights-copilot` | `custom:github-insights-card` with `preset: copilot` |
+| `custom:github-insights-activity` | `custom:github-insights-card` with `preset: activity` |
+| `custom:github-insights-contributions` | `custom:github-insights-card` with `preset: contributions` |
+| `custom:github-insights-security` | `custom:github-insights-card` with `preset: security` |
+| `custom:github-insights-dashboard` | `custom:github-insights-card` with `preset: dashboard` |
+| `custom:github-insights-compact` | `custom:github-insights-card` with `preset: compact` |
+| `custom:github-insights-repositories` | `custom:github-insights-repository-card` with `repositories: auto` |
+| `custom:github-insights-repository` | `custom:github-insights-repository-card` with the existing `repository` value |
+
+Existing `metrics`, `entities`, actions, repository filters, sorting,
+favorites, overrides, badges, severity, forecast, estimate, and diagnostics
+settings can be copied to the replacement card. Old layout names should be
+mapped to `responsive`, `compact`, `expanded`, or `detail`.

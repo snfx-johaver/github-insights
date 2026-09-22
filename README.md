@@ -5,7 +5,7 @@ and costs from Home Assistant.
 
 > [!IMPORTANT]
 > Version `0.2.0-beta.1` brings the integration, GitHub data collectors,
-> billing and budget tools, and all eleven bundled Lovelace cards together as
+> billing and budget tools, and two configurable bundled Lovelace cards together as
 > one beta release candidate. No release or tag exists yet: publication remains
 > blocked on the documented hosted and live Home Assistant validation gates.
 
@@ -41,9 +41,10 @@ package, plugin, repository, HACS entry, or version.
 - An optional user-configured Actions included-minutes allowance with derived
   configured used, remaining, and percent sensors when GitHub reports a single
   minute unit.
-- Eleven responsive Lit-based cards, each with a visual editor, card-picker
-  defaults, Home Assistant theme integration, keyboard support, screen-reader
-  semantics, reduced-motion behavior, and missing/unavailable/error states.
+- Two responsive Lit-based cards with visual editors, presets, ordered
+  sections and metrics, card-picker defaults, Home Assistant theme integration,
+  keyboard support, screen-reader semantics, reduced-motion behavior, and
+  missing/unavailable/error states.
 - Read-only operation by default; budget writes require explicit opt-in and
   confirmation for every mutation.
 
@@ -219,19 +220,13 @@ diagnostic entities are disabled by default.
 
 Bundled cards:
 
-- `custom:github-insights-overview`
-- `custom:github-insights-usage`
-- `custom:github-insights-repositories`
-- `custom:github-insights-repository`
-- `custom:github-insights-actions`
-- `custom:github-insights-copilot`
-- `custom:github-insights-activity`
-- `custom:github-insights-contributions`
-- `custom:github-insights-security`
-- `custom:github-insights-compact`
-- `custom:github-insights-dashboard`
+- `custom:github-insights-card` for account, overview, usage, Actions,
+  Copilot, activity, contributions, security, and dashboard presentations.
+- `custom:github-insights-repository-card` for auto-discovered collections,
+  selected repositories, or one repository.
 
-Every card has a visual editor. The richer repository and billing experiences
+Both cards have visual editors. Presets and presentation modes replace separate
+card types. The richer repository and billing experiences
 remain bundled in the same integration installation: compact/expanded
 repository views, favorites, deterministic multi-key sorting, safe GitHub deep
 links, metric badges, configured allowance progress, authoritative cost
@@ -244,19 +239,17 @@ as a compatibility override. See
 ## Example configuration
 
 ```yaml
-type: custom:github-insights-usage
+type: custom:github-insights-card
+preset: usage
 sections:
+  - usage
   - actions
-  - ai
-  - storage
-  - budgets
-layout: responsive
+  - copilot
+layout: expanded
 period: current_billing_cycle
 show_forecast: true
-actions_limit:
-  show_enforcement: true
-  show_estimated_minutes: true
-  reference_runner: linux_standard
+show_estimated_minutes: true
+reference_runner: linux_standard
 ```
 
 ## Privacy and reliability

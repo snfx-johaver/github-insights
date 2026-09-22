@@ -8,7 +8,7 @@ import {
 } from "../src/services/entity-discovery";
 
 const config: GitHubInsightsCardConfig = {
-  type: "custom:github-insights-overview",
+  type: "custom:github-insights-card",
 };
 
 describe("entity discovery", () => {
