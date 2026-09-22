@@ -299,11 +299,13 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
             )
             if (
                 isinstance(allowance, bool)
-                or not isinstance(allowance, int)
+                or not isinstance(allowance, (int, float))
+                or not float(allowance).is_integer()
                 or not 0 <= allowance <= 100_000_000
             ):
                 errors[CONF_ACTIONS_INCLUDED_MINUTES] = "invalid_actions_allowance"
             else:
+                user_input[CONF_ACTIONS_INCLUDED_MINUTES] = int(allowance)
                 return self.async_create_entry(data=user_input)
 
         runtime = getattr(self._entry, "runtime_data", None)
