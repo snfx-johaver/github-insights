@@ -698,7 +698,7 @@ function normalizeConfig(value, definition) {
         exclude: {
             names: [...(value.exclude?.names ?? [])],
             archived: value.exclude?.archived ?? !value.show_archived,
-            forked: value.exclude?.forked ?? false,
+            forked: value.exclude?.forked ?? value.show_forks === false,
         },
         sort: (value.sort ?? [
             { field: "workflow_health", direction: "ascending", nulls: "last" },
@@ -1376,6 +1376,11 @@ class GitHubInsightsCard extends i {
             void this.runAction(this.actionFor(event));
         }
     }
+    eventTargetsInteractive(event) {
+        return event
+            .composedPath()
+            .some((target) => target instanceof Element && target.matches("a,button"));
+    }
     render() {
         if (!this.config)
             return A;
@@ -1408,6 +1413,8 @@ class GitHubInsightsCard extends i {
             }
         }}
         @contextmenu=${(event) => {
+            if (this.eventTargetsInteractive(event))
+                return;
             event.preventDefault();
             void this.runAction(this.config?.hold_action);
         }}

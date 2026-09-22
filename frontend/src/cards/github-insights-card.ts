@@ -508,6 +508,15 @@ export class GitHubInsightsCard extends LitElement {
     }
   }
 
+  private eventTargetsInteractive(event: Event): boolean {
+    return event
+      .composedPath()
+      .some(
+        (target) =>
+          target instanceof Element && target.matches("a,button"),
+      );
+  }
+
   protected render() {
     if (!this.config) return nothing;
     const metrics =
@@ -552,6 +561,7 @@ export class GitHubInsightsCard extends LitElement {
           }
         }}
         @contextmenu=${(event: Event) => {
+          if (this.eventTargetsInteractive(event)) return;
           event.preventDefault();
           void this.runAction(this.config?.hold_action);
         }}

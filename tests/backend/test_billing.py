@@ -29,7 +29,10 @@ from custom_components.github_insights.models import (
 from custom_components.github_insights.repairs import (
     async_update_configured_allowance_issue,
 )
-from custom_components.github_insights.sensor import GitHubInsightsBillingSensor
+from custom_components.github_insights.sensor import (
+    GitHubInsightsBillingSensor,
+    GitHubInsightsConfiguredAllowanceSensor,
+)
 from custom_components.github_insights.services import (
     CREATE_SCHEMA,
     _create_confirmation,
@@ -452,9 +455,21 @@ def test_configured_actions_allowance_uses_discounted_minutes() -> None:
         ),
     )
 
-    included = GitHubInsightsBillingSensor(
-        coordinator, scope_data, "actions_configured_included_minutes"
+    account_coordinator = cast(
+        Any,
+        SimpleNamespace(
+            data=SimpleNamespace(
+                account=SimpleNamespace(
+                    id=42,
+                    login="octocat",
+                    html_url="https://github.com/octocat",
+                )
+            ),
+            config_entry=coordinator.config_entry,
+            last_update_success=False,
+        ),
     )
+    included = GitHubInsightsConfiguredAllowanceSensor(account_coordinator)
     used = GitHubInsightsBillingSensor(
         coordinator, scope_data, "actions_configured_minutes_used"
     )
@@ -615,9 +630,20 @@ def test_configured_allowance_remains_available_without_usage() -> None:
             last_update_success=True,
         ),
     )
-    allowance = GitHubInsightsBillingSensor(
-        coordinator, scope_data, "actions_configured_included_minutes"
+    account_coordinator = cast(
+        Any,
+        SimpleNamespace(
+            data=SimpleNamespace(
+                account=SimpleNamespace(
+                    id=42,
+                    login="octocat",
+                    html_url="https://github.com/octocat",
+                )
+            ),
+            config_entry=coordinator.config_entry,
+        ),
     )
+    allowance = GitHubInsightsConfiguredAllowanceSensor(account_coordinator)
     used = GitHubInsightsBillingSensor(
         coordinator, scope_data, "actions_configured_minutes_used"
     )

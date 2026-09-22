@@ -47,7 +47,7 @@ export function normalizeConfig(
     exclude: {
       names: [...(value.exclude?.names ?? [])],
       archived: value.exclude?.archived ?? !value.show_archived,
-      forked: value.exclude?.forked ?? false,
+      forked: value.exclude?.forked ?? value.show_forks === false,
     },
     sort: (value.sort ?? [
       { field: "workflow_health", direction: "ascending", nulls: "last" },

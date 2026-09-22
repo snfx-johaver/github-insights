@@ -72,6 +72,30 @@ describe("card configuration", () => {
     ).toThrow("Expected type");
   });
 
+  it("normalizes the legacy show_forks option into repository exclusion", () => {
+    const definition = CARD_DEFINITIONS.find((card) => card.kind === "repositories")!;
+
+    expect(
+      normalizeConfig(
+        {
+          type: `custom:${definition.tag}`,
+          show_forks: false,
+        },
+        definition,
+      ).exclude?.forked,
+    ).toBe(true);
+    expect(
+      normalizeConfig(
+        {
+          type: `custom:${definition.tag}`,
+          show_forks: false,
+          exclude: { forked: false },
+        },
+        definition,
+      ).exclude?.forked,
+    ).toBe(false);
+  });
+
   it("keeps billing concepts as distinct metric keys", () => {
     const usage = CARD_DEFINITIONS.find((card) => card.kind === "usage");
     expect(usage?.defaultMetrics).toEqual(

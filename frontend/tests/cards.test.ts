@@ -303,6 +303,35 @@ describe("GitHub Insights cards", () => {
     expect(links.every((link) => link.rel === "noopener noreferrer")).toBe(true);
   });
 
+  it("preserves the browser context menu on interactive GitHub links", async () => {
+    const callService = vi.fn();
+    const card = await renderCard(
+      "github-insights-actions",
+      {
+        metrics: ["actions_cost"],
+        entities: { actions_cost: "sensor.cost" },
+        hold_action: { action: "call-service", service: "notify.test" },
+      },
+      {
+        "sensor.cost": entity("sensor.cost", "12", {
+          currency: "USD",
+          actions_url: "https://github.example/octo/repo/actions",
+        }),
+      },
+    );
+    card.hass.callService = callService;
+    const link = card.shadowRoot?.querySelector<HTMLAnchorElement>("a");
+    const event = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+      composed: true,
+    });
+
+    expect(link?.dispatchEvent(event)).toBe(true);
+    expect(event.defaultPrevented).toBe(false);
+    expect(callService).not.toHaveBeenCalled();
+  });
+
   it("shows and copies sanitized diagnostics without entity attributes", async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, "clipboard", {
