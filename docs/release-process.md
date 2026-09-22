@@ -39,7 +39,9 @@ frontend release, npm publication, plugin artifact, or second HACS lifecycle.
 prerelease tag, version-matched `release-ready.json` must record successful
 source validation, HACS Action, Hassfest, artifact validation, secret scanning,
 and live Home Assistant validation, plus the exact archive hash, size, and file
-count. It must not claim a HACS custom-repository installation, because
+count. The tag workflow rebuilds and validates the archive before running the
+readiness check, which recomputes and compares all three values against the
+checked-in evidence. It must not claim a HACS custom-repository installation, because
 `zip_release` and `hide_default_branch` make that exact test possible only after
 the first immutable release asset exists.
 
