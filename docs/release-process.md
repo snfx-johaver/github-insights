@@ -32,7 +32,8 @@ frontend release, npm publication, plugin artifact, or second HACS lifecycle.
     provenance for the exact archive.
 12. Create a full GitHub Release and attach the artifact and checksum. Semantic
     versions containing a prerelease suffix such as `alpha`, `beta`, or `rc`
-    are published as GitHub prereleases.
+    are published as GitHub prereleases. Use the versioned release-notes
+    document as the release body and append GitHub-generated change notes.
 13. Verify the release page and HACS custom-repository installation.
 
 `check_release_readiness.py` uses two fail-closed evidence stages. Before a
