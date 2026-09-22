@@ -28,9 +28,9 @@ Official GitHub documentation currently describes:
   historical windows and elevated repository access;
 - Dependabot, code-scanning, and secret-scanning alerts where the feature,
   plan, role, and token allow them;
-- enhanced-billing usage reports containing product, SKU, quantity, unit type,
-  unit price, gross amount, discount, net amount, and repository attribution
-  at supported scopes;
+- enhanced-billing detail and public-preview summary reports containing product,
+  SKU, quantity, unit type, unit price, gross amount, discount, net amount, and
+  repository attribution at supported scopes;
 - billing budgets containing amount, consumed amount, scope, product/SKU,
   alerting, and `prevent_further_usage`;
 - personal and organization AI-credit and premium-request billing reports; and
@@ -47,9 +47,10 @@ an "authoritative workflow cost" from runtime.
 
 ## Data not universally retrievable
 
-- A universal authoritative "Actions minutes remaining" value is not guaranteed
-  on the enhanced billing platform. It is exposed only when an official
-  response provides the allowance and consumption in compatible units.
+- The enhanced-billing response does not expose the billing UI's exact total
+  included-plan allowance. GitHub Insights does not fabricate a remaining
+  allowance from plan tables. `discountQuantity` is retained as authoritative
+  discounted-or-included consumption, not total allowance.
 - Workflow run duration cannot establish included, billable, or remaining
   minutes because runner SKU, rounding, public-repository treatment,
   self-hosting, discounts, and plan allowances affect billing.
@@ -106,6 +107,11 @@ score.
 GitHub documents that usage incurred before a newly created budget in its first
 billing cycle may not count against that budget. The integration must show the
 budget creation/effective context and never imply retroactive enforcement.
+
+Personal enhanced-billing usage is documented, but personal budget CRUD is not.
+Budget CRUD is therefore limited to organization and enterprise endpoints.
+Repository budgets are nested budget scopes rather than standalone repository
+API routes.
 
 ## Phase 1 environment observation
 

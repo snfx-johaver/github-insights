@@ -16,12 +16,13 @@ administrative data is unavailable.
 | Dependabot alerts | Dependabot alerts read | `security_events` or `repo` | Plan/feature dependent |
 | Code-scanning alerts | Code scanning alerts read | `security_events`, `repo`, or public-repo cases | Role restrictions apply |
 | Secret-scanning alerts | Secret scanning alerts read | `security_events` or `repo` | Never expose literal secrets |
-| Organization billing usage | Organization administration/billing-manager role | Scope varies by endpoint and account | Enhanced billing may be required |
-| Personal billing usage | Authenticated user billing access | Account-dependent | Applies only to usage billed personally |
+| Organization billing usage | Organization administration/billing-manager role | Classic PAT required | Enhanced billing may be required; fine-grained PATs are unsupported |
+| Personal billing usage | Authenticated account holder | Classic PAT required | Applies only to usage billed personally; fine-grained PATs are unsupported |
+| Enterprise billing usage | Enterprise billing role or documented enterprise billing access | Classic PAT for PAT authentication | GitHub Enterprise Cloud only |
 | Copilot organization metrics | View organization Copilot metrics | `read:org` | Organization policy must enable metrics |
 | Copilot enterprise metrics | View enterprise Copilot metrics and owner/billing role | `manage_billing:copilot` or `read:enterprise` | Reports use expiring signed URLs |
-| Budget read | Organization admin or billing manager at documented scope | Account-dependent | Feature-detect user/org/enterprise endpoints |
-| Budget create/update/delete | Same role plus write-capable credential | Account-dependent | Requested only after explicit opt-in |
+| Budget read | Organization/enterprise admin or billing manager at documented scope | Endpoint-specific | No documented personal budget endpoint |
+| Budget create/update/delete | Same role plus write-capable credential | Endpoint-specific | Requested only after explicit opt-in; fine-grained PAT support is not documented |
 
 GitHub documentation and live response headers are authoritative for a specific
 endpoint. The UI must show detected capabilities instead of promising that a
@@ -34,10 +35,11 @@ GitHub App installation/user tokens are the preferred long-term organization
 model, but remain future work. Endpoint documentation and
 `X-Accepted-GitHub-Permissions` are the final authority.
 
-Current GitHub documentation has some inconsistency between general billing
-tutorials and endpoint-specific fine-grained/GitHub App permission references.
-The setup flow must test each selected endpoint rather than inferring access
-from the token type alone.
+GitHub's billing tutorial explicitly requires a personal access token (classic)
+for usage and states that fine-grained PATs are unsupported. Budget
+documentation does not make the same PAT-type guarantee, so GitHub Insights
+feature-detects budget reads independently and does not claim fine-grained PAT
+support.
 
 ## Token handling
 

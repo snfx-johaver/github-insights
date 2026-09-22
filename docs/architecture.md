@@ -150,6 +150,12 @@ Read-only mode is complete and default. Budget writes require:
 GitHub remains the enforcement system. The integration never simulates limits
 by cancelling workflow runs and never automatically raises a budget.
 
+Phase 3 implements this boundary with four Home Assistant services. Direct
+entity controls only change local estimate or safety options; they never perform
+a financial mutation. Service calls require exact confirmation text and use the
+documented organization or enterprise CRUD route once, followed by an
+authoritative read-back. Personal budget writes are not exposed.
+
 ## Frontend architecture
 
 A centralized typed metric registry defines translation keys, value types,
