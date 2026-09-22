@@ -124,6 +124,50 @@ async def test_usage_scopes_and_authoritative_schema(
     assert report.detail_items[0].repository_name == "example-org/example"
 
 
+async def test_usage_summary_failure_preserves_detailed_report() -> None:
+    """A preview-summary failure does not suppress authoritative detail usage."""
+    session = FakeSession(
+        FakeResponse(200, DETAIL_USAGE),
+        FakeResponse(404, {"message": "Not Found"}),
+    )
+    client = GitHubClient(
+        cast(ClientSession, session), "ghp_classic", "https://github.com"
+    )
+
+    report = await client.async_get_billing_usage(
+        BillingScope(BillingScopeType.USER, "octocat"),
+        year=2026,
+        month=9,
+    )
+
+    assert report.summary_items == ()
+    assert report.actions_items == report.detail_items
+    assert report.actions_items[0].net_amount == Decimal("6")
+    assert report.unavailable_sections == ("summary",)
+
+
+async def test_usage_detail_failure_preserves_summary_report() -> None:
+    """A detail failure does not suppress authoritative aggregate usage."""
+    session = FakeSession(
+        FakeResponse(404, {"message": "Not Found"}),
+        FakeResponse(200, SUMMARY_USAGE),
+    )
+    client = GitHubClient(
+        cast(ClientSession, session), "ghp_classic", "https://github.com"
+    )
+
+    report = await client.async_get_billing_usage(
+        BillingScope(BillingScopeType.ORGANIZATION, "example-org"),
+        year=2026,
+        month=9,
+    )
+
+    assert report.detail_items == ()
+    assert report.actions_items == report.summary_items
+    assert report.actions_items[0].net_quantity == Decimal("750")
+    assert report.unavailable_sections == ("detail",)
+
+
 async def test_fine_grained_pat_marks_usage_unavailable_without_request() -> None:
     """GitHub's documented classic-PAT-only restriction is detected locally."""
     session = FakeSession()
@@ -145,6 +189,7 @@ async def test_fine_grained_pat_marks_usage_unavailable_without_request() -> Non
 async def test_insufficient_org_permissions_are_partial() -> None:
     """A billing 403 does not turn into an authentication failure."""
     session = FakeSession(
+        FakeResponse(403, {"message": "Resource not accessible"}),
         FakeResponse(403, {"message": "Resource not accessible"}),
         FakeResponse(403, {"message": "Resource not accessible"}),
     )

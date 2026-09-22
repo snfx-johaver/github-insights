@@ -755,6 +755,7 @@ class GitHubInsightsBillingSensor(GitHubInsightsBillingEntity, SensorEntity):
             attributes["repository_breakdown"] = _repository_breakdown(
                 usage.detail_items
             )
+            attributes["unavailable_sections"] = usage.unavailable_sections
         if self._key.startswith("actions_budget"):
             attributes["budgets"] = [
                 {
