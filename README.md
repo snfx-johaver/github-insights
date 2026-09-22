@@ -1,14 +1,13 @@
 # GitHub Insights
 
-GitHub usage, Actions billing, Copilot metrics, and repository insights for
-Home Assistant.
+Bring your GitHub world home 🏠—keep an eye on repos, Actions, Copilot, usage
+and costs from Home Assistant.
 
 > [!IMPORTANT]
-> Version `0.2.0-beta.1` includes the Phase 2 core, Phase 3 Actions billing and
-> budgets, Phase 4 repository and workflow collection, Phase 5 official
-> Copilot/AI collection, and the complete Phase 6-8 bundled frontend card suite.
-> It remains intentionally unreleased while hosted and real-instance validation
-> continues.
+> Version `0.2.0-beta.1` brings the integration, GitHub data collectors,
+> billing and budget tools, and all eleven bundled Lovelace cards together as
+> one beta release candidate. No release or tag exists yet: publication remains
+> blocked on the documented hosted and live Home Assistant validation gates.
 
 ## One integration and one installation
 
@@ -52,7 +51,7 @@ states where GitHub does not authorize or provide data.
 ## Screenshots
 
 Screenshot placeholders are retained until the cards are validated against a
-live Home Assistant instance in Phase 9:
+live Home Assistant instance:
 
 - Overview and usage desktop layout
 - Repository operations grid
@@ -61,13 +60,13 @@ live Home Assistant instance in Phase 9:
 
 ## Compatibility target
 
-| Surface | Phase 3 position |
+| Surface | Support |
 |---|---|
 | Home Assistant | Config-entry runtime targets current Home Assistant releases |
 | HACS | Integration repository using a single zip release |
 | GitHub.com | Primary target |
 | GitHub Enterprise Server | Capability-detected; billing/Copilot parity is not assumed |
-| Billing authentication | Personal access token (classic) required by GitHub; fine-grained PATs continue to work for non-billing Phase 2 data |
+| Billing authentication | Personal access token (classic) required by GitHub; fine-grained PATs continue to work for supported non-billing data |
 | Browser | Current Home Assistant-supported browsers |
 
 ## HACS custom-repository installation
@@ -88,10 +87,11 @@ The integration serves this installed file through Home Assistant's static-path
 API. Lovelace resource registration remains manual because Home Assistant does
 not provide a stable public API for integrations to mutate dashboard resources.
 Adding a custom repository is not acceptance into the standard HACS catalog.
-The `0.2.0-beta.1` candidate is intended only for opt-in prerelease/custom
-repository validation. Standard HACS catalog submission is deferred until a
-stable release is ready because the default catalog does not accept projects
-that are still explicitly in alpha or beta testing.
+When published, the `0.2.0-beta.1` candidate will be intended only for opt-in
+prerelease/custom-repository validation. It is not currently installable as a
+release asset. Standard HACS catalog submission is deferred until a stable
+release is ready because the default catalog does not accept projects that are
+still explicitly in alpha or beta testing.
 
 ## Manual installation
 
@@ -165,7 +165,7 @@ remaining" value from static plan tables. `discountQuantity` is shown only as
 authoritative discounted-or-included consumption, not as the account's total
 allowance.
 
-## Phase 3 entities
+## Billing entities
 
 Each configured billing scope receives a Billing device with billing period,
 Actions gross/discount/net cost, unambiguous billed and discounted quantity,
@@ -254,7 +254,7 @@ actions_limit:
 - Stop-usage enforcement is controlled by GitHub and can block workflows,
   including Actions workloads initiated by Copilot features.
 - Repository, billing, security, activity, and Copilot card sections remain
-  empty/unavailable until their backend phases expose authorized entities.
+  empty or unavailable when GitHub does not authorize or provide their data.
 - Data freshness follows GitHub's reporting cadence and may lag source events.
 
 ## Dashboard companions

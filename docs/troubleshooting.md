@@ -1,8 +1,9 @@
 # Troubleshooting
 
-GitHub Insights has a functional Phase 2 core but remains unreleased.
+GitHub Insights is a functional beta candidate, but no release or tag has been
+published yet.
 
-When implementation begins, troubleshooting will distinguish:
+Troubleshooting distinguishes:
 
 - invalid/expired authentication and reauthentication;
 - missing endpoint permission;

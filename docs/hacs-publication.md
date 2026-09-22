@@ -3,9 +3,9 @@
 ## Current status
 
 The repository is public, the integration and bundled frontend are implemented,
-and `hide_default_branch` is enabled. Version `0.2.0-beta.1` is an opt-in
-prerelease candidate for custom-repository testing after validation. No HACS
-catalog claim is made.
+and `hide_default_branch` is enabled. Version `0.2.0-beta.1` is an unreleased
+beta candidate for opt-in custom-repository testing after validation. No tag,
+release asset, or HACS catalog availability is claimed.
 
 ## Repository requirements
 
@@ -43,10 +43,11 @@ version, checksum, and release serve both backend and cards.
 
 HACS normally treats integrations and dashboard plugins as different
 categories. GitHub Insights deliberately chooses the less conventional bundled
-integration path to satisfy the one-install requirement. The integration now serves the bundled directory through Home Assistant's
-supported static-path API. Lovelace resource registration is manual because no
-stable public integration API exists for mutating resources. A second
-Dashboard/plugin repository is not an allowed fallback.
+integration path to satisfy the one-install requirement. The integration serves
+the bundled directory through Home Assistant's supported static-path API.
+Lovelace resource registration is still required because no stable public
+integration API exists for mutating resources. A second Dashboard/plugin
+repository is not an allowed fallback.
 
 ## Custom repository process
 
@@ -86,9 +87,9 @@ External review can take months and cannot be bypassed.
 
 ## Branding
 
-Phase 0 includes deterministic placeholder `icon.png` and `dark_icon.png`
-assets for validation. Product-ready artwork and any required Home Assistant
-Brands submission must be completed before catalog submission.
+The repository includes deterministic placeholder `icon.png` and
+`dark_icon.png` assets for validation. Product-ready artwork and any required
+Home Assistant Brands submission must be completed before catalog submission.
 
 ## Rollback and recovery
 

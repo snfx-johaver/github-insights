@@ -2,13 +2,13 @@
 
 ## Current status
 
-Phase 9 candidate files were staged on 2026-09-22 against Home Assistant
-2026.9.3. Automated source/artifact gates passed, and the existing GitHub
-Insights installation and dashboard were backed up before direct UNC byte
-writes. Home Assistant configuration check, restart, resource registration,
-and post-restart runtime validation remain blocked because no authenticated
-Home Assistant browser/API session is available. `release-ready.json` is
-therefore intentionally absent.
+The `0.2.0-beta.1` candidate files were staged on 2026-09-22 against Home
+Assistant 2026.9.3. Automated source/artifact gates passed, and the existing
+GitHub Insights installation and dashboard were backed up before direct UNC
+byte writes. Home Assistant configuration check, restart, resource
+registration, and post-restart runtime validation remain blocked because no
+authenticated Home Assistant browser/API session is available.
+`release-ready.json` is therefore intentionally absent.
 
 The deployed files are pending a supported configuration check and restart.
 They must not be treated as a completed live validation or HACS installation.

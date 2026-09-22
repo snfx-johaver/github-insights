@@ -2,10 +2,9 @@
 
 ## Implementation status
 
-The Phase 6-8 frontend registers all eleven cards and eleven visual editors
-from one Lit/TypeScript bundle. Cards tolerate capability-dependent entities
-that are absent or unavailable. Backend entities beyond the Phase 2 account
-surface remain future backend work; the frontend does not fabricate them.
+The bundled frontend registers all eleven cards and eleven visual editors from
+one Lit/TypeScript bundle. Cards tolerate capability-dependent entities that
+are absent or unavailable, and never fabricate backend data.
 
 All cards are custom elements in one deterministic
 `github-insights-cards.js` bundle installed with the `github_insights`

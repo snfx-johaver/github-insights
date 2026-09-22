@@ -1,6 +1,7 @@
 # Release process
 
-No release or tag is created by the Phase 6-8 frontend branch.
+No release or tag exists for `0.2.0-beta.1`. The candidate remains gated on
+the validation and evidence requirements below.
 
 ## Version and artifact invariant
 

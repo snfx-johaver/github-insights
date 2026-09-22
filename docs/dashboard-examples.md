@@ -7,8 +7,8 @@ or required by GitHub Insights.
 
 The examples use stable metric keys in `entities`. Omit `entities` to use
 registry discovery when backend entities are available. A missing permission,
-plan feature, or future backend phase produces an unavailable/empty state
-instead of breaking the card.
+plan feature, or unavailable GitHub capability produces an unavailable/empty
+state instead of breaking the card.
 
 ## Resources
 

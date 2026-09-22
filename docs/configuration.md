@@ -1,7 +1,8 @@
 # Configuration
 
-Phases 2-5 implement account setup, repository capabilities, Copilot data, and
-optional enhanced-billing scopes. No release has been published yet.
+GitHub Insights combines account setup, repository capabilities, Copilot data,
+and optional enhanced-billing scopes in one integration. No release or tag has
+been published yet.
 
 The first release will support one config entry containing one GitHub server,
 one authenticated identity, selected organizations, optional enterprise
