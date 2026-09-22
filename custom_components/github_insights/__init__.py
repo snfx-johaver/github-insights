@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+from typing import Any
+
+from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
@@ -13,6 +17,7 @@ from .const import (
     CONF_SERVER,
     CONF_TOKEN,
     DEFAULT_SERVER,
+    DOMAIN,
     PLATFORMS,
 )
 from .coordinator import (
@@ -20,6 +25,27 @@ from .coordinator import (
     GitHubInsightsCoordinator,
     GitHubInsightsRuntimeData,
 )
+
+FRONTEND_URL = "/github_insights/frontend"
+FRONTEND_PATH = Path(__file__).parent / "frontend"
+FRONTEND_REGISTERED = f"{DOMAIN}_frontend_registered"
+
+
+async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:
+    """Register the bundled frontend asset directory."""
+    if hass.data.get(FRONTEND_REGISTERED):
+        return True
+    await hass.http.async_register_static_paths(
+        [
+            StaticPathConfig(
+                FRONTEND_URL,
+                str(FRONTEND_PATH),
+                cache_headers=True,
+            )
+        ]
+    )
+    hass.data[FRONTEND_REGISTERED] = True
+    return True
 
 
 async def async_setup_entry(

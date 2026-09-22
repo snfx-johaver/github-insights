@@ -1,0 +1,122 @@
+import type { CardDefinition } from "../models/config";
+
+const definitions: CardDefinition[] = [
+  {
+    kind: "overview",
+    tag: "github-insights-overview",
+    editorTag: "github-insights-overview-editor",
+    name: "GitHub Insights overview",
+    description: "Account, usage, repositories, workflows, security, and freshness.",
+    icon: "mdi:github",
+    defaultMetrics: ["account", "actions_usage_percent", "actions_budget_percent", "copilot_usage_percent", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "last_successful_sync"],
+    defaultLayout: "responsive",
+  },
+  {
+    kind: "usage",
+    tag: "github-insights-usage",
+    editorTag: "github-insights-usage-editor",
+    name: "GitHub Insights usage",
+    description: "Actions, billing, budgets, AI usage, storage, and estimates.",
+    icon: "mdi:chart-donut",
+    defaultMetrics: ["actions_included_usage", "actions_billable_usage", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_stop_usage", "actions_estimated_minutes_remaining", "actions_forecast", "artifact_storage", "package_storage", "cache_usage", "copilot_usage_percent", "copilot_paid_usage"],
+    defaultLayout: "hero",
+  },
+  {
+    kind: "repositories",
+    tag: "github-insights-repositories",
+    editorTag: "github-insights-repositories-editor",
+    name: "GitHub Insights repositories",
+    description: "Automatically discovered repository operations view.",
+    icon: "mdi:source-repository-multiple",
+    defaultMetrics: ["stars", "forks", "open_issues", "open_pull_requests", "workflow_health", "actions_usage_percent"],
+    defaultLayout: "grid",
+  },
+  {
+    kind: "repository",
+    tag: "github-insights-repository",
+    editorTag: "github-insights-repository-editor",
+    name: "GitHub Insights repository",
+    description: "Detailed metrics and status for one repository.",
+    icon: "mdi:source-repository",
+    defaultMetrics: ["stars", "forks", "open_issues", "open_pull_requests", "latest_commit", "latest_release", "workflow_health", "actions_usage_percent", "traffic_views", "dependabot_alerts"],
+    defaultLayout: "responsive",
+  },
+  {
+    kind: "actions",
+    tag: "github-insights-actions",
+    editorTag: "github-insights-actions-editor",
+    name: "GitHub Insights Actions",
+    description: "Runtime, included and paid usage, runs, costs, and enforcement.",
+    icon: "mdi:play-circle-outline",
+    defaultMetrics: ["actions_runtime", "actions_included_usage", "actions_billable_usage", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_stop_usage", "actions_failed_runs", "actions_recent_runs", "actions_estimated_minutes_remaining"],
+    defaultLayout: "responsive",
+  },
+  {
+    kind: "copilot",
+    tag: "github-insights-copilot",
+    editorTag: "github-insights-copilot-editor",
+    name: "GitHub Insights Copilot",
+    description: "Authorized Copilot billing, adoption, and activity data.",
+    icon: "mdi:robot-outline",
+    defaultMetrics: ["copilot_included_quantity", "copilot_paid_usage", "copilot_remaining_quantity", "copilot_usage_percent", "copilot_cost", "copilot_active_users", "last_successful_sync"],
+    defaultLayout: "responsive",
+  },
+  {
+    kind: "activity",
+    tag: "github-insights-activity",
+    editorTag: "github-insights-activity-editor",
+    name: "GitHub Insights activity",
+    description: "Development activity and simple trends.",
+    icon: "mdi:pulse",
+    defaultMetrics: ["commits", "pull_requests_opened", "pull_requests_merged", "issues_opened", "reviews", "releases"],
+    defaultLayout: "responsive",
+  },
+  {
+    kind: "contributions",
+    tag: "github-insights-contributions",
+    editorTag: "github-insights-contributions-editor",
+    name: "GitHub Insights contributions",
+    description: "Contribution heatmap and reliable streak metrics.",
+    icon: "mdi:chart-timeline-variant-shimmer",
+    defaultMetrics: ["contributions", "current_streak", "longest_streak"],
+    defaultLayout: "responsive",
+  },
+  {
+    kind: "security",
+    tag: "github-insights-security",
+    editorTag: "github-insights-security-editor",
+    name: "GitHub Insights security",
+    description: "Authorized Dependabot, code, and secret scanning alerts.",
+    icon: "mdi:shield-check-outline",
+    defaultMetrics: ["dependabot_alerts", "code_scanning_alerts", "secret_scanning_alerts", "last_successful_sync"],
+    defaultLayout: "responsive",
+  },
+  {
+    kind: "compact",
+    tag: "github-insights-compact",
+    editorTag: "github-insights-compact-editor",
+    name: "GitHub Insights compact",
+    description: "One primary and secondary metric for dense dashboards.",
+    icon: "mdi:github",
+    defaultMetrics: ["actions_usage_percent", "actions_budget_remaining"],
+    defaultLayout: "compact",
+  },
+  {
+    kind: "dashboard",
+    tag: "github-insights-dashboard",
+    editorTag: "github-insights-dashboard-editor",
+    name: "GitHub Insights dashboard",
+    description: "Composite responsive GitHub dashboard.",
+    icon: "mdi:view-dashboard-outline",
+    defaultMetrics: ["actions_usage_percent", "actions_budget_percent", "copilot_usage_percent", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "commits", "last_successful_sync"],
+    defaultLayout: "responsive",
+  },
+];
+
+export const CARD_DEFINITIONS = definitions;
+
+export function definitionForTag(tag: string): CardDefinition {
+  const definition = definitions.find((candidate) => candidate.tag === tag);
+  if (!definition) throw new Error(`Unknown GitHub Insights card: ${tag}`);
+  return definition;
+}
