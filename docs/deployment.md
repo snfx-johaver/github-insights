@@ -150,6 +150,10 @@ stable public API for integrations to mutate Lovelace resources. The static
 path is isolated in `custom_components/github_insights/__init__.py` and tested.
 If that supported API changes, the fallback is to copy the same bundled asset
 to `www/` and update the resource URL; no second HACS repository is needed.
+Until registration is completed through a supported Lovelace resource
+mechanism, keep the deployable release-candidate dashboard on its companion and
+native fallback cards. Reintroduce its `custom:github-insights-*` blocks only
+after the module registration is configured or recorded as release evidence.
 
 ## Safe deployment procedure
 

@@ -18,6 +18,12 @@ Register the GitHub Insights bundle once as a JavaScript module:
 /github_insights/frontend/github-insights-cards.js
 ```
 
+The deployable release-candidate dashboard intentionally uses its companion
+and native cards without bundled GitHub Insights cards until this resource is
+registered through a supported Lovelace resource mechanism. Reintroduce
+`custom:github-insights-*` blocks there only after that registration is
+configured or recorded as release evidence.
+
 Optional companion resources, when separately installed through HACS:
 
 ```text

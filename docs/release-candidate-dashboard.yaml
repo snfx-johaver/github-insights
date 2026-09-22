@@ -40,19 +40,6 @@ views:
                 tap_action:
                   action: navigate
                   navigation_path: /github-insights/security
-          - type: custom:github-insights-dashboard
-            title: Engineering overview
-            layout: responsive
-            metrics:
-              - account
-              - public_repositories
-              - open_pull_requests
-              - workflow_health
-              - actions_cost
-              - actions_budget_percent
-              - copilot_paid_usage
-              - dependabot_alerts
-              - last_successful_sync
       - type: grid
         cards:
           - type: custom:mushroom-title-card
@@ -109,39 +96,6 @@ views:
           - type: custom:mushroom-title-card
             title: Actions billing and budgets
             subtitle: GitHub-reported usage, cost, budget, and enforcement
-          - type: custom:github-insights-usage
-            title: Usage and budget
-            layout: hero
-            metrics:
-              - actions_discounted_usage
-              - actions_billable_usage
-              - actions_gross_cost
-              - actions_discount
-              - actions_cost
-              - actions_budget
-              - actions_budget_remaining
-              - actions_budget_percent
-              - actions_blocked
-              - actions_estimated_minutes_remaining
-              - billing_period
-            show_estimated_minutes: true
-            severity:
-              green: 0
-              amber: 70
-              red: 90
-          - type: custom:github-insights-actions
-            title: Actions operations
-            layout: responsive
-            metrics:
-              - workflow_health
-              - actions_discounted_usage
-              - actions_billable_usage
-              - actions_cost
-              - actions_budget_remaining
-              - actions_budget_percent
-              - actions_blocked
-              - actions_estimated_minutes_remaining
-              - billing_period
       - type: grid
         cards:
           - type: custom:mushroom-title-card
@@ -193,24 +147,6 @@ views:
           - type: custom:mushroom-title-card
             title: Repository operations
             subtitle: Automatically discovered repositories and workflow health
-          - type: custom:github-insights-repositories
-            repositories: auto
-            view: grid
-            group_by: organization
-            sort:
-              - field: workflow_health
-                direction: ascending
-              - field: name
-                direction: ascending
-            metrics:
-              - stars
-              - forks
-              - open_issues
-              - open_pull_requests
-              - workflow_health
-              - latest_release
-            show_archived: false
-            show_forks: true
       - type: grid
         cards:
           - type: custom:auto-entities
@@ -257,21 +193,6 @@ views:
           - type: custom:mushroom-title-card
             title: Development activity
             subtitle: Contributions, pull requests, issues, reviews, and releases
-          - type: custom:github-insights-activity
-            period: 90d
-            metrics:
-              - commits
-              - pull_requests_opened
-              - pull_requests_merged
-              - issues_opened
-              - reviews
-              - releases
-          - type: custom:github-insights-contributions
-            period: 90d
-            metrics:
-              - contributions
-              - current_streak
-              - longest_streak
       - type: grid
         cards:
           - type: custom:auto-entities
@@ -305,13 +226,6 @@ views:
           - type: custom:mushroom-title-card
             title: Copilot and AI
             subtitle: Official authorized billing, adoption, and activity data
-          - type: custom:github-insights-copilot
-            layout: responsive
-            metrics:
-              - copilot_paid_usage
-              - copilot_cost
-              - copilot_active_users
-              - last_successful_sync
       - type: grid
         cards:
           - type: custom:auto-entities
@@ -339,13 +253,6 @@ views:
           - type: custom:mushroom-title-card
             title: Repository security
             subtitle: Only alerts authorized by GitHub are shown
-          - type: custom:github-insights-security
-            layout: responsive
-            metrics:
-              - dependabot_alerts
-              - code_scanning_alerts
-              - secret_scanning_alerts
-              - last_successful_sync
       - type: grid
         cards:
           - type: custom:auto-entities

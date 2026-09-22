@@ -52,6 +52,11 @@ REQUIRED_CARDS = {
     "github-insights-compact",
     "github-insights-dashboard",
 }
+BUNDLED_CARD_PATTERN = re.compile(r"type:\s*custom:github-insights-[\w-]+")
+BUNDLED_RESOURCE_URL = "/github_insights/frontend/github-insights-cards.js"
+DASHBOARD = ROOT / "docs" / "release-candidate-dashboard.yaml"
+RESOURCE_CONFIG = ROOT / "docs" / "release-candidate-lovelace-resources.yaml"
+RESOURCE_EVIDENCE = ROOT / "release-ready.json"
 
 
 def load_json(path: Path) -> dict[str, object]:
@@ -70,6 +75,21 @@ def pep440_version(version: str) -> str:
         lambda match: markers[match.group(1)],
         version,
     )
+
+
+def has_bundled_resource_registration() -> bool:
+    """Return whether supported resource configuration or evidence is present."""
+    if RESOURCE_CONFIG.is_file():
+        config = RESOURCE_CONFIG.read_text(encoding="utf-8")
+        if BUNDLED_RESOURCE_URL in config and re.search(r"type:\s*module", config):
+            return True
+    if RESOURCE_EVIDENCE.is_file():
+        evidence = load_json(RESOURCE_EVIDENCE)
+        return (
+            evidence.get("lovelace_resource_registration") is True
+            and evidence.get("lovelace_resource_url") == BUNDLED_RESOURCE_URL
+        )
+    return False
 
 
 def main() -> None:
@@ -101,6 +121,12 @@ def main() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyproject["project"]["version"] == pep440_version(str(manifest["version"]))
     assert (ROOT / "frontend" / "package-lock.json").is_file()
+    dashboard = DASHBOARD.read_text(encoding="utf-8")
+    bundled_card_references = BUNDLED_CARD_PATTERN.findall(dashboard)
+    assert not bundled_card_references or has_bundled_resource_registration(), (
+        "release candidate dashboard references bundled cards without supported "
+        "Lovelace resource registration configuration or evidence"
+    )
 
 
 if __name__ == "__main__":
