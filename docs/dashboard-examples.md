@@ -18,6 +18,14 @@ Register the GitHub Insights bundle once as a JavaScript module:
 /github_insights/frontend/github-insights-cards.js
 ```
 
+The deployable release-candidate dashboard intentionally uses a compact
+Mushroom, ApexCharts, Auto Entities, and native fallback until this resource is
+registered through a supported Lovelace resource mechanism. Its entity filters
+are dynamic, so GitHub usernames and capability-dependent entity IDs are not
+hardcoded. Reintroduce its full bundled-card views only after a supported Home
+Assistant restart or config-entry reload exposes the current entity set and
+resource registration is configured or recorded as release evidence.
+
 Optional companion resources, when separately installed through HACS:
 
 ```text
