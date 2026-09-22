@@ -38,6 +38,9 @@ jobs:
           else
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
+          notes="docs/release-notes-${version}.md"
+          test -f "$notes"
+          echo "notes=$notes" >> "$GITHUB_OUTPUT"
       - name: Generate checksum
         shell: bash
         run: |
@@ -48,6 +51,8 @@ jobs:
           subject-path: dist/github_insights.zip
       - uses: softprops/action-gh-release@v2
         with:
+          body_path: ${{ steps.release-type.outputs.notes }}
+          generate_release_notes: true
           prerelease: ${{ steps.release-type.outputs.prerelease }}
           files: |
             dist/github_insights.zip
