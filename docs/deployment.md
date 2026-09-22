@@ -87,6 +87,32 @@ manifest itself matched the staged copy, and the dashboard matched the
 repository candidate byte-for-byte. The obsolete installed
 `frontend/README.md` was removed.
 
+### Adaptive dashboard fallback
+
+The original candidate dashboard referenced bundled card types before the
+Lovelace module was registered. Its first native fallback then referenced
+deployment-specific entity IDs and left capability tabs sparse. Both failure
+modes were removed without modifying `.storage`:
+
+- the live dashboard now has two useful views: **Overview** and **All entities**;
+- Mushroom, ApexCharts, Auto Entities, and native cards remain in use;
+- all GitHub Insights entities are selected through dynamic `entity_id` filters;
+- no deployment-specific entity ID or `custom:github-insights-*` card is present;
+- the dashboard automatically exposes new entities after a supported restart
+  and config-entry reload.
+
+The final live dashboard SHA-256 is
+`b7565c77da1a4e976104fab6fcd6fd414e27cc0234f36dc56775195de350ad81`.
+Its immediate rollback backup is:
+
+```text
+\\192.168.1.4\config\dashboard-backups\github-insights-dynamic-20260922-151538\github_insights.yaml
+```
+
+Home Assistant returned HTTP 200 after the write. This verifies process
+availability only; authenticated configuration check, restart, resource
+registration, and post-restart entity validation remain pending.
+
 After the write, the Home Assistant root returned HTTP 200 and the Supervisor
 observer reported **Connected**, **Supported**, and **Healthy**. This confirms
 that the existing process remained healthy; it does not prove the new
@@ -151,9 +177,11 @@ path is isolated in `custom_components/github_insights/__init__.py` and tested.
 If that supported API changes, the fallback is to copy the same bundled asset
 to `www/` and update the resource URL; no second HACS repository is needed.
 Until registration is completed through a supported Lovelace resource
-mechanism, keep the deployable release-candidate dashboard on its companion and
-native fallback cards. Reintroduce its `custom:github-insights-*` blocks only
-after the module registration is configured or recorded as release evidence.
+mechanism, keep the deployable release-candidate dashboard on its dynamic
+Mushroom, ApexCharts, Auto Entities, and native fallback. Reintroduce its full
+`custom:github-insights-*` views only after a supported Home Assistant restart
+or config-entry reload exposes the current entity set and the module
+registration is configured or recorded as release evidence.
 
 ## Safe deployment procedure
 

@@ -57,6 +57,10 @@ BUNDLED_RESOURCE_URL = "/github_insights/frontend/github-insights-cards.js"
 DASHBOARD = ROOT / "docs" / "release-candidate-dashboard.yaml"
 RESOURCE_CONFIG = ROOT / "docs" / "release-candidate-lovelace-resources.yaml"
 RESOURCE_EVIDENCE = ROOT / "release-ready.json"
+DYNAMIC_DASHBOARD_FILTERS = {
+    f"{domain}.github_insights_*"
+    for domain in ("sensor", "binary_sensor", "number", "select", "switch", "button")
+}
 
 
 def load_json(path: Path) -> dict[str, object]:
@@ -126,6 +130,28 @@ def main() -> None:
     assert not bundled_card_references or has_bundled_resource_registration(), (
         "release candidate dashboard references bundled cards without supported "
         "Lovelace resource registration configuration or evidence"
+    )
+    if not has_bundled_resource_registration():
+        assert "type: custom:auto-entities" in dashboard
+        assert "entity_id: sensor.github_insights_*" in dashboard
+        assert not re.search(r"^\s+entity:\s+\S+", dashboard, re.MULTILINE), (
+            "safe fallback dashboard must discover entities dynamically instead of "
+            "hardcoding deployment-specific entity IDs"
+        )
+    assert re.findall(r"^  - title: (.+)$", dashboard, re.MULTILINE) == [
+        "Overview",
+        "All entities",
+    ]
+    assert not re.search(
+        r"^\s+-?\s*(?:entity|entity_id): "
+        r"(?:sensor|binary_sensor|number|select|switch|button)"
+        r"\.github_insights_[a-z0-9_]+$",
+        dashboard,
+        re.MULTILINE,
+    )
+    assert all(
+        f"entity_id: {entity_filter}" in dashboard
+        for entity_filter in DYNAMIC_DASHBOARD_FILTERS
     )
 
 
