@@ -6,7 +6,9 @@ on:
       - "v*"
 
 permissions:
+  attestations: write
   contents: write
+  id-token: write
 
 jobs:
   release:
@@ -26,6 +28,27 @@ jobs:
         working-directory: frontend
       - run: python scripts/build_release.py
       - run: python scripts/validate_release_artifact.py
+      - name: Determine release type
+        id: release-type
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          if [[ "$version" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Generate checksum
+        shell: bash
+        run: |
+          cd dist
+          sha256sum github_insights.zip > github_insights.zip.sha256
+      - uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: dist/github_insights.zip
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/github_insights.zip
+          prerelease: ${{ steps.release-type.outputs.prerelease }}
+          files: |
+            dist/github_insights.zip
+            dist/github_insights.zip.sha256

@@ -2,10 +2,10 @@
 
 ## Current status
 
-The repository is public, Phase 2 account behavior and the bundled frontend are
-implemented, `hide_default_branch` is enabled, no release exists, and no HACS
-catalog claim is made. Remaining backend phases and live installation
-validation still block release.
+The repository is public, the integration and bundled frontend are implemented,
+and `hide_default_branch` is enabled. Version `0.2.0-beta.1` is an opt-in
+prerelease candidate for custom-repository testing after validation. No HACS
+catalog claim is made.
 
 ## Repository requirements
 
@@ -50,7 +50,7 @@ Dashboard/plugin repository is not an allowed fallback.
 
 ## Custom repository process
 
-After a validated release:
+After a validated prerelease asset is published:
 
 1. Add `https://github.com/snfx-johaver/github-insights` in HACS custom
    repositories.
@@ -59,12 +59,17 @@ After a validated release:
 4. Restart if HACS/Home Assistant requires it.
 5. Configure the integration and register the bundled resource through the
    documented supported method.
+6. Record the exact custom-repository install and upgrade results in
+   `post-release-validation.json`. Never mark this gate complete before the
+   immutable release asset exists.
 
 This is Level 1 availability and does not imply standard catalog inclusion.
 
 ## Standard catalog submission
 
-After custom installation is proven:
+HACS default inclusion is deferred while GitHub Insights is explicitly in
+alpha, beta, or release-candidate testing. After a stable release is ready and
+custom installation is proven:
 
 1. Confirm the submitter is owner/major contributor.
 2. Confirm current HACS Action and Hassfest pass without ignores.
@@ -102,9 +107,11 @@ changes and config-entry migrations. A failed install restores only the prior
 - [ ] Isolated install/upgrade/removal tests pass
 - [ ] Safe local validation passes
 - [ ] README permissions and limitations match behavior
-- [ ] HACS custom-repository install succeeds
-- [ ] Version-matched release readiness marker records the preceding gates
+- [ ] Version-matched pre-release evidence records only completed pre-tag gates
 - [ ] Full GitHub Release exists after the validation gates
+- [ ] Exact HACS custom-repository install and upgrade succeed
+- [ ] Post-release evidence records the tested prerelease asset hash
+- [ ] Stable release readiness is established before default-catalog submission
 - [ ] Catalog PR is submitted only after all preceding checks
 
 ## Sources
