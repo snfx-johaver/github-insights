@@ -1,0 +1,22 @@
+{
+  "timePeriod": {
+    "year": 2026,
+    "month": 9
+  },
+  "organization": "example-org",
+  "usageItems": [
+    {
+      "product": "Copilot",
+      "sku": "premium_requests",
+      "model": "example-model",
+      "unitType": "requests",
+      "pricePerUnit": 0.04,
+      "grossQuantity": 100,
+      "grossAmount": 4.0,
+      "discountQuantity": 20,
+      "discountAmount": 0.8,
+      "netQuantity": 80,
+      "netAmount": 3.2
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from collections.abc import Mapping
 from datetime import UTC, datetime
 from decimal import Decimal
@@ -56,11 +57,24 @@ def snapshot(
         repositories=(
             GitHubRepository(
                 id=99,
+                name="example",
                 full_name="octocat/example",
+                description="Example repository",
                 private=False,
+                visibility="public",
                 archived=False,
                 fork=False,
                 html_url="https://github.com/octocat/example",
+                default_branch="main",
+                language="Python",
+                license_name="MIT",
+                stargazers_count=10,
+                watchers_count=2,
+                forks_count=3,
+                open_issues_count=4,
+                has_discussions=True,
+                size_kb=128,
+                pushed_at=datetime(2026, 9, 18, 10, 0, tzinfo=UTC),
             ),
         ),
         rate_limit=GitHubRateLimit(
@@ -182,6 +196,12 @@ class FakeResponse:
         """Return the configured JSON payload."""
         return self._payload
 
+    async def read(self) -> bytes:
+        """Return the configured payload as response bytes."""
+        if isinstance(self._payload, bytes):
+            return self._payload
+        return json.dumps(self._payload).encode()
+
 
 class FakeSession:
     """Queue-driven aiohttp session substitute."""
@@ -195,3 +215,7 @@ class FakeSession:
         """Record a request and return the next response."""
         self.requests.append({"method": method, "url": url, **kwargs})
         return self.responses.pop(0)
+
+    def get(self, url: str, **kwargs: Any) -> FakeResponse:
+        """Record a GET request and return the next response."""
+        return self.request("GET", url, **kwargs)
