@@ -143,6 +143,6 @@ async def test_migrate_legacy_host_key(hass: HomeAssistant) -> None:
     entry.add_to_hass(hass)
 
     assert await async_migrate_entry(hass, entry)
-    assert entry.version == 2
+    assert entry.version == 3
     assert entry.data[CONF_SERVER] == "https://github.example.com"
     assert entry.data[CONF_ACCOUNT_LOGIN] == "octocat"
