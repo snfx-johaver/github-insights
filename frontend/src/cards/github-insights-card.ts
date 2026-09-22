@@ -8,6 +8,7 @@ import type {
 import type {
   HassEntity,
   HomeAssistant,
+  LovelaceCardElement,
 } from "../models/home-assistant";
 import { metricDefinition } from "../models/metrics";
 import {
@@ -32,6 +33,7 @@ export class GitHubInsightsCard extends LitElement {
     discovered: { attribute: false, state: true },
     discoveryError: { attribute: false, state: true },
     discoveryComplete: { attribute: false, state: true },
+    companionCards: { attribute: false, state: true },
   };
 
   hass?: HomeAssistant;
@@ -39,8 +41,10 @@ export class GitHubInsightsCard extends LitElement {
   discovered: DiscoveredEntity[] = [];
   discoveryError?: string;
   discoveryComplete = false;
+  companionCards: LovelaceCardElement[] = [];
   definition!: CardDefinition;
   private discoveryGeneration = 0;
+  private companionSignature = "";
   private holdTimer?: number;
   private lastTap = 0;
 
@@ -80,6 +84,7 @@ export class GitHubInsightsCard extends LitElement {
         this.discovered = discovered;
         this.discoveryError = undefined;
         this.discoveryComplete = true;
+        await this.refreshCompanionCards(generation);
       }
     } catch (error) {
       if (generation === this.discoveryGeneration) {
@@ -92,13 +97,118 @@ export class GitHubInsightsCard extends LitElement {
   }
 
   private resolveEntity(key: string): HassEntity | undefined {
+    const reference = this.resolveEntityReference(key);
+    return reference ? this.hass?.states[reference.entityId] : undefined;
+  }
+
+  private resolveEntityReference(key: string): DiscoveredEntity | undefined {
     const candidates = this.config?.repository
       ? this.discovered.filter(
           (entity) => entity.repository === this.config?.repository,
         )
       : this.discovered;
-    const reference = entitiesByKey(candidates).get(key);
-    return reference ? this.hass?.states[reference.entityId] : undefined;
+    return entitiesByKey(candidates).get(key);
+  }
+
+  private async refreshCompanionCards(generation: number): Promise<void> {
+    if (this.definition.kind !== "dashboard" || !window.loadCardHelpers) {
+      this.companionCards = [];
+      this.companionSignature = "";
+      return;
+    }
+
+    const configs: Record<string, unknown>[] = [];
+    const chipKeys = [
+      "workflow_health",
+      "open_pull_requests",
+      "dependabot_alerts",
+      "last_successful_sync",
+    ];
+    const chips = chipKeys.flatMap((key) => {
+      const reference = this.resolveEntityReference(key);
+      if (!reference) return [];
+      const metric = metricDefinition(key);
+      return [{
+        type: "entity",
+        entity: reference.entityId,
+        icon: metric.icon,
+        content_info: "state",
+      }];
+    });
+    if (customElements.get("mushroom-chips-card") && chips.length > 0) {
+      configs.push({
+        type: "custom:mushroom-chips-card",
+        alignment: "justify",
+        chips,
+      });
+    }
+
+    const trendKeys = [
+      "commits",
+      "pull_requests_merged",
+    ];
+    const series = trendKeys.flatMap((key) => {
+      const reference = this.resolveEntityReference(key);
+      if (!reference) return [];
+      return [{
+        entity: reference.entityId,
+        name: metricDefinition(key).label,
+        type: "line",
+        stroke_width: 3,
+        group_by: { duration: "1d", func: "max", fill: "last" },
+        show: { in_header: true, legend_value: false },
+      }];
+    });
+    if (customElements.get("apexcharts-card") && series.length > 0) {
+      configs.push({
+        type: "custom:apexcharts-card",
+        graph_span: "30d",
+        update_interval: "5min",
+        header: {
+          show: true,
+          title: "Engineering pulse",
+          show_states: true,
+          colorize_states: true,
+        },
+        apex_config: {
+          chart: {
+            height: 280,
+            toolbar: { show: false },
+            zoom: { enabled: false },
+          },
+          grid: { borderColor: "rgba(127, 127, 127, 0.16)" },
+          legend: { show: true, position: "top" },
+          stroke: { curve: "smooth" },
+        },
+        series,
+      });
+    }
+
+    if (configs.length === 0) {
+      this.companionCards = [];
+      this.companionSignature = "";
+      return;
+    }
+
+    const signature = JSON.stringify(configs);
+    if (signature === this.companionSignature) {
+      for (const card of this.companionCards) card.hass = this.hass;
+      return;
+    }
+
+    try {
+      const helpers = await window.loadCardHelpers();
+      if (generation !== this.discoveryGeneration) return;
+      this.companionCards = configs.map((config) => {
+        const card = helpers.createCardElement(config);
+        card.hass = this.hass;
+        return card;
+      });
+      this.companionSignature = signature;
+    } catch {
+      this.companionCards = [];
+      this.companionSignature = "";
+    }
   }
 
   private sparklineTemplate(entity: HassEntity | undefined, label: string) {
@@ -199,10 +309,21 @@ export class GitHubInsightsCard extends LitElement {
 
     if (repositories.length === 0) return nothing;
     return html`
-      <section class="repositories" aria-label="Discovered repositories">
+      <section class="repositories ${this.definition.kind === "dashboard" ? "dashboard-repositories" : ""}" aria-label="Discovered repositories">
+        ${this.definition.kind === "dashboard"
+          ? html`<div class="section-heading">
+              <div>
+                <span class="eyebrow">Portfolio</span>
+                <h3>Repositories</h3>
+              </div>
+              <span class="count">${repositories.length}</span>
+            </div>`
+          : nothing}
+        <div class="repository-list">
         ${repositories.map(
           (repository) => html`
             <article class="repository">
+              <ha-icon icon="mdi:source-repository" aria-hidden="true"></ha-icon>
               <strong>${favorites.has(repository) ? "★ " : ""}${repository}</strong>
               <span class="meta">${this.config?.group_by === "organization"
                 ? repository.split("/", 1)[0]
@@ -210,6 +331,109 @@ export class GitHubInsightsCard extends LitElement {
             </article>
           `,
         )}
+        </div>
+      </section>
+    `;
+  }
+
+  private dashboardHeaderTemplate(account: HassEntity | undefined) {
+    const avatarUrl = safeHttpUrl(account?.attributes.avatar_url);
+    const blocked = this.resolveEntity("actions_blocked")?.state === "on";
+    const warning = this.resolveEntity("actions_budget_warning")?.state === "on";
+    const status = blocked ? "Blocked" : warning ? "Attention" : "Operational";
+    const statusClass = blocked ? "critical" : warning ? "warning" : "healthy";
+    return html`
+      <header class="dashboard-hero">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <span class="eyebrow">Live GitHub operations</span>
+          <div class="hero-title">
+            ${avatarUrl
+              ? html`<img
+                  src=${avatarUrl}
+                  alt=""
+                  width="52"
+                  height="52"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
+                />`
+              : html`<span class="hero-mark"><ha-icon icon="mdi:github"></ha-icon></span>`}
+            <div>
+              <h2>${this.config?.title ?? "Engineering command center"}</h2>
+              <p>Delivery, spend, adoption, and risk in one view.</p>
+            </div>
+          </div>
+        </div>
+        <span class="health-pill ${statusClass}">
+          <span aria-hidden="true"></span>${status}
+        </span>
+      </header>
+    `;
+  }
+
+  private dashboardMetricsTemplate(metrics: string[]) {
+    const groups: Array<{ title: string; icon: string; keys: string[] }> = [
+      {
+        title: "Usage & spend",
+        icon: "mdi:chart-donut",
+        keys: ["actions_usage_percent", "actions_budget_percent", "copilot_paid_usage", "actions_cost"],
+      },
+      {
+        title: "Delivery",
+        icon: "mdi:rocket-launch-outline",
+        keys: ["public_repositories", "open_pull_requests", "workflow_health", "commits"],
+      },
+      {
+        title: "Risk & freshness",
+        icon: "mdi:shield-check-outline",
+        keys: ["dependabot_alerts", "code_scanning_alerts", "secret_scanning_alerts", "last_successful_sync"],
+      },
+    ];
+    const configured = new Set(metrics);
+    const grouped = new Set(groups.flatMap((group) => group.keys));
+    const remaining = metrics.filter((key) => !grouped.has(key));
+    if (remaining.length > 0) {
+      groups.push({
+        title: "More insights",
+        icon: "mdi:view-grid-plus-outline",
+        keys: remaining,
+      });
+    }
+    return html`
+      <div class="dashboard-sections">
+        ${groups.map((group) => {
+          const keys = group.keys.filter((key) => configured.has(key));
+          if (keys.length === 0) return nothing;
+          return html`
+            <section class="dashboard-section">
+              <div class="section-heading">
+                <div class="section-title">
+                  <ha-icon .icon=${group.icon}></ha-icon>
+                  <h3>${group.title}</h3>
+                </div>
+              </div>
+              <div class="grid">${keys.map((key) => this.metricTemplate(key))}</div>
+            </section>
+          `;
+        })}
+      </div>
+    `;
+  }
+
+  private companionCardsTemplate() {
+    if (this.definition.kind !== "dashboard" || this.companionCards.length === 0) {
+      return nothing;
+    }
+    for (const card of this.companionCards) card.hass = this.hass;
+    return html`
+      <section
+        class="companion-grid"
+        aria-label="Optional dashboard visualizations"
+        @pointerdown=${(event: Event) => event.stopPropagation()}
+        @pointerup=${(event: Event) => event.stopPropagation()}
+        @contextmenu=${(event: Event) => event.stopPropagation()}
+      >
+        ${this.companionCards}
       </section>
     `;
   }
@@ -343,7 +567,7 @@ export class GitHubInsightsCard extends LitElement {
           );
     const anyConfigured = metrics.some((key) => this.resolveEntity(key));
     const account = this.resolveEntity("account");
-    const avatarUrl = safeHttpUrl(account?.attributes.avatar_url);
+    const isDashboard = this.definition.kind === "dashboard";
     const isLoading =
       Boolean(this.hass?.connection) &&
       !this.discoveryComplete &&
@@ -367,12 +591,14 @@ export class GitHubInsightsCard extends LitElement {
           void this.runAction(this.config?.hold_action);
         }}
       >
-        <section class="card">
-          <header class="header">
+        <section class="card ${isDashboard ? "dashboard-card" : ""}">
+          ${isDashboard
+            ? this.dashboardHeaderTemplate(account)
+            : html`<header class="header">
             <div class="account">
-              ${avatarUrl
+              ${safeHttpUrl(account?.attributes.avatar_url)
                 ? html`<img
-                    src=${avatarUrl}
+                    src=${safeHttpUrl(account?.attributes.avatar_url)}
                     alt=""
                     width="40"
                     height="40"
@@ -386,7 +612,7 @@ export class GitHubInsightsCard extends LitElement {
               </div>
             </div>
             <ha-icon .icon=${this.config.icon ?? this.definition.icon} aria-hidden="true"></ha-icon>
-          </header>
+          </header>`}
           ${this.statusTemplate()}
           ${isLoading
             ? html`<div class="status" role="status">Discovering GitHub Insights entities…</div>`
@@ -395,7 +621,10 @@ export class GitHubInsightsCard extends LitElement {
             ? html`<div class="status empty" role="status">
                 No supported metrics are available. Enable the relevant GitHub capability or select entities in the card editor.
               </div>`
-            : html`<div class="grid">${metrics.map((key) => this.metricTemplate(key))}</div>`}
+            : isDashboard
+              ? this.dashboardMetricsTemplate(metrics)
+              : html`<div class="grid">${metrics.map((key) => this.metricTemplate(key))}</div>`}
+          ${this.companionCardsTemplate()}
           ${this.repositoryTemplate()} ${this.heatmapTemplate()}
         </section>
       </ha-card>

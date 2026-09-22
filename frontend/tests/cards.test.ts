@@ -178,4 +178,66 @@ describe("GitHub Insights cards", () => {
       "@media (prefers-reduced-motion: reduce)",
     );
   });
+
+  it("renders a grouped dashboard and uses installed companion cards", async () => {
+    if (!customElements.get("mushroom-chips-card")) {
+      customElements.define("mushroom-chips-card", class extends HTMLElement {});
+    }
+    if (!customElements.get("apexcharts-card")) {
+      customElements.define("apexcharts-card", class extends HTMLElement {});
+    }
+    const createdConfigs: Record<string, unknown>[] = [];
+    window.loadCardHelpers = async () => ({
+      createCardElement(config) {
+        createdConfigs.push(config);
+        const element = document.createElement(
+          config.type === "custom:apexcharts-card"
+            ? "apexcharts-card"
+            : "mushroom-chips-card",
+        ) as HTMLElement & {
+          hass?: HomeAssistant;
+          setConfig(config: Record<string, unknown>): void;
+        };
+        element.setConfig = () => undefined;
+        return element;
+      },
+    });
+
+    const card = await renderCard(
+      "github-insights-dashboard",
+      {
+        entities: {
+          account: "sensor.account",
+          workflow_health: "sensor.workflow",
+          open_pull_requests: "sensor.pull_requests",
+          dependabot_alerts: "sensor.dependabot",
+          commits: "sensor.commits",
+          pull_requests_merged: "sensor.merged",
+          last_successful_sync: "sensor.sync",
+        },
+      },
+      {
+        "sensor.account": entity("sensor.account", "octocat"),
+        "sensor.workflow": entity("sensor.workflow", "success"),
+        "sensor.pull_requests": entity("sensor.pull_requests", "4"),
+        "sensor.dependabot": entity("sensor.dependabot", "1"),
+        "sensor.commits": entity("sensor.commits", "32"),
+        "sensor.merged": entity("sensor.merged", "8"),
+        "sensor.sync": entity("sensor.sync", "2026-09-22T12:00:00Z"),
+      },
+    );
+    await new Promise((resolve) => window.setTimeout(resolve, 0));
+    await card.updateComplete;
+
+    expect(card.shadowRoot?.textContent).toContain("Engineering command center");
+    expect(card.shadowRoot?.textContent).toContain("Usage & spend");
+    expect(card.shadowRoot?.textContent).toContain("Delivery");
+    expect(card.shadowRoot?.textContent).toContain("Risk & freshness");
+    expect(createdConfigs.map((config) => config.type)).toEqual([
+      "custom:mushroom-chips-card",
+      "custom:apexcharts-card",
+    ]);
+    expect(card.shadowRoot?.querySelector("mushroom-chips-card")).not.toBeNull();
+    expect(card.shadowRoot?.querySelector("apexcharts-card")).not.toBeNull();
+  });
 });

@@ -9,6 +9,12 @@ export const cardStyles = css`
     --gi-warning: var(--warning-color, #f59e0b);
     --gi-critical: var(--error-color, #db4437);
     --gi-success: var(--success-color, #43a047);
+    --gi-ink: color-mix(in srgb, var(--primary-text-color) 92%, #ffffff);
+    --gi-surface: color-mix(
+      in srgb,
+      var(--card-background-color) 88%,
+      var(--primary-color)
+    );
   }
 
   ha-card {
@@ -20,6 +26,141 @@ export const cardStyles = css`
 
   .card {
     padding: 16px;
+  }
+
+  .dashboard-card {
+    position: relative;
+    display: grid;
+    gap: 18px;
+    padding: 0 0 18px;
+    background:
+      radial-gradient(
+        circle at 95% 0%,
+        color-mix(in srgb, var(--primary-color) 15%, transparent),
+        transparent 32%
+      ),
+      var(--card-background-color);
+  }
+
+  .dashboard-hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    min-height: 132px;
+    padding: 24px;
+    overflow: hidden;
+    color: var(--gi-ink);
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--primary-color) 23%, var(--card-background-color)),
+        color-mix(in srgb, #6e40c9 13%, var(--card-background-color)) 58%,
+        var(--card-background-color)
+      );
+    border-bottom: 1px solid color-mix(in srgb, var(--primary-color) 20%, transparent);
+  }
+
+  .hero-glow {
+    position: absolute;
+    z-index: -1;
+    width: 260px;
+    height: 260px;
+    top: -165px;
+    right: -70px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--primary-color) 38%, transparent);
+    filter: blur(8px);
+  }
+
+  .hero-copy {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .hero-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .hero-title img,
+  .hero-mark {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+  }
+
+  .hero-title img {
+    object-fit: cover;
+  }
+
+  .hero-mark {
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    background: color-mix(in srgb, var(--primary-color) 74%, #111827);
+  }
+
+  .hero-mark ha-icon {
+    color: inherit;
+    --mdc-icon-size: 30px;
+  }
+
+  .hero-title h2 {
+    font-size: clamp(1.35rem, 4vw, 1.9rem);
+    letter-spacing: -0.035em;
+  }
+
+  .hero-title p {
+    margin: 4px 0 0;
+    color: color-mix(in srgb, var(--primary-text-color) 72%, transparent);
+    font-size: 0.9rem;
+  }
+
+  .eyebrow {
+    color: color-mix(in srgb, var(--primary-color) 72%, var(--primary-text-color));
+    font-size: 0.67rem;
+    font-weight: 750;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .health-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 9%, var(--card-background-color));
+    font-size: 0.73rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .health-pill > span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 16%, transparent);
+  }
+
+  .health-pill.healthy {
+    color: var(--gi-success);
+  }
+
+  .health-pill.warning {
+    color: var(--gi-warning);
+  }
+
+  .health-pill.critical {
+    color: var(--gi-critical);
   }
 
   .header,
@@ -69,6 +210,86 @@ export const cardStyles = css`
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr));
     gap: var(--gi-gap);
+  }
+
+  .dashboard-sections {
+    display: grid;
+    gap: 22px;
+    padding: 0 18px;
+  }
+
+  .dashboard-section {
+    display: grid;
+    gap: 10px;
+  }
+
+  .section-heading,
+  .section-title {
+    display: flex;
+    align-items: center;
+  }
+
+  .section-heading {
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .section-title {
+    gap: 8px;
+  }
+
+  .section-heading h3 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+
+  .section-title ha-icon {
+    color: var(--primary-color);
+    --mdc-icon-size: 18px;
+  }
+
+  .count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 7px;
+    border-radius: 999px;
+    color: var(--secondary-text-color);
+    background: var(--gi-soft);
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .dashboard-section .metric {
+    position: relative;
+    overflow: hidden;
+    min-height: 112px;
+    background:
+      linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--gi-soft) 86%, transparent),
+        color-mix(in srgb, var(--card-background-color) 94%, transparent)
+      );
+    box-shadow: inset 0 1px color-mix(in srgb, #fff 8%, transparent);
+  }
+
+  .dashboard-section .metric::after {
+    content: "";
+    position: absolute;
+    width: 74px;
+    height: 74px;
+    right: -38px;
+    bottom: -46px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  }
+
+  .dashboard-section .value {
+    margin-top: 12px;
+    font-size: clamp(1.2rem, 4vw, 1.65rem);
+    letter-spacing: -0.035em;
   }
 
   :host([layout="compact"]) .grid {
@@ -167,15 +388,56 @@ export const cardStyles = css`
     gap: 8px;
   }
 
+  .dashboard-repositories {
+    display: grid;
+    gap: 10px;
+    padding: 0 18px;
+  }
+
+  .dashboard-repositories .section-heading > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .repository-list {
+    display: grid;
+    gap: 8px;
+  }
+
   .repository {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
     gap: 8px;
   }
 
   .repository strong {
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .repository > ha-icon {
+    --mdc-icon-size: 17px;
+    color: var(--secondary-text-color);
+  }
+
+  .companion-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 0 18px;
+  }
+
+  .companion-grid > * {
+    min-width: 0;
+  }
+
+  .companion-grid mushroom-chips-card {
+    padding: 2px 0;
+  }
+
+  .dashboard-card > .status {
+    margin: 0 18px;
   }
 
   .heatmap {
@@ -238,12 +500,52 @@ export const cardStyles = css`
     :host([layout="compact"]) .grid {
       grid-template-columns: 1fr 1fr;
     }
+
+    .dashboard-card {
+      padding: 0 0 14px;
+    }
+
+    .dashboard-hero {
+      min-height: 118px;
+      padding: 18px;
+    }
+
+    .dashboard-sections,
+    .dashboard-repositories,
+    .companion-grid {
+      padding-inline: 12px;
+    }
+
+    .dashboard-card > .status {
+      margin-inline: 12px;
+    }
+
+    .health-pill {
+      padding: 6px 8px;
+    }
   }
 
   @media (max-width: 360px) {
     .grid,
     :host([layout="compact"]) .grid {
       grid-template-columns: 1fr;
+    }
+
+    .dashboard-hero {
+      display: grid;
+      gap: 14px;
+    }
+
+    .health-pill {
+      justify-self: start;
+    }
+
+    .repository {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .repository .meta {
+      display: none;
     }
   }
 
