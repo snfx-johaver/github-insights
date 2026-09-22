@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -29,6 +31,7 @@ def _configure(
     pyproject = tmp_path / "pyproject.toml"
     marker = tmp_path / "release-ready.json"
     post_marker = tmp_path / "post-release-validation.json"
+    archive = tmp_path / "github_insights.zip"
     _write_json(manifest, {"version": version})
     _write_json(frontend, {"version": version})
     _write_json(lockfile, {"version": version, "packages": {"": {"version": version}}})
@@ -36,15 +39,22 @@ def _configure(
         f'[project]\nversion = "{check_release_readiness._pep440_version(version)}"\n',
         encoding="utf-8",
     )
+    with zipfile.ZipFile(archive, "w") as release_archive:
+        release_archive.writestr("github_insights/manifest.json", "{}")
+        release_archive.writestr("github_insights/deployment-manifest.json", "{}")
+    archive_bytes = archive.read_bytes()
+    artifact = {
+        "artifact_sha256": hashlib.sha256(archive_bytes).hexdigest(),
+        "artifact_size_bytes": len(archive_bytes),
+        "artifact_file_count": 2,
+    }
     _write_json(
         marker,
         evidence
         or {
             "version": version,
             **check_release_readiness.PRE_RELEASE_GATES,
-            "artifact_sha256": SHA256,
-            "artifact_size_bytes": 123,
-            "artifact_file_count": 10,
+            **artifact,
             "custom_repository_install_test": False,
         },
     )
@@ -52,6 +62,7 @@ def _configure(
     monkeypatch.setattr(check_release_readiness, "FRONTEND_PACKAGE", frontend)
     monkeypatch.setattr(check_release_readiness, "LOCKFILE", lockfile)
     monkeypatch.setattr(check_release_readiness, "PYPROJECT", pyproject)
+    monkeypatch.setattr(check_release_readiness, "ARCHIVE", archive)
     monkeypatch.setattr(check_release_readiness, "RELEASE_MARKER", marker)
     monkeypatch.setattr(check_release_readiness, "POST_RELEASE_MARKER", post_marker)
     monkeypatch.delenv("GITHUB_REF_NAME", raising=False)
@@ -68,15 +79,10 @@ def test_prerelease_accepts_truthful_pre_release_evidence(
 def test_prerelease_rejects_false_custom_install_claim(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    evidence: dict[str, object] = {
-        "version": "0.2.0-beta.1",
-        **check_release_readiness.PRE_RELEASE_GATES,
-        "artifact_sha256": SHA256,
-        "artifact_size_bytes": 123,
-        "artifact_file_count": 10,
-        "custom_repository_install_test": True,
-    }
-    _configure(tmp_path, monkeypatch, evidence=evidence)
+    _configure(tmp_path, monkeypatch)
+    evidence = json.loads(check_release_readiness.RELEASE_MARKER.read_text())
+    evidence["custom_repository_install_test"] = True
+    _write_json(check_release_readiness.RELEASE_MARKER, evidence)
 
     with pytest.raises(SystemExit, match="must not claim"):
         check_release_readiness.main()
@@ -85,15 +91,10 @@ def test_prerelease_rejects_false_custom_install_claim(
 def test_prerelease_rejects_missing_live_validation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    evidence: dict[str, object] = {
-        "version": "0.2.0-beta.1",
-        **check_release_readiness.PRE_RELEASE_GATES,
-        "live_home_assistant_validation": False,
-        "artifact_sha256": SHA256,
-        "artifact_size_bytes": 123,
-        "artifact_file_count": 10,
-    }
-    _configure(tmp_path, monkeypatch, evidence=evidence)
+    _configure(tmp_path, monkeypatch)
+    evidence = json.loads(check_release_readiness.RELEASE_MARKER.read_text())
+    evidence["live_home_assistant_validation"] = False
+    _write_json(check_release_readiness.RELEASE_MARKER, evidence)
 
     with pytest.raises(SystemExit, match="live_home_assistant_validation"):
         check_release_readiness.main()
@@ -122,3 +123,27 @@ def test_stable_release_accepts_validated_prerelease(
     )
 
     check_release_readiness.main()
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("artifact_sha256", SHA256, "SHA-256 differs"),
+        ("artifact_size_bytes", 1, "size differs"),
+        ("artifact_file_count", 1, "file count differs"),
+    ],
+)
+def test_release_rejects_artifact_evidence_mismatch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    field: str,
+    value: object,
+    message: str,
+) -> None:
+    _configure(tmp_path, monkeypatch)
+    evidence = json.loads(check_release_readiness.RELEASE_MARKER.read_text())
+    evidence[field] = value
+    _write_json(check_release_readiness.RELEASE_MARKER, evidence)
+
+    with pytest.raises(SystemExit, match=message):
+        check_release_readiness.main()

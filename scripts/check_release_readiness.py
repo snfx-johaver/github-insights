@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
 import tomllib
+import zipfile
 from pathlib import Path
 from typing import Any
 
@@ -16,6 +18,7 @@ POST_RELEASE_MARKER = ROOT / "post-release-validation.json"
 MANIFEST = ROOT / "custom_components" / "github_insights" / "manifest.json"
 FRONTEND_PACKAGE = ROOT / "frontend" / "package.json"
 PYPROJECT = ROOT / "pyproject.toml"
+ARCHIVE = ROOT / "dist" / "github_insights.zip"
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 PRE_RELEASE_GATES = {
@@ -93,17 +96,30 @@ def main() -> None:
         raise SystemExit("Release blocked: release-ready version does not match.")
     _require_gates(release_ready, PRE_RELEASE_GATES)
 
-    digest = release_ready.get("artifact_sha256")
-    if not isinstance(digest, str) or not SHA256_PATTERN.fullmatch(digest):
+    expected_digest = release_ready.get("artifact_sha256")
+    if not isinstance(expected_digest, str) or not SHA256_PATTERN.fullmatch(
+        expected_digest
+    ):
         raise SystemExit("Release blocked: artifact SHA-256 evidence is invalid.")
-    if not isinstance(release_ready.get("artifact_size_bytes"), int) or (
-        release_ready["artifact_size_bytes"] <= 0
-    ):
+    expected_size = release_ready.get("artifact_size_bytes")
+    if not isinstance(expected_size, int) or expected_size <= 0:
         raise SystemExit("Release blocked: artifact size evidence is invalid.")
-    if not isinstance(release_ready.get("artifact_file_count"), int) or (
-        release_ready["artifact_file_count"] <= 0
-    ):
+    expected_count = release_ready.get("artifact_file_count")
+    if not isinstance(expected_count, int) or expected_count <= 0:
         raise SystemExit("Release blocked: artifact file-count evidence is invalid.")
+    if not ARCHIVE.is_file():
+        raise SystemExit("Release blocked: release archive is missing.")
+    archive_bytes = ARCHIVE.read_bytes()
+    actual_digest = hashlib.sha256(archive_bytes).hexdigest()
+    actual_size = len(archive_bytes)
+    with zipfile.ZipFile(ARCHIVE) as archive:
+        actual_count = sum(not info.is_dir() for info in archive.infolist())
+    if actual_digest != expected_digest:
+        raise SystemExit("Release blocked: release archive SHA-256 differs.")
+    if actual_size != expected_size:
+        raise SystemExit("Release blocked: release archive size differs.")
+    if actual_count != expected_count:
+        raise SystemExit("Release blocked: release archive file count differs.")
 
     ref_name = os.environ.get("GITHUB_REF_NAME", "")
     if ref_name.startswith("v") and ref_name[1:] != version:
