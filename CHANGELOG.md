@@ -4,7 +4,7 @@ All notable changes will be documented here.
 
 The project uses [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## [0.2.0-beta.1] - 2026-09-22
 
 ### Added
 
@@ -24,7 +24,9 @@ The project uses [Semantic Versioning](https://semver.org/).
 - Phase 3 personal/organization/enterprise enhanced-billing usage, organization
   and enterprise budget discovery/CRUD, confirmed mutation services,
   Actions cost and budget entities, and clearly labeled runner-based estimates.
-
-Repository/workflow detail, Copilot, activity, and security metrics remain
-separate backend phases. Cards expose empty/unavailable states until those
-entities are present.
+- Phase 4 repository discovery, workflows, releases, deployments, activity,
+  traffic, and security collection with bounded, capability-aware entities.
+- Phase 5 official Copilot and AI billing, adoption, coding-agent, and
+  code-review reporting where GitHub exposes authorized data.
+- Release-candidate packaging and deployment metadata for version
+  `0.2.0-beta.1`.

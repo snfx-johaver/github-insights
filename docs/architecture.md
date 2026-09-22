@@ -2,7 +2,7 @@
 
 ## Status and invariant
 
-Version `0.1.0-beta.1` implements the Phase 2 account integration, Phase 4
+Version `0.2.0-beta.1` implements the Phase 2 account integration, Phase 4
 repository/workflow capabilities, Phase 5 Copilot/AI capabilities, and the
 Phase 6-8 bundled frontend architecture described here. Unsupported or
 unauthorized backend categories are never simulated by the cards.

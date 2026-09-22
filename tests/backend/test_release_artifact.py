@@ -17,11 +17,14 @@ def _write_archive(
     *,
     extra_files: dict[str, bytes] | None = None,
     manifest_root: str = "custom_components/github_insights",
+    version: str = "0.2.0-beta.1",
 ) -> None:
     files = {
         "__init__.py": b"",
         "frontend/github-insights-cards.js": b"export {};",
-        "manifest.json": b'{"domain":"github_insights"}',
+        "manifest.json": json.dumps(
+            {"domain": "github_insights", "version": version}
+        ).encode(),
     }
     manifest_files = [
         {
@@ -33,6 +36,7 @@ def _write_archive(
     manifest = {
         "format": 1,
         "root": manifest_root,
+        "version": version,
         "files": manifest_files,
     }
     with zipfile.ZipFile(archive_path, "w") as archive:
@@ -92,4 +96,15 @@ def test_rejects_incorrect_install_root(
     monkeypatch.setattr(validate_release_artifact, "ARCHIVE", archive_path)
 
     with pytest.raises(SystemExit, match="root is invalid"):
+        validate_release_artifact.main()
+
+
+def test_rejects_incorrect_artifact_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    archive_path = tmp_path / "github_insights.zip"
+    _write_archive(archive_path, version="0.1.0-beta.1")
+    monkeypatch.setattr(validate_release_artifact, "ARCHIVE", archive_path)
+
+    with pytest.raises(SystemExit, match="version does not match"):
         validate_release_artifact.main()

@@ -10,6 +10,7 @@ from typing import Any
 
 ROOT = Path(__file__).parents[1]
 ARCHIVE = ROOT / "dist" / "github_insights.zip"
+SOURCE_MANIFEST = ROOT / "custom_components" / "github_insights" / "manifest.json"
 PREFIX = "github_insights/"
 DEPLOYMENT_MANIFEST = f"{PREFIX}deployment-manifest.json"
 FORBIDDEN_PARTS = {
@@ -46,6 +47,11 @@ def _load_deployment_manifest(archive: zipfile.ZipFile) -> dict[str, Any]:
         raise SystemExit("Deployment manifest format must be 1.")
     if manifest.get("root") != "custom_components/github_insights":
         raise SystemExit("Deployment manifest root is invalid.")
+    source_version = json.loads(SOURCE_MANIFEST.read_text(encoding="utf-8")).get(
+        "version"
+    )
+    if manifest.get("version") != source_version:
+        raise SystemExit("Deployment manifest version does not match the integration.")
     if not isinstance(manifest.get("files"), list):
         raise SystemExit("Deployment manifest files must be a list.")
     return manifest
@@ -81,6 +87,11 @@ def main() -> None:
             raise SystemExit(f"Archive is missing: {sorted(missing)}")
 
         manifest = _load_deployment_manifest(archive)
+        archived_manifest = json.loads(archive.read(f"{PREFIX}manifest.json"))
+        if archived_manifest.get("version") != manifest["version"]:
+            raise SystemExit(
+                "Archived integration version does not match deployment manifest."
+            )
         listed_names: set[str] = set()
         for item in manifest["files"]:
             if not isinstance(item, dict):

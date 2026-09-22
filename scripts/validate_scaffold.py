@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import re
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
@@ -60,13 +62,23 @@ def load_json(path: Path) -> dict[str, object]:
     return value
 
 
+def pep440_version(version: str) -> str:
+    """Convert the supported semantic prerelease spelling to PEP 440."""
+    markers = {"alpha": "a", "beta": "b", "rc": "rc"}
+    return re.sub(
+        r"-(alpha|beta|rc)\.",
+        lambda match: markers[match.group(1)],
+        version,
+    )
+
+
 def main() -> None:
     """Check structural and release-safety invariants."""
     manifest = load_json(INTEGRATION / "manifest.json")
     hacs = load_json(ROOT / "hacs.json")
 
     assert manifest["domain"] == DOMAIN
-    assert manifest["version"] == "0.1.0-beta.1"
+    assert manifest["version"] == "0.2.0-beta.1"
     assert manifest["config_flow"] is True
     assert manifest["single_config_entry"] is True
     assert hacs["zip_release"] is True
@@ -80,7 +92,14 @@ def main() -> None:
     bundle_text = bundle.read_text(encoding="utf-8")
     assert all(card in bundle_text for card in REQUIRED_CARDS)
     frontend = load_json(ROOT / "frontend" / "package.json")
+    frontend_lock = load_json(ROOT / "frontend" / "package-lock.json")
     assert frontend["version"] == manifest["version"]
+    assert frontend_lock["version"] == manifest["version"]
+    packages = frontend_lock["packages"]
+    assert isinstance(packages, dict)
+    assert packages[""]["version"] == manifest["version"]
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    assert pyproject["project"]["version"] == pep440_version(str(manifest["version"]))
     assert (ROOT / "frontend" / "package-lock.json").is_file()
 
 
