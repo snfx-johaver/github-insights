@@ -103,4 +103,26 @@ describe("entity discovery", () => {
       },
     ]);
   });
+
+  it("discovers the longest known metric suffix from opaque unique IDs", async () => {
+    const sendMessagePromise = vi
+      .fn()
+      .mockResolvedValueOnce([
+        {
+          entity_id: "sensor.configured_minutes",
+          platform: "github_insights",
+          unique_id: "owner_with_underscores_actions_configured_minutes_used",
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    await expect(
+      EntityDiscoveryService.discover(
+        { states: {}, connection: { sendMessagePromise } },
+        config,
+      ),
+    ).resolves.toEqual([
+      expect.objectContaining({ key: "actions_configured_minutes_used" }),
+    ]);
+  });
 });

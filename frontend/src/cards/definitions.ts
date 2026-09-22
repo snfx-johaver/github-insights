@@ -8,7 +8,7 @@ const definitions: CardDefinition[] = [
     name: "GitHub Insights overview",
     description: "Account, usage, repositories, workflows, security, and freshness.",
     icon: "mdi:github",
-    defaultMetrics: ["account", "actions_usage_percent", "actions_budget_percent", "copilot_paid_usage", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "last_successful_sync"],
+    defaultMetrics: ["account", "actions_configured_minutes_used_percent", "actions_configured_minutes_remaining", "actions_gross_cost", "actions_discount", "actions_cost", "copilot_paid_usage", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "last_successful_sync"],
     defaultLayout: "responsive",
   },
   {
@@ -18,7 +18,7 @@ const definitions: CardDefinition[] = [
     name: "GitHub Insights usage",
     description: "Actions, billing, budgets, AI usage, storage, and estimates.",
     icon: "mdi:chart-donut",
-    defaultMetrics: ["actions_discounted_usage", "actions_billable_usage", "actions_gross_cost", "actions_discount", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_blocked", "actions_estimated_minutes_remaining", "billing_period", "copilot_paid_usage"],
+    defaultMetrics: ["actions_configured_included_minutes", "actions_configured_minutes_used", "actions_configured_minutes_remaining", "actions_configured_minutes_used_percent", "actions_gross_cost", "actions_discount", "actions_cost", "actions_discounted_usage", "actions_billable_usage", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_blocked", "actions_estimated_minutes_remaining", "billing_period", "copilot_paid_usage"],
     defaultLayout: "hero",
   },
   {
@@ -48,7 +48,7 @@ const definitions: CardDefinition[] = [
     name: "GitHub Insights Actions",
     description: "Runtime, included and paid usage, runs, costs, and enforcement.",
     icon: "mdi:play-circle-outline",
-    defaultMetrics: ["workflow_health", "actions_discounted_usage", "actions_billable_usage", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_blocked", "actions_estimated_minutes_remaining", "billing_period"],
+    defaultMetrics: ["actions_configured_included_minutes", "actions_configured_minutes_used", "actions_configured_minutes_remaining", "actions_configured_minutes_used_percent", "actions_gross_cost", "actions_discount", "actions_cost", "workflow_health", "actions_discounted_usage", "actions_billable_usage", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_blocked", "actions_estimated_minutes_remaining", "billing_period"],
     defaultLayout: "responsive",
   },
   {
@@ -108,7 +108,7 @@ const definitions: CardDefinition[] = [
     name: "GitHub Insights dashboard",
     description: "Composite responsive GitHub dashboard.",
     icon: "mdi:view-dashboard-outline",
-    defaultMetrics: ["actions_usage_percent", "actions_budget_percent", "copilot_paid_usage", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "commits", "last_successful_sync"],
+    defaultMetrics: ["actions_configured_included_minutes", "actions_configured_minutes_used_percent", "actions_configured_minutes_remaining", "actions_gross_cost", "actions_discount", "actions_cost", "actions_budget_percent", "copilot_paid_usage", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "commits", "last_successful_sync"],
     defaultLayout: "responsive",
   },
 ];

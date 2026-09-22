@@ -23,6 +23,13 @@ The project uses [Semantic Versioning](https://semver.org/).
 - Personal, organization, and enterprise enhanced-billing usage; organization
   and enterprise budget discovery/CRUD; confirmed mutation services; Actions
   cost and budget entities; and clearly labeled runner-based estimates.
+- Optional configured Actions included-minutes allowance with configured used,
+  remaining, and percent sensors derived only from unambiguous GitHub-reported
+  minute quantities, plus explicit unavailable reasons and repair guidance.
+- Richer bundled repository, usage, Actions, and dashboard cards with
+  compact/expanded repository layouts, metric badges, safe deep links,
+  favorites, stable multi-key sorting, per-repository presentation overrides,
+  and a sanitized accessible diagnostics panel.
 - Repository discovery, workflows, releases, deployments, activity, traffic,
   and security collection with bounded, capability-aware entities.
 - Official Copilot and AI billing, adoption, coding-agent, and code-review

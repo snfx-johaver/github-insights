@@ -1018,6 +1018,7 @@ def _repository_attributes(item: GitHubRepositoryInsights) -> Mapping[str, Any]:
         "full_name": repository.full_name,
         "description": repository.description,
         "url": repository.html_url,
+        "repository_url": repository.html_url,
         "visibility": repository.visibility,
         "default_branch": repository.default_branch,
         "language": repository.language,

@@ -38,6 +38,9 @@ package, plugin, repository, HACS entry, or version.
   delete, and `prevent_further_usage` changes.
 - Explicit separation of workflow runtime, included usage, paid usage, monetary
   cost, budgets, and estimated equivalent minutes.
+- An optional user-configured Actions included-minutes allowance with derived
+  configured used, remaining, and percent sensors when GitHub reports a single
+  minute unit.
 - Eleven responsive Lit-based cards, each with a visual editor, card-picker
   defaults, Home Assistant theme integration, keyboard support, screen-reader
   semantics, reduced-motion behavior, and missing/unavailable/error states.
@@ -153,9 +156,20 @@ and an authoritative post-write refresh. See [permissions](docs/permissions.md).
 ## Actions limits and estimates
 
 GitHub's authoritative enforcement mechanism is a **monetary budget** with
-`prevent_further_usage`, not a universal raw-minute ceiling. GitHub-reported
-usage quantity, gross cost, discount, net cost, included allowance, workflow
-runtime, and budget consumption are distinct values.
+`prevent_further_usage`, not a universal raw-minute ceiling. The current public
+enhanced-billing API reports Actions gross quantity/cost, discounted-or-included
+quantity/discount, and net quantity/cost, but it does not report the historical
+plan included-minutes allowance.
+
+Users may optionally configure their own included-minutes allowance in the
+integration options. It defaults to unset (`0`), is always labeled
+**Configured**, and produces configured used, remaining, and percentage values
+only when GitHub reports an unambiguous Actions minute quantity. The derivation
+prefers GitHub's discounted-or-included quantity and falls back to gross
+quantity when the summary quantity is unavailable; it never treats net/billed
+quantity as included-minute consumption. The configured allowance itself
+remains available when set; mixed, non-minute, or unavailable usage makes the
+used/remaining/percent derivations unavailable with an explicit reason.
 
 An "estimated equivalent minutes" value may be calculated as:
 
@@ -170,17 +184,18 @@ status.
 ## Entities and cards
 
 The enhanced-billing API does not expose the billing UI's exact total included
-plan allowance. GitHub Insights therefore does not create an "included minutes
-remaining" value from static plan tables. `discountQuantity` is shown only as
-authoritative discounted-or-included consumption, not as the account's total
-allowance.
+plan allowance. GitHub Insights never invents one from plan lookup tables,
+undocumented endpoints, or web scraping. A configured allowance is a local
+planning input, while `grossQuantity`, `discountQuantity`, `netQuantity`, and
+their monetary amounts remain authoritative GitHub values.
 
 ## Billing entities
 
 Each configured billing scope receives a Billing device with billing period,
 Actions gross/discount/net cost, unambiguous billed and discounted quantity,
-budget count, single-budget amount/remaining/utilization, estimated equivalent
-minutes, warning/exhausted/blocked binary sensors, and a manual refresh button.
+optional configured included/used/remaining/percent minutes, budget count,
+single-budget amount/remaining/utilization, estimated equivalent minutes,
+warning/exhausted/blocked binary sensors, and a manual refresh button.
 If multiple overlapping Actions budgets exist, aggregate amount sensors remain
 unavailable and the individual budget summaries stay in bounded attributes.
 
@@ -216,10 +231,15 @@ Bundled cards:
 - `custom:github-insights-compact`
 - `custom:github-insights-dashboard`
 
-Every card has a visual editor. Entity discovery filters the Home Assistant
-entity registry by the `github_insights` platform and uses stable translation
-keys; explicit `entities` mappings are supported as a compatibility override.
-See [card specifications](docs/card-specifications.md).
+Every card has a visual editor. The richer repository and billing experiences
+remain bundled in the same integration installation: compact/expanded
+repository views, favorites, deterministic multi-key sorting, safe GitHub deep
+links, metric badges, configured allowance progress, authoritative cost
+breakdowns, and an optional sanitized diagnostics panel. Entity discovery
+filters the Home Assistant entity registry by the `github_insights` platform
+and uses stable translation keys; explicit `entities` mappings are supported
+as a compatibility override. See
+[card specifications](docs/card-specifications.md).
 
 ## Example configuration
 

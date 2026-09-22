@@ -30,6 +30,10 @@ loading/empty/error/stale/partial states.
 - Tap, hold, and double-tap use Home Assistant action semantics.
 - Values include provenance and freshness; estimated values always contain the
   word "estimated".
+- Optional diagnostics show only normalized card configuration and discovered
+  entity IDs/metric keys. Entity states and attributes are never copied into
+  the panel, preventing tokens, signed URLs, and repository metadata from
+  leaking through debug output.
 - Rendering uses Lit text bindings and validated HTTP(S) links; GitHub content
   is never injected through unsafe HTML.
 - All card shells are keyboard-focusable, expose progress semantics and status
@@ -43,12 +47,14 @@ type: custom:github-insights-actions
 title: Actions
 layout: responsive
 metrics:
-  - actions_runtime
+  - actions_configured_minutes_remaining
+  - actions_configured_minutes_used_percent
+  - actions_gross_cost
+  - actions_discount
+  - actions_cost
   - actions_discounted_usage
   - actions_billable_usage
-  - actions_cost
-  - actions_budget
-  - actions_estimated_minutes_remaining
+show_debug: false
 entities: # optional override; registry discovery is the default
   actions_discounted_usage: sensor.github_insights_actions_discounted_or_included_consumption
 tap_action:
@@ -65,16 +71,16 @@ card-specific fields. All picker stubs are usable without YAML.
 | Card | Primary purpose | Default content |
 |---|---|---|
 | `github-insights-overview` | Account landing card | Avatar, account, Actions usage/budget, AI availability, repos, PRs, workflow/security health, freshness |
-| `github-insights-usage` | Flagship billing card | GitHub-reported quantities/costs, budget/enforcement, AI usage, storage, forecast, estimated equivalent minutes |
+| `github-insights-usage` | Flagship billing card | Configured allowance progress, GitHub-reported quantities and gross/discount/net costs, budget/enforcement, AI usage, storage, forecast, estimated equivalent minutes |
 | `github-insights-repositories` | Multi-repository operations | Search, grouping, sorting, favorites, compact/grid rows, workflow/release/security indicators |
 | `github-insights-repository` | One repository | Description, language, KPIs, latest events, workflow, usage, traffic, security, actions |
-| `github-insights-actions` | Workflow and billing detail | Runtime, runs, failures, long jobs, usage by SKU/repo/workflow, cost, budget, estimate |
+| `github-insights-actions` | Workflow and billing detail | Configured allowance progress, authoritative gross/discount/net cost, runtime, failures, usage by SKU/repo/workflow, budget, estimate |
 | `github-insights-copilot` | Authorized AI data | AI credits/premium requests, costs, adoption/activity, coding-agent/review, freshness |
 | `github-insights-activity` | Development activity | Commits, PRs, issues, reviews, releases, selectable periods, simple trends |
 | `github-insights-contributions` | Contribution patterns | Heatmap, totals, reliable streaks, repositories, weekday distribution |
 | `github-insights-security` | Authorized alert posture | Alert counts/severity/repositories and safe GitHub links |
 | `github-insights-compact` | Dense dashboard metric | One primary and secondary metric, icon, optional ring/bar/trend |
-| `github-insights-dashboard` | Composite responsive surface | User-selected modules sharing layout and status context |
+| `github-insights-dashboard` | Composite responsive surface | Prominent configured Actions allowance and authoritative cost modules plus user-selected repository/status modules |
 
 ## Usage card rules
 
@@ -87,6 +93,11 @@ Never combine unlike units in one progress bar. Separate:
 - GitHub-enforced monetary budget and consumed amount;
 - stop-usage status; and
 - estimated equivalent minutes.
+
+Configured included minutes are local input, not GitHub-reported plan limits.
+Configured progress renders only when the backend confirms a single minute unit
+and exposes its source label. GitHub gross, discount, and net monetary amounts
+remain separately labeled authoritative values.
 
 The estimate presents the runner/SKU, price per minute, price source date, and
 formula. It never labels itself as an allowance or hard limit.
@@ -139,4 +150,5 @@ metrics:
   - workflow_status
   - actions_usage
 show_forks: true
+show_debug: false
 ```

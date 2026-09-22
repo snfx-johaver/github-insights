@@ -39,6 +39,11 @@ export class GitHubInsightsEditor extends LitElement {
       border: 1px solid var(--divider-color);
       border-radius: 8px;
     }
+    input:focus-visible,
+    select:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
     .metrics {
       grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     }
@@ -146,6 +151,46 @@ export class GitHubInsightsEditor extends LitElement {
                 )}
               </select>
             </label>
+            <label>
+              Favorite repositories
+              <input
+                aria-label="Favorite repositories"
+                placeholder="owner/one, owner/two"
+                .value=${(this.config.favorites ?? []).join(", ")}
+                @change=${(event: Event) =>
+                  this.updateConfig({
+                    favorites: (event.target as HTMLInputElement).value
+                      .split(",")
+                      .map((value) => value.trim())
+                      .filter(Boolean),
+                  })}
+              />
+            </label>
+            <label>
+              Primary repository sort
+              <select
+                aria-label="Primary repository sort"
+                .value=${this.config.sort?.[0]?.field ?? "workflow_health"}
+                @change=${(event: Event) => {
+                  const field = (event.target as HTMLSelectElement).value;
+                  this.updateConfig({
+                    sort: [
+                      {
+                        field,
+                        direction: field === "last_push" ? "descending" : "ascending",
+                        nulls: "last",
+                      },
+                      { field: "name", direction: "ascending", nulls: "last" },
+                    ],
+                  });
+                }}
+              >
+                ${["workflow_health", "last_push", "stars", "open_issues", "name"].map(
+                  (field) =>
+                    html`<option value=${field}>${field.replaceAll("_", " ")}</option>`,
+                )}
+              </select>
+            </label>
           `
         : nothing}
       ${this.definition.kind === "compact"
@@ -193,6 +238,44 @@ export class GitHubInsightsEditor extends LitElement {
               this.updateConfig({ show_forecast: (event.target as HTMLInputElement).checked })}
           />
           Show forecast when supplied by GitHub Insights
+        </label>
+        <label class="check">
+          <input
+            type="checkbox"
+            .checked=${this.config.show_metric_badges ?? true}
+            @change=${(event: Event) =>
+              this.updateConfig({
+                show_metric_badges: (event.target as HTMLInputElement).checked,
+              })}
+          />
+          Show metric attribute badges
+        </label>
+        <label>
+          Badge attributes
+          <input
+            aria-label="Metric badge attributes"
+            placeholder="visibility, default_branch"
+            .value=${(this.config.metric_badges ?? [])
+              .map((badge) => badge.attribute)
+              .join(", ")}
+            @change=${(event: Event) =>
+              this.updateConfig({
+                metric_badges: (event.target as HTMLInputElement).value
+                  .split(",")
+                  .map((attribute) => attribute.trim())
+                  .filter(Boolean)
+                  .map((attribute) => ({ attribute })),
+              })}
+          />
+        </label>
+        <label class="check">
+          <input
+            type="checkbox"
+            .checked=${this.config.show_debug ?? false}
+            @change=${(event: Event) =>
+              this.updateConfig({ show_debug: (event.target as HTMLInputElement).checked })}
+          />
+          Show sanitized diagnostics panel
         </label>
       </fieldset>
     `;
