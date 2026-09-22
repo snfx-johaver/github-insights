@@ -4,11 +4,10 @@ GitHub usage, Actions billing, Copilot metrics, and repository insights for
 Home Assistant.
 
 > [!IMPORTANT]
-> Version `0.1.0-beta.1` includes the Phase 2 read-only account integration and
-> the complete Phase 6-8 frontend card suite. Backend billing, repository,
-> workflow, Copilot, activity, contribution, and security entities remain
-> separate implementation phases. Cards handle those absent capabilities
-> without fabricated data. No release has been published.
+> Version `0.1.0-beta.1` includes the Phase 2 account integration, Phase 3
+> Actions billing and budgets backend, and the bundled Phase 6-8 card suite.
+> Repository/workflow detail, Copilot, activity, contribution, and security
+> backend entities remain later phases. No release has been published.
 
 ## One integration and one installation
 
@@ -30,12 +29,13 @@ package, plugin, repository, HACS entry, or version.
 
 ## Features
 
-- GitHub account, organization, repository, workflow, activity, contribution,
-  traffic, and authorized security data.
-- Authoritative GitHub billing usage and monetary budgets where official APIs
-  and permissions expose them.
-- Copilot billing and usage metrics where the account scope and plan support
-  official endpoints.
+- GitHub account discovery, organization/repository selection, account sensors,
+  API rate-limit diagnostics, reauthentication, repairs, and redacted
+  diagnostics.
+- Authoritative enhanced-billing detail and summary reports for personal,
+  organization, and enterprise scopes on GitHub.com/GitHub Enterprise Cloud.
+- Organization and enterprise budget discovery plus confirmed create, update,
+  delete, and `prevent_further_usage` changes.
 - Explicit separation of workflow runtime, included usage, paid usage, monetary
   cost, budgets, and estimated equivalent minutes.
 - Eleven responsive Lit-based cards, each with a visual editor, card-picker
@@ -43,6 +43,9 @@ package, plugin, repository, HACS entry, or version.
   semantics, reduced-motion behavior, and missing/unavailable/error states.
 - Read-only operation by default; budget writes require explicit opt-in and
   confirmation for every mutation.
+
+Repository/workflow detail and Copilot/activity/security backend reporting
+remain later phases; the cards already render safe empty/unavailable states.
 
 ## Screenshots
 
@@ -56,13 +59,13 @@ live Home Assistant instance in Phase 9:
 
 ## Compatibility target
 
-| Surface | Phase 2 position |
+| Surface | Phase 3 position |
 |---|---|
 | Home Assistant | Config-entry runtime targets current Home Assistant releases |
 | HACS | Integration repository using a single zip release |
 | GitHub.com | Primary target |
 | GitHub Enterprise Server | Capability-detected; billing/Copilot parity is not assumed |
-| Authentication | Personal access token first; GitHub App/OAuth abstraction reserved |
+| Billing authentication | Personal access token (classic) required by GitHub; fine-grained PATs continue to work for non-billing Phase 2 data |
 | Browser | Current Home Assistant-supported browsers |
 
 ## HACS custom-repository installation
@@ -99,7 +102,7 @@ source maps, and development dependencies are not shipped.
 
 ## Setup and permissions
 
-The Phase 2 config flow requests a GitHub server and token, validates the
+The config flow requests a GitHub server and token, validates the
 authenticated identity, discovers accessible organizations and repositories,
 and explains unavailable capabilities. Read-only repository access is the
 baseline. Billing, security, traffic, Copilot, and budget-management data each
@@ -111,9 +114,15 @@ core REST rate-limit remaining/reset, and last successful synchronization.
 Repository discovery is bounded metadata for configuration; detailed repository
 entities remain Phase 4 work.
 
-Budget management is always disabled by default. Write-capable entities appear
-only after explicit opt-in and successful capability detection. See
-[permissions](docs/permissions.md).
+Enhanced-billing usage endpoints require a **personal access token (classic)**.
+GitHub explicitly does not support fine-grained PATs for these endpoints. A
+fine-grained PAT remains valid for supported account/repository features; only
+billing is marked unavailable.
+
+Budget management is always disabled by default. The local management switch
+only enables access to mutation services; it never changes a GitHub budget.
+Every mutation service requires an exact action-specific confirmation string
+and an authoritative post-write refresh. See [permissions](docs/permissions.md).
 
 ## Actions limits and estimates
 
@@ -133,6 +142,34 @@ price snapshot, and never replace GitHub-reported quantities or enforcement
 status.
 
 ## Entities and cards
+
+The enhanced-billing API does not expose the billing UI's exact total included
+plan allowance. GitHub Insights therefore does not create an "included minutes
+remaining" value from static plan tables. `discountQuantity` is shown only as
+authoritative discounted-or-included consumption, not as the account's total
+allowance.
+
+## Phase 3 entities
+
+Each configured billing scope receives a Billing device with billing period,
+Actions gross/discount/net cost, unambiguous billed and discounted quantity,
+budget count, single-budget amount/remaining/utilization, estimated equivalent
+minutes, warning/exhausted/blocked binary sensors, and a manual refresh button.
+If multiple overlapping Actions budgets exist, aggregate amount sensors remain
+unavailable and the individual budget summaries stay in bounded attributes.
+
+Account-level local controls include:
+
+- desired estimated Actions minutes (`number`);
+- estimate reference runner (`select`); and
+- budget-management service opt-in (`switch`).
+
+These controls do not mutate GitHub. Financial changes use
+`github_insights.create_budget`, `update_budget`, `delete_budget`, and
+`set_stop_usage`, with the exact confirmation shown by the service error/help
+text.
+
+### Bundled cards
 
 The initial design targets 24 default-enabled account/category entities plus 6
 default-enabled entities per explicitly selected repository. Six write-capable

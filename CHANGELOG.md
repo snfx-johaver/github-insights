@@ -19,7 +19,12 @@ The project uses [Semantic Versioning](https://semver.org/).
   motion, and lightweight CSS/SVG-style visualizations.
 - Deterministic integration-only release archives with a hashed deployment
   manifest and artifact validation.
+- Phase 2 config-entry authentication, account discovery, rate-limit
+  diagnostics, sensors, repairs, and strict backend tests.
+- Phase 3 personal/organization/enterprise enhanced-billing usage, organization
+  and enterprise budget discovery/CRUD, confirmed mutation services,
+  Actions cost and budget entities, and clearly labeled runner-based estimates.
 
-Backend billing, repository, workflow, Copilot, activity, and security metrics
-remain separate implementation phases. Cards expose empty/unavailable states
-until those entities are present.
+Repository/workflow detail, Copilot, activity, and security metrics remain
+separate backend phases. Cards expose empty/unavailable states until those
+entities are present.

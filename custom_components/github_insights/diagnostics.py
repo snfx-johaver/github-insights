@@ -32,6 +32,7 @@ async def async_get_config_entry_diagnostics(
 ) -> dict[str, Any]:
     """Return sanitized diagnostics for one config entry."""
     snapshot = entry.runtime_data.coordinator.data
+    billing = entry.runtime_data.billing_coordinator.data
     return {
         "entry": async_redact_data(
             {
@@ -62,6 +63,7 @@ async def async_get_config_entry_diagnostics(
                 if entry.runtime_data.client.server.is_dotcom
                 else "github_enterprise_server"
             ),
+            "token_type": entry.runtime_data.client.token_type,
             "organization_count": len(snapshot.organizations),
             "repository_count": len(snapshot.repositories),
             "capabilities": {
@@ -84,5 +86,34 @@ async def async_get_config_entry_diagnostics(
                 if snapshot.rate_limit
                 else None
             ),
+            "billing": {
+                "scope_count": len(billing.scopes),
+                "scopes": [
+                    {
+                        "scope_type": scope_data.scope.scope_type,
+                        "usage_status": scope_data.usage_capability.status,
+                        "usage_reason": scope_data.usage_capability.reason,
+                        "budget_status": scope_data.budget_capability.status,
+                        "budget_reason": scope_data.budget_capability.reason,
+                        "usage_item_count": (
+                            len(scope_data.usage.summary_items)
+                            if scope_data.usage
+                            else 0
+                        ),
+                        "budget_count": len(scope_data.budgets),
+                    }
+                    for scope_data in billing.scopes.values()
+                ],
+                "fetched_at": billing.fetched_at,
+                "last_mutation": (
+                    {
+                        "action": billing.last_mutation.action,
+                        "scope_type": billing.last_mutation.scope_key.split(":", 1)[0],
+                        "completed_at": billing.last_mutation.completed_at,
+                    }
+                    if billing.last_mutation
+                    else None
+                ),
+            },
         },
     }

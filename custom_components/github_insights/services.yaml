@@ -1,2 +1,137 @@
-{}
+create_budget:
+  name: Create budget
+  description: Creates an organization or enterprise budget after exact confirmation.
+  fields:
+    scope_type:
+      required: true
+      selector:
+        select:
+          options:
+            - organization
+            - enterprise
+    scope_name:
+      required: true
+      selector:
+        text:
+    budget_amount:
+      required: true
+      selector:
+        number:
+          min: 0
+          step: 1
+          mode: box
+    budget_scope:
+      required: true
+      selector:
+        text:
+    budget_entity_name:
+      selector:
+        text:
+    budget_type:
+      required: true
+      selector:
+        select:
+          options:
+            - BundlePricing
+            - ProductPricing
+            - SkuPricing
+    budget_product_sku:
+      required: true
+      selector:
+        text:
+    prevent_further_usage:
+      required: true
+      selector:
+        boolean:
+    will_alert:
+      selector:
+        boolean:
+    alert_recipients:
+      selector:
+        object:
+    confirmation:
+      required: true
+      selector:
+        text:
 
+update_budget:
+  name: Update budget
+  description: Updates a budget after exact confirmation and authoritative read-back.
+  fields:
+    scope_type:
+      required: true
+      selector:
+        text:
+    scope_name:
+      required: true
+      selector:
+        text:
+    budget_id:
+      required: true
+      selector:
+        text:
+    budget_amount:
+      selector:
+        number:
+          min: 0
+          step: 1
+          mode: box
+    prevent_further_usage:
+      selector:
+        boolean:
+    will_alert:
+      selector:
+        boolean:
+    alert_recipients:
+      selector:
+        object:
+    confirmation:
+      required: true
+      selector:
+        text:
+
+delete_budget:
+  name: Delete budget
+  description: Permanently removes a budget after stronger exact confirmation.
+  fields:
+    scope_type:
+      required: true
+      selector:
+        text:
+    scope_name:
+      required: true
+      selector:
+        text:
+    budget_id:
+      required: true
+      selector:
+        text:
+    confirmation:
+      required: true
+      selector:
+        text:
+
+set_stop_usage:
+  name: Set stop usage
+  description: Enables or disables GitHub budget enforcement after exact confirmation.
+  fields:
+    scope_type:
+      required: true
+      selector:
+        text:
+    scope_name:
+      required: true
+      selector:
+        text:
+    budget_id:
+      required: true
+      selector:
+        text:
+    prevent_further_usage:
+      required: true
+      selector:
+        boolean:
+    confirmation:
+      required: true
+      selector:
+        text:

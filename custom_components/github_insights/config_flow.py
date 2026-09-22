@@ -33,17 +33,36 @@ from .const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
     CONF_AUTO_DISCOVER,
+    CONF_BILLING_ENTERPRISE,
+    CONF_BILLING_INTERVAL,
+    CONF_BILLING_ORGANIZATIONS,
+    CONF_BUDGET_CRITICAL_THRESHOLD,
+    CONF_BUDGET_MANAGEMENT,
+    CONF_BUDGET_WARNING_THRESHOLD,
+    CONF_ESTIMATED_MINUTES,
     CONF_ORGANIZATIONS,
+    CONF_PERSONAL_BILLING,
+    CONF_REFERENCE_RUNNER,
     CONF_REPOSITORIES,
     CONF_SERVER,
     CONF_TOKEN,
     CONF_UPDATE_INTERVAL,
     DEFAULT_AUTO_DISCOVER,
+    DEFAULT_BILLING_INTERVAL_MINUTES,
+    DEFAULT_BUDGET_CRITICAL_THRESHOLD,
+    DEFAULT_BUDGET_MANAGEMENT,
+    DEFAULT_BUDGET_WARNING_THRESHOLD,
+    DEFAULT_ESTIMATED_MINUTES,
+    DEFAULT_PERSONAL_BILLING,
+    DEFAULT_REFERENCE_RUNNER,
     DEFAULT_SERVER,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
+    MAX_BILLING_INTERVAL_MINUTES,
     MAX_UPDATE_INTERVAL_MINUTES,
+    MIN_BILLING_INTERVAL_MINUTES,
     MIN_UPDATE_INTERVAL_MINUTES,
+    REFERENCE_RUNNER_PRICES,
 )
 from .coordinator import GitHubInsightsConfigEntry
 from .models import GitHubSnapshot
@@ -74,7 +93,7 @@ async def async_validate_input(
 class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a GitHub Insights config flow."""
 
-    VERSION = 2
+    VERSION = 3
     MINOR_VERSION = 1
 
     def __init__(self) -> None:
@@ -148,6 +167,15 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_ORGANIZATIONS: user_input[CONF_ORGANIZATIONS],
                     CONF_REPOSITORIES: user_input[CONF_REPOSITORIES],
                     CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL_MINUTES,
+                    CONF_BILLING_INTERVAL: DEFAULT_BILLING_INTERVAL_MINUTES,
+                    CONF_PERSONAL_BILLING: DEFAULT_PERSONAL_BILLING,
+                    CONF_BILLING_ORGANIZATIONS: user_input[CONF_ORGANIZATIONS],
+                    CONF_BILLING_ENTERPRISE: "",
+                    CONF_BUDGET_MANAGEMENT: DEFAULT_BUDGET_MANAGEMENT,
+                    CONF_REFERENCE_RUNNER: DEFAULT_REFERENCE_RUNNER,
+                    CONF_ESTIMATED_MINUTES: DEFAULT_ESTIMATED_MINUTES,
+                    CONF_BUDGET_WARNING_THRESHOLD: DEFAULT_BUDGET_WARNING_THRESHOLD,
+                    CONF_BUDGET_CRITICAL_THRESHOLD: DEFAULT_BUDGET_CRITICAL_THRESHOLD,
                 },
             )
 
@@ -281,7 +309,92 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
                         step=5,
                         mode=NumberSelectorMode.BOX,
                     )
-                )
+                ),
+                vol.Required(
+                    CONF_BILLING_INTERVAL,
+                    default=self._entry.options.get(
+                        CONF_BILLING_INTERVAL,
+                        DEFAULT_BILLING_INTERVAL_MINUTES,
+                    ),
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=MIN_BILLING_INTERVAL_MINUTES,
+                        max=MAX_BILLING_INTERVAL_MINUTES,
+                        step=30,
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required(
+                    CONF_PERSONAL_BILLING,
+                    default=self._entry.options.get(
+                        CONF_PERSONAL_BILLING, DEFAULT_PERSONAL_BILLING
+                    ),
+                ): bool,
+                vol.Optional(
+                    CONF_BILLING_ORGANIZATIONS,
+                    default=self._entry.options.get(
+                        CONF_BILLING_ORGANIZATIONS, organizations
+                    ),
+                ): SelectSelector(
+                    SelectSelectorConfig(
+                        options=organizations,
+                        multiple=True,
+                        sort=True,
+                    )
+                ),
+                vol.Optional(
+                    CONF_BILLING_ENTERPRISE,
+                    default=self._entry.options.get(CONF_BILLING_ENTERPRISE, ""),
+                ): TextSelector(TextSelectorConfig()),
+                vol.Required(
+                    CONF_BUDGET_MANAGEMENT,
+                    default=self._entry.options.get(
+                        CONF_BUDGET_MANAGEMENT, DEFAULT_BUDGET_MANAGEMENT
+                    ),
+                ): bool,
+                vol.Required(
+                    CONF_REFERENCE_RUNNER,
+                    default=self._entry.options.get(
+                        CONF_REFERENCE_RUNNER, DEFAULT_REFERENCE_RUNNER
+                    ),
+                ): SelectSelector(
+                    SelectSelectorConfig(options=list(REFERENCE_RUNNER_PRICES))
+                ),
+                vol.Required(
+                    CONF_ESTIMATED_MINUTES,
+                    default=self._entry.options.get(
+                        CONF_ESTIMATED_MINUTES, DEFAULT_ESTIMATED_MINUTES
+                    ),
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0,
+                        max=1_000_000,
+                        step=100,
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required(
+                    CONF_BUDGET_WARNING_THRESHOLD,
+                    default=self._entry.options.get(
+                        CONF_BUDGET_WARNING_THRESHOLD,
+                        DEFAULT_BUDGET_WARNING_THRESHOLD,
+                    ),
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=1, max=100, step=1, mode=NumberSelectorMode.BOX
+                    )
+                ),
+                vol.Required(
+                    CONF_BUDGET_CRITICAL_THRESHOLD,
+                    default=self._entry.options.get(
+                        CONF_BUDGET_CRITICAL_THRESHOLD,
+                        DEFAULT_BUDGET_CRITICAL_THRESHOLD,
+                    ),
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=1, max=100, step=1, mode=NumberSelectorMode.BOX
+                    )
+                ),
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema)

@@ -28,7 +28,7 @@ from custom_components.github_insights.diagnostics import (
     async_get_config_entry_diagnostics,
 )
 
-from .helpers import snapshot
+from .helpers import billing_snapshot, snapshot
 
 
 async def test_setup_registers_bundled_frontend_once() -> None:
@@ -69,9 +69,15 @@ async def test_setup_creates_account_sensors(hass: HomeAssistant) -> None:
     )
     entry.add_to_hass(hass)
 
-    with patch(
-        "custom_components.github_insights.api.GitHubClient.async_fetch_snapshot",
-        new=AsyncMock(return_value=snapshot()),
+    with (
+        patch(
+            "custom_components.github_insights.api.GitHubClient.async_fetch_snapshot",
+            new=AsyncMock(return_value=snapshot()),
+        ),
+        patch(
+            "custom_components.github_insights.api.GitHubClient.async_fetch_billing_snapshot",
+            new=AsyncMock(return_value=billing_snapshot()),
+        ),
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -101,9 +107,15 @@ async def test_diagnostics_redact_token(hass: HomeAssistant) -> None:
     )
     entry.add_to_hass(hass)
 
-    with patch(
-        "custom_components.github_insights.api.GitHubClient.async_fetch_snapshot",
-        new=AsyncMock(return_value=snapshot()),
+    with (
+        patch(
+            "custom_components.github_insights.api.GitHubClient.async_fetch_snapshot",
+            new=AsyncMock(return_value=snapshot()),
+        ),
+        patch(
+            "custom_components.github_insights.api.GitHubClient.async_fetch_billing_snapshot",
+            new=AsyncMock(return_value=billing_snapshot()),
+        ),
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
         await hass.async_block_till_done()
@@ -112,6 +124,9 @@ async def test_diagnostics_redact_token(hass: HomeAssistant) -> None:
     assert "secret-token" not in str(diagnostics)
     assert "private-org" not in str(diagnostics)
     assert diagnostics["runtime"]["repository_count"] == 1
+    assert "example-org" not in str(diagnostics)
+    assert "budget-1" not in str(diagnostics)
+    assert diagnostics["runtime"]["billing"]["scope_count"] == 1
 
 
 async def test_migrate_legacy_host_key(hass: HomeAssistant) -> None:
@@ -128,6 +143,6 @@ async def test_migrate_legacy_host_key(hass: HomeAssistant) -> None:
     entry.add_to_hass(hass)
 
     assert await async_migrate_entry(hass, entry)
-    assert entry.version == 2
+    assert entry.version == 3
     assert entry.data[CONF_SERVER] == "https://github.example.com"
     assert entry.data[CONF_ACCOUNT_LOGIN] == "octocat"
