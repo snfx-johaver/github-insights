@@ -310,24 +310,53 @@ class GitHubClient:
         selected_month = month or now.month
         params = {"year": str(selected_year), "month": str(selected_month)}
         base_path = _billing_scope_path(scope)
-        detail = await self._request_json("GET", f"{base_path}/usage", params=params)
-        summary = await self._request_json(
-            "GET", f"{base_path}/usage/summary", params=params
-        )
-        summary_object = _as_object(summary, "invalid_usage_summary")
-        time_period = _required_object(summary_object, "timePeriod")
-        period = BillingPeriod(
-            year=_required_int(time_period, "year"),
-            month=_optional_int(time_period.get("month")),
-            day=_optional_int(time_period.get("day")),
-        )
+        detail_items: tuple[BillingUsageItem, ...] = ()
+        summary_items: tuple[BillingUsageItem, ...] = ()
+        unavailable: list[str] = []
+        detail_error: GitHubInsightsError | None = None
+        summary_error: GitHubInsightsError | None = None
+        try:
+            detail = await self._request_json(
+                "GET", f"{base_path}/usage", params=params
+            )
+            detail_items = _parse_detail_usage_items(
+                _as_object(detail, "invalid_usage_report").get("usageItems")
+            )
+        except GitHubInsightsError as err:
+            if isinstance(err, GitHubAuthenticationError) or (
+                isinstance(err, GitHubAPIError) and err.status == 502
+            ):
+                raise
+            detail_error = err
+            unavailable.append("detail")
+        try:
+            summary = await self._request_json(
+                "GET", f"{base_path}/usage/summary", params=params
+            )
+            summary_object = _as_object(summary, "invalid_usage_summary")
+            time_period = _required_object(summary_object, "timePeriod")
+            period = BillingPeriod(
+                year=_required_int(time_period, "year"),
+                month=_optional_int(time_period.get("month")),
+                day=_optional_int(time_period.get("day")),
+            )
+            summary_items = _parse_summary_usage_items(summary_object.get("usageItems"))
+        except GitHubInsightsError as err:
+            if isinstance(err, GitHubAuthenticationError) or (
+                isinstance(err, GitHubAPIError) and err.status == 502
+            ):
+                raise
+            summary_error = err
+            unavailable.append("summary")
+            period = BillingPeriod(selected_year, selected_month)
+        if detail_error is not None and summary_error is not None:
+            raise summary_error
         return BillingUsageReport(
             scope=scope,
             period=period,
-            summary_items=_parse_summary_usage_items(summary_object.get("usageItems")),
-            detail_items=_parse_detail_usage_items(
-                _as_object(detail, "invalid_usage_report").get("usageItems")
-            ),
+            summary_items=summary_items,
+            detail_items=detail_items,
+            unavailable_sections=tuple(unavailable),
         )
 
     async def async_get_budgets(
@@ -356,6 +385,8 @@ class GitHubClient:
             budgets.extend(_parse_budget(item, scope) for item in raw_budgets)
             if data.get("has_next_page") is not True:
                 break
+        else:
+            raise GitHubAPIError(502, "budget_page_limit_exceeded")
         return tuple(budgets)
 
     async def async_create_budget(

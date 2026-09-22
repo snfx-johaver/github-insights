@@ -82,6 +82,12 @@ UPDATE_SCHEMA = vol.Schema(
         **_SCOPE_SCHEMA,
         vol.Required(CONF_BUDGET_ID): cv.string,
         vol.Optional(CONF_BUDGET_AMOUNT): vol.All(vol.Coerce(int), vol.Range(min=0)),
+        vol.Optional(CONF_BUDGET_SCOPE): cv.string,
+        vol.Optional(CONF_BUDGET_ENTITY_NAME): cv.string,
+        vol.Optional(CONF_BUDGET_TYPE): vol.In(
+            ["BundlePricing", "ProductPricing", "SkuPricing"]
+        ),
+        vol.Optional(CONF_BUDGET_PRODUCT_SKU): cv.string,
         vol.Optional(CONF_PREVENT_FURTHER_USAGE): cv.boolean,
         vol.Optional(CONF_WILL_ALERT): cv.boolean,
         vol.Optional(CONF_ALERT_RECIPIENTS): vol.All(cv.ensure_list, [cv.string]),
@@ -142,6 +148,10 @@ async def async_register_services(hass: HomeAssistant) -> None:
             key: call.data[key]
             for key in (
                 CONF_BUDGET_AMOUNT,
+                CONF_BUDGET_SCOPE,
+                CONF_BUDGET_ENTITY_NAME,
+                CONF_BUDGET_TYPE,
+                CONF_BUDGET_PRODUCT_SKU,
                 CONF_PREVENT_FURTHER_USAGE,
             )
             if key in call.data
