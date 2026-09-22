@@ -76,6 +76,22 @@ update_budget:
           min: 0
           step: 1
           mode: box
+    budget_scope:
+      selector:
+        text:
+    budget_entity_name:
+      selector:
+        text:
+    budget_type:
+      selector:
+        select:
+          options:
+            - BundlePricing
+            - ProductPricing
+            - SkuPricing
+    budget_product_sku:
+      selector:
+        text:
     prevent_further_usage:
       selector:
         boolean:
