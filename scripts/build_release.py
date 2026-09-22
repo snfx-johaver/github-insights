@@ -35,6 +35,7 @@ shutil.copytree(
         "*.pyc",
         "*.pyo",
         "*.map",
+        "*.md",
     ),
 )
 
