@@ -1,0 +1,401 @@
+# Phase 9 deployment input. This file is not part of github_insights.zip.
+# Back up and replace only dashboards/github_insights.yaml.
+title: GitHub Insights
+views:
+  - title: Overview
+    path: overview
+    icon: mdi:github
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: GitHub Insights
+            subtitle: Account, delivery, usage, and risk
+          - type: custom:mushroom-chips-card
+            alignment: start
+            chips:
+              - type: template
+                icon: mdi:cash-multiple
+                content: Usage
+                tap_action:
+                  action: navigate
+                  navigation_path: /github-insights/usage
+              - type: template
+                icon: mdi:source-repository-multiple
+                content: Repositories
+                tap_action:
+                  action: navigate
+                  navigation_path: /github-insights/repositories
+              - type: template
+                icon: mdi:robot-outline
+                content: Copilot
+                tap_action:
+                  action: navigate
+                  navigation_path: /github-insights/copilot
+              - type: template
+                icon: mdi:shield-check-outline
+                content: Security
+                tap_action:
+                  action: navigate
+                  navigation_path: /github-insights/security
+          - type: custom:github-insights-dashboard
+            title: Engineering overview
+            layout: responsive
+            metrics:
+              - account
+              - public_repositories
+              - open_pull_requests
+              - workflow_health
+              - actions_cost
+              - actions_budget_percent
+              - copilot_paid_usage
+              - dependabot_alerts
+              - last_successful_sync
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Current status
+            subtitle: Automatically discovered GitHub Insights entities
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: Warnings and availability
+              show_header_toggle: false
+            filter:
+              include:
+                - integration: github_insights
+                  domain: binary_sensor
+                - entity_id: sensor.github_insights_*last_successful_sync
+                - entity_id: sensor.github_insights_*api_rate_limit_remaining
+            sort:
+              method: friendly_name
+            show_empty: false
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: API capacity
+            subtitle: Recorder history for GitHub-reported remaining requests
+          - type: custom:auto-entities
+            card:
+              type: custom:apexcharts-card
+              header:
+                show: true
+                title: API requests remaining
+              graph_span: 24h
+              update_interval: 5min
+              apex_config:
+                chart:
+                  height: 260
+            card_param: series
+            filter:
+              include:
+                - entity_id: sensor.github_insights_*api_rate_limit_remaining
+                  options:
+                    name: Requests remaining
+                    type: line
+                    stroke_width: 2
+            show_empty: false
+
+  - title: Usage
+    path: usage
+    icon: mdi:cash-multiple
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Actions billing and budgets
+            subtitle: GitHub-reported usage, cost, budget, and enforcement
+          - type: custom:github-insights-usage
+            title: Usage and budget
+            layout: hero
+            metrics:
+              - actions_discounted_usage
+              - actions_billable_usage
+              - actions_gross_cost
+              - actions_discount
+              - actions_cost
+              - actions_budget
+              - actions_budget_remaining
+              - actions_budget_percent
+              - actions_blocked
+              - actions_estimated_minutes_remaining
+              - billing_period
+            show_estimated_minutes: true
+            severity:
+              green: 0
+              amber: 70
+              red: 90
+          - type: custom:github-insights-actions
+            title: Actions operations
+            layout: responsive
+            metrics:
+              - workflow_health
+              - actions_discounted_usage
+              - actions_billable_usage
+              - actions_cost
+              - actions_budget_remaining
+              - actions_budget_percent
+              - actions_blocked
+              - actions_estimated_minutes_remaining
+              - billing_period
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Cost history
+            subtitle: Monetary values remain separate from runtime and quantity
+          - type: custom:auto-entities
+            card:
+              type: custom:apexcharts-card
+              header:
+                show: true
+                title: Actions net cost
+              graph_span: 30d
+            card_param: series
+            filter:
+              include:
+                - entity_id: sensor.github_insights_*actions_net_cost
+                  options:
+                    name: Net cost
+                    type: line
+                    stroke_width: 2
+            show_empty: false
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Billing capability
+            subtitle: Fine-grained PATs keep nonbilling data available
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: Billing entities
+              show_header_toggle: false
+            filter:
+              include:
+                - entity_id: sensor.github_insights_*billing*
+                - entity_id: sensor.github_insights_*actions*
+                - entity_id: binary_sensor.github_insights_*actions*
+            sort:
+              method: friendly_name
+            show_empty: false
+
+  - title: Repositories
+    path: repositories
+    icon: mdi:source-repository-multiple
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Repository operations
+            subtitle: Automatically discovered repositories and workflow health
+          - type: custom:github-insights-repositories
+            repositories: auto
+            view: grid
+            group_by: organization
+            sort:
+              - field: workflow_health
+                direction: ascending
+              - field: name
+                direction: ascending
+            metrics:
+              - stars
+              - forks
+              - open_issues
+              - open_pull_requests
+              - workflow_health
+              - latest_release
+            show_archived: false
+            show_forks: true
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: Repository sensors
+              show_header_toggle: false
+            filter:
+              include:
+                - integration: github_insights
+                  domain: sensor
+              exclude:
+                - entity_id: sensor.github_insights_*api_rate_limit*
+                - entity_id: sensor.github_insights_*billing*
+                - entity_id: sensor.github_insights_*actions*
+                - entity_id: sensor.github_insights_*copilot*
+            sort:
+              method: friendly_name
+            show_empty: false
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: Workflow and security problems
+              show_header_toggle: false
+            filter:
+              include:
+                - entity_id: binary_sensor.github_insights_*workflow*
+                - entity_id: binary_sensor.github_insights_*security*
+            sort:
+              method: state
+              reverse: true
+            show_empty: false
+
+  - title: Activity
+    path: activity
+    icon: mdi:pulse
+    type: sections
+    max_columns: 3
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Development activity
+            subtitle: Contributions, pull requests, issues, reviews, and releases
+          - type: custom:github-insights-activity
+            period: 90d
+            metrics:
+              - commits
+              - pull_requests_opened
+              - pull_requests_merged
+              - issues_opened
+              - reviews
+              - releases
+          - type: custom:github-insights-contributions
+            period: 90d
+            metrics:
+              - contributions
+              - current_streak
+              - longest_streak
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            card:
+              type: custom:apexcharts-card
+              header:
+                show: true
+                title: Repository activity
+              graph_span: 90d
+            card_param: series
+            filter:
+              include:
+                - entity_id: sensor.github_insights_*commits_90_days
+                  options:
+                    name: Commits
+                    type: line
+                - entity_id: sensor.github_insights_*pull_requests_merged_90_days
+                  options:
+                    name: Merged pull requests
+                    type: line
+            show_empty: false
+
+  - title: Copilot
+    path: copilot
+    icon: mdi:robot-outline
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Copilot and AI
+            subtitle: Official authorized billing, adoption, and activity data
+          - type: custom:github-insights-copilot
+            layout: responsive
+            metrics:
+              - copilot_paid_usage
+              - copilot_cost
+              - copilot_active_users
+              - last_successful_sync
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: Copilot and AI entities
+              show_header_toggle: false
+            filter:
+              include:
+                - entity_id: sensor.github_insights_*copilot*
+                - entity_id: sensor.github_insights_*ai_credits*
+                - entity_id: sensor.github_insights_*premium_requests*
+            sort:
+              method: friendly_name
+            show_empty: false
+
+  - title: Security
+    path: security
+    icon: mdi:shield-check-outline
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: custom:mushroom-title-card
+            title: Repository security
+            subtitle: Only alerts authorized by GitHub are shown
+          - type: custom:github-insights-security
+            layout: responsive
+            metrics:
+              - dependabot_alerts
+              - code_scanning_alerts
+              - secret_scanning_alerts
+              - last_successful_sync
+      - type: grid
+        cards:
+          - type: custom:auto-entities
+            card:
+              type: entities
+              title: Security entities
+              show_header_toggle: false
+            filter:
+              include:
+                - entity_id: sensor.github_insights_*dependabot*
+                - entity_id: sensor.github_insights_*code_scanning*
+                - entity_id: sensor.github_insights_*secret_scanning*
+                - entity_id: binary_sensor.github_insights_*security*
+            sort:
+              method: state
+              reverse: true
+            show_empty: false
+
+  - title: Native fallback
+    path: native-fallback
+    icon: mdi:home-assistant
+    type: sections
+    max_columns: 2
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: GitHub Insights
+            icon: mdi:github
+          - type: markdown
+            content: >-
+              Native Home Assistant fallback. These account and API entities
+              remain usable when optional dashboard cards are unavailable.
+          - type: entities
+            title: Account and API status
+            show_header_toggle: false
+            entities:
+              - sensor.github_insights_johave_account
+              - sensor.github_insights_johave_public_repositories
+              - sensor.github_insights_johave_private_repositories
+              - sensor.github_insights_johave_followers
+              - sensor.github_insights_johave_following
+              - sensor.github_insights_johave_organizations
+              - sensor.github_insights_johave_api_rate_limit_remaining
+              - sensor.github_insights_johave_api_rate_limit_reset
+              - sensor.github_insights_johave_last_successful_sync
+      - type: grid
+        cards:
+          - type: history-graph
+            title: API capacity
+            hours_to_show: 24
+            entities:
+              - sensor.github_insights_johave_api_rate_limit_remaining

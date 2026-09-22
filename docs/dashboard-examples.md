@@ -68,16 +68,23 @@ cards:
       green: 0
       amber: 70
       red: 90
-  - type: custom:apexcharts-card
-    header:
-      show: true
-      title: Actions usage trend
-    graph_span: 30d
-    series:
-      - entity: sensor.github_insights_actions_billable_usage
-        name: Paid usage
-      - entity: sensor.github_insights_actions_runtime
-        name: Workflow runtime
+  - type: custom:auto-entities
+    card:
+      type: custom:apexcharts-card
+      header:
+        show: true
+        title: Actions usage trend
+      graph_span: 30d
+    card_param: series
+    filter:
+      include:
+        - entity_id: sensor.github_insights_*actions_billed_consumption
+          options:
+            name: Paid usage
+        - entity_id: sensor.github_insights_*actions_discounted_or_included_consumption
+          options:
+            name: Discounted or included consumption
+    show_empty: false
 ```
 
 Do not stack runtime and paid usage into one quantity: their units and billing
