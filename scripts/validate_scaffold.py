@@ -56,7 +56,7 @@ REQUIRED_CARDS = {
 BUNDLED_CARD_PATTERN = re.compile(r"type:\s*custom:github-insights-[\w-]+")
 BUNDLED_RESOURCE_URL = "/github_insights/frontend/github-insights-cards.js"
 DASHBOARD = ROOT / "docs" / "release-candidate-dashboard.yaml"
-DASHBOARD_SHA256 = "b7565c77da1a4e976104fab6fcd6fd414e27cc0234f36dc56775195de350ad81"
+DASHBOARD_SHA256 = "97fc8f3208cfbfa29731c656333afdb2237fadafb67c896eb61eec867be690d5"
 RESOURCE_CONFIG = ROOT / "docs" / "release-candidate-lovelace-resources.yaml"
 RESOURCE_EVIDENCE = ROOT / "release-ready.json"
 DYNAMIC_DASHBOARD_FILTERS = {
@@ -81,6 +81,12 @@ def pep440_version(version: str) -> str:
         lambda match: markers[match.group(1)],
         version,
     )
+
+
+def canonical_text_sha256(path: Path) -> str:
+    """Hash text consistently across LF and CRLF checkouts."""
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()
 
 
 def has_bundled_resource_registration() -> bool:
@@ -127,8 +133,7 @@ def main() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyproject["project"]["version"] == pep440_version(str(manifest["version"]))
     assert (ROOT / "frontend" / "package-lock.json").is_file()
-    dashboard_bytes = DASHBOARD.read_bytes()
-    assert hashlib.sha256(dashboard_bytes).hexdigest() == DASHBOARD_SHA256, (
+    assert canonical_text_sha256(DASHBOARD) == DASHBOARD_SHA256, (
         "release-candidate-dashboard.yaml is the exact storage-dashboard import "
         "template and must not change without an intentional template revision"
     )
