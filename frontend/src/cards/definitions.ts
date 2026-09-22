@@ -18,7 +18,7 @@ const definitions: CardDefinition[] = [
     name: "GitHub Insights usage",
     description: "Actions, billing, budgets, AI usage, storage, and estimates.",
     icon: "mdi:chart-donut",
-    defaultMetrics: ["actions_included_usage", "actions_billable_usage", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_stop_usage", "actions_estimated_minutes_remaining", "actions_forecast", "artifact_storage", "package_storage", "cache_usage", "copilot_paid_usage"],
+    defaultMetrics: ["actions_discounted_usage", "actions_billable_usage", "actions_gross_cost", "actions_discount", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_blocked", "actions_estimated_minutes_remaining", "billing_period", "copilot_paid_usage"],
     defaultLayout: "hero",
   },
   {
@@ -48,7 +48,7 @@ const definitions: CardDefinition[] = [
     name: "GitHub Insights Actions",
     description: "Runtime, included and paid usage, runs, costs, and enforcement.",
     icon: "mdi:play-circle-outline",
-    defaultMetrics: ["actions_runtime", "actions_included_usage", "actions_billable_usage", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_stop_usage", "actions_failed_runs", "actions_recent_runs", "actions_estimated_minutes_remaining"],
+    defaultMetrics: ["workflow_health", "actions_discounted_usage", "actions_billable_usage", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_blocked", "actions_estimated_minutes_remaining", "billing_period"],
     defaultLayout: "responsive",
   },
   {

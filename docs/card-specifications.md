@@ -45,16 +45,16 @@ title: Actions
 layout: responsive
 metrics:
   - actions_runtime
-  - actions_included_usage
+  - actions_discounted_usage
   - actions_billable_usage
   - actions_cost
   - actions_budget
   - actions_estimated_minutes_remaining
 entities: # optional override; registry discovery is the default
-  actions_runtime: sensor.github_insights_actions_runtime
+  actions_discounted_usage: sensor.github_insights_actions_discounted_or_included_consumption
 tap_action:
   action: more-info
-  entity: sensor.github_insights_actions_runtime
+  entity: sensor.github_insights_actions_discounted_or_included_consumption
 ```
 
 Every card supports `title`, `layout`, `metrics`, `entities`, `tap_action`,

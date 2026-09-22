@@ -45,7 +45,7 @@ describe("card configuration", () => {
     const usage = CARD_DEFINITIONS.find((card) => card.kind === "usage");
     expect(usage?.defaultMetrics).toEqual(
       expect.arrayContaining([
-        "actions_included_usage",
+        "actions_discounted_usage",
         "actions_billable_usage",
         "actions_cost",
         "actions_budget",

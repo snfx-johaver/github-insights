@@ -109,16 +109,16 @@ describe("GitHub Insights cards", () => {
       {
         show_estimated_minutes: false,
         metrics: [
-          "actions_included_usage",
+          "actions_discounted_usage",
           "actions_estimated_minutes_remaining",
         ],
         entities: {
-          actions_included_usage: "sensor.included",
+          actions_discounted_usage: "sensor.discounted",
           actions_estimated_minutes_remaining: "sensor.estimated",
         },
       },
       {
-        "sensor.included": entity("sensor.included", "40", {
+        "sensor.discounted": entity("sensor.discounted", "40", {
           unit_of_measurement: "min",
         }),
         "sensor.estimated": entity("sensor.estimated", "80", {
@@ -126,7 +126,9 @@ describe("GitHub Insights cards", () => {
         }),
       },
     );
-    expect(card.shadowRoot?.textContent).toContain("Included usage");
+    expect(card.shadowRoot?.textContent).toContain(
+      "Discounted or included consumption",
+    );
     expect(card.shadowRoot?.textContent).not.toContain(
       "Estimated equivalent minutes",
     );
