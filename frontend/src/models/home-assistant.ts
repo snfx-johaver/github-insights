@@ -20,6 +20,15 @@ export interface HomeAssistant {
   ): Promise<unknown>;
 }
 
+export interface LovelaceCardElement extends HTMLElement {
+  hass?: HomeAssistant;
+  setConfig(config: Record<string, unknown>): void;
+}
+
+export interface LovelaceCardHelpers {
+  createCardElement(config: Record<string, unknown>): LovelaceCardElement;
+}
+
 export interface EntityRegistryEntry {
   entity_id: string;
   platform?: string;

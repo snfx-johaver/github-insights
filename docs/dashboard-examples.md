@@ -211,6 +211,19 @@ cards:
 
 ## 8. Combined executive overview
 
+The bundled dashboard now has its own command-center layout with grouped usage,
+delivery, risk, freshness, and repository sections. When Mushroom and
+ApexCharts are installed and registered, it automatically embeds:
+
+- a Mushroom status-chip rail for workflow, pull-request, security, and
+  freshness state; and
+- an ApexCharts 30-day engineering-activity chart for commits and merged pull
+  requests.
+
+No extra YAML is required for these enhancements. If either companion is not
+installed, the dashboard keeps its complete native GitHub Insights layout
+without an error or placeholder.
+
 ```yaml
 type: sections
 max_columns: 4

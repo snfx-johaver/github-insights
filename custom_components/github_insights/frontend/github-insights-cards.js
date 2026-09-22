@@ -292,6 +292,12 @@ const cardStyles = i$3 `
     --gi-warning: var(--warning-color, #f59e0b);
     --gi-critical: var(--error-color, #db4437);
     --gi-success: var(--success-color, #43a047);
+    --gi-ink: color-mix(in srgb, var(--primary-text-color) 92%, #ffffff);
+    --gi-surface: color-mix(
+      in srgb,
+      var(--card-background-color) 88%,
+      var(--primary-color)
+    );
   }
 
   ha-card {
@@ -303,6 +309,141 @@ const cardStyles = i$3 `
 
   .card {
     padding: 16px;
+  }
+
+  .dashboard-card {
+    position: relative;
+    display: grid;
+    gap: 18px;
+    padding: 0 0 18px;
+    background:
+      radial-gradient(
+        circle at 95% 0%,
+        color-mix(in srgb, var(--primary-color) 15%, transparent),
+        transparent 32%
+      ),
+      var(--card-background-color);
+  }
+
+  .dashboard-hero {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    min-height: 132px;
+    padding: 24px;
+    overflow: hidden;
+    color: var(--gi-ink);
+    background:
+      linear-gradient(
+        135deg,
+        color-mix(in srgb, var(--primary-color) 23%, var(--card-background-color)),
+        color-mix(in srgb, #6e40c9 13%, var(--card-background-color)) 58%,
+        var(--card-background-color)
+      );
+    border-bottom: 1px solid color-mix(in srgb, var(--primary-color) 20%, transparent);
+  }
+
+  .hero-glow {
+    position: absolute;
+    z-index: -1;
+    width: 260px;
+    height: 260px;
+    top: -165px;
+    right: -70px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--primary-color) 38%, transparent);
+    filter: blur(8px);
+  }
+
+  .hero-copy {
+    display: grid;
+    gap: 16px;
+    min-width: 0;
+  }
+
+  .hero-title {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .hero-title img,
+  .hero-mark {
+    width: 52px;
+    height: 52px;
+    flex: 0 0 52px;
+    border-radius: 16px;
+    box-shadow: 0 10px 28px color-mix(in srgb, #000 22%, transparent);
+  }
+
+  .hero-title img {
+    object-fit: cover;
+  }
+
+  .hero-mark {
+    display: grid;
+    place-items: center;
+    color: #ffffff;
+    background: color-mix(in srgb, var(--primary-color) 74%, #111827);
+  }
+
+  .hero-mark ha-icon {
+    color: inherit;
+    --mdc-icon-size: 30px;
+  }
+
+  .hero-title h2 {
+    font-size: clamp(1.35rem, 4vw, 1.9rem);
+    letter-spacing: -0.035em;
+  }
+
+  .hero-title p {
+    margin: 4px 0 0;
+    color: color-mix(in srgb, var(--primary-text-color) 72%, transparent);
+    font-size: 0.9rem;
+  }
+
+  .eyebrow {
+    color: color-mix(in srgb, var(--primary-color) 72%, var(--primary-text-color));
+    font-size: 0.67rem;
+    font-weight: 750;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+
+  .health-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    border: 1px solid color-mix(in srgb, currentColor 28%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, currentColor 9%, var(--card-background-color));
+    font-size: 0.73rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  .health-pill > span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 4px color-mix(in srgb, currentColor 16%, transparent);
+  }
+
+  .health-pill.healthy {
+    color: var(--gi-success);
+  }
+
+  .health-pill.warning {
+    color: var(--gi-warning);
+  }
+
+  .health-pill.critical {
+    color: var(--gi-critical);
   }
 
   .header,
@@ -352,6 +493,86 @@ const cardStyles = i$3 `
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr));
     gap: var(--gi-gap);
+  }
+
+  .dashboard-sections {
+    display: grid;
+    gap: 22px;
+    padding: 0 18px;
+  }
+
+  .dashboard-section {
+    display: grid;
+    gap: 10px;
+  }
+
+  .section-heading,
+  .section-title {
+    display: flex;
+    align-items: center;
+  }
+
+  .section-heading {
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .section-title {
+    gap: 8px;
+  }
+
+  .section-heading h3 {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 700;
+  }
+
+  .section-title ha-icon {
+    color: var(--primary-color);
+    --mdc-icon-size: 18px;
+  }
+
+  .count {
+    display: inline-grid;
+    place-items: center;
+    min-width: 26px;
+    height: 26px;
+    padding: 0 7px;
+    border-radius: 999px;
+    color: var(--secondary-text-color);
+    background: var(--gi-soft);
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .dashboard-section .metric {
+    position: relative;
+    overflow: hidden;
+    min-height: 112px;
+    background:
+      linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--gi-soft) 86%, transparent),
+        color-mix(in srgb, var(--card-background-color) 94%, transparent)
+      );
+    box-shadow: inset 0 1px color-mix(in srgb, #fff 8%, transparent);
+  }
+
+  .dashboard-section .metric::after {
+    content: "";
+    position: absolute;
+    width: 74px;
+    height: 74px;
+    right: -38px;
+    bottom: -46px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  }
+
+  .dashboard-section .value {
+    margin-top: 12px;
+    font-size: clamp(1.2rem, 4vw, 1.65rem);
+    letter-spacing: -0.035em;
   }
 
   :host([layout="compact"]) .grid {
@@ -450,15 +671,56 @@ const cardStyles = i$3 `
     gap: 8px;
   }
 
+  .dashboard-repositories {
+    display: grid;
+    gap: 10px;
+    padding: 0 18px;
+  }
+
+  .dashboard-repositories .section-heading > div {
+    display: grid;
+    gap: 3px;
+  }
+
+  .repository-list {
+    display: grid;
+    gap: 8px;
+  }
+
   .repository {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
     gap: 8px;
   }
 
   .repository strong {
     overflow: hidden;
     text-overflow: ellipsis;
+  }
+
+  .repository > ha-icon {
+    --mdc-icon-size: 17px;
+    color: var(--secondary-text-color);
+  }
+
+  .companion-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    padding: 0 18px;
+  }
+
+  .companion-grid > * {
+    min-width: 0;
+  }
+
+  .companion-grid mushroom-chips-card {
+    padding: 2px 0;
+  }
+
+  .dashboard-card > .status {
+    margin: 0 18px;
   }
 
   .heatmap {
@@ -521,12 +783,52 @@ const cardStyles = i$3 `
     :host([layout="compact"]) .grid {
       grid-template-columns: 1fr 1fr;
     }
+
+    .dashboard-card {
+      padding: 0 0 14px;
+    }
+
+    .dashboard-hero {
+      min-height: 118px;
+      padding: 18px;
+    }
+
+    .dashboard-sections,
+    .dashboard-repositories,
+    .companion-grid {
+      padding-inline: 12px;
+    }
+
+    .dashboard-card > .status {
+      margin-inline: 12px;
+    }
+
+    .health-pill {
+      padding: 6px 8px;
+    }
   }
 
   @media (max-width: 360px) {
     .grid,
     :host([layout="compact"]) .grid {
       grid-template-columns: 1fr;
+    }
+
+    .dashboard-hero {
+      display: grid;
+      gap: 14px;
+    }
+
+    .health-pill {
+      justify-self: start;
+    }
+
+    .repository {
+      grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .repository .meta {
+      display: none;
     }
   }
 
@@ -679,7 +981,9 @@ class GitHubInsightsCard extends i {
         super(...arguments);
         this.discovered = [];
         this.discoveryComplete = false;
+        this.companionCards = [];
         this.discoveryGeneration = 0;
+        this.companionSignature = "";
         this.lastTap = 0;
     }
     static { this.styles = cardStyles; }
@@ -689,6 +993,7 @@ class GitHubInsightsCard extends i {
         discovered: { attribute: false, state: true },
         discoveryError: { attribute: false, state: true },
         discoveryComplete: { attribute: false, state: true },
+        companionCards: { attribute: false, state: true },
     }; }
     setConfig(config) {
         this.config = normalizeConfig(config, this.definition);
@@ -720,6 +1025,7 @@ class GitHubInsightsCard extends i {
                 this.discovered = discovered;
                 this.discoveryError = undefined;
                 this.discoveryComplete = true;
+                await this.refreshCompanionCards(generation);
             }
         }
         catch (error) {
@@ -732,11 +1038,114 @@ class GitHubInsightsCard extends i {
         }
     }
     resolveEntity(key) {
+        const reference = this.resolveEntityReference(key);
+        return reference ? this.hass?.states[reference.entityId] : undefined;
+    }
+    resolveEntityReference(key) {
         const candidates = this.config?.repository
             ? this.discovered.filter((entity) => entity.repository === this.config?.repository)
             : this.discovered;
-        const reference = entitiesByKey(candidates).get(key);
-        return reference ? this.hass?.states[reference.entityId] : undefined;
+        return entitiesByKey(candidates).get(key);
+    }
+    async refreshCompanionCards(generation) {
+        if (this.definition.kind !== "dashboard" || !window.loadCardHelpers) {
+            this.companionCards = [];
+            this.companionSignature = "";
+            return;
+        }
+        const configs = [];
+        const chipKeys = [
+            "workflow_health",
+            "open_pull_requests",
+            "dependabot_alerts",
+            "last_successful_sync",
+        ];
+        const chips = chipKeys.flatMap((key) => {
+            const reference = this.resolveEntityReference(key);
+            if (!reference)
+                return [];
+            const metric = metricDefinition(key);
+            return [{
+                    type: "entity",
+                    entity: reference.entityId,
+                    icon: metric.icon,
+                    content_info: "state",
+                }];
+        });
+        if (customElements.get("mushroom-chips-card") && chips.length > 0) {
+            configs.push({
+                type: "custom:mushroom-chips-card",
+                alignment: "justify",
+                chips,
+            });
+        }
+        const trendKeys = [
+            "commits",
+            "pull_requests_merged",
+        ];
+        const series = trendKeys.flatMap((key) => {
+            const reference = this.resolveEntityReference(key);
+            if (!reference)
+                return [];
+            return [{
+                    entity: reference.entityId,
+                    name: metricDefinition(key).label,
+                    type: "line",
+                    stroke_width: 3,
+                    group_by: { duration: "1d", func: "max", fill: "last" },
+                    show: { in_header: true, legend_value: false },
+                }];
+        });
+        if (customElements.get("apexcharts-card") && series.length > 0) {
+            configs.push({
+                type: "custom:apexcharts-card",
+                graph_span: "30d",
+                update_interval: "5min",
+                header: {
+                    show: true,
+                    title: "Engineering pulse",
+                    show_states: true,
+                    colorize_states: true,
+                },
+                apex_config: {
+                    chart: {
+                        height: 280,
+                        toolbar: { show: false },
+                        zoom: { enabled: false },
+                    },
+                    grid: { borderColor: "rgba(127, 127, 127, 0.16)" },
+                    legend: { show: true, position: "top" },
+                    stroke: { curve: "smooth" },
+                },
+                series,
+            });
+        }
+        if (configs.length === 0) {
+            this.companionCards = [];
+            this.companionSignature = "";
+            return;
+        }
+        const signature = JSON.stringify(configs);
+        if (signature === this.companionSignature) {
+            for (const card of this.companionCards)
+                card.hass = this.hass;
+            return;
+        }
+        try {
+            const helpers = await window.loadCardHelpers();
+            if (generation !== this.discoveryGeneration)
+                return;
+            this.companionCards = configs.map((config) => {
+                const card = helpers.createCardElement(config);
+                card.hass = this.hass;
+                return card;
+            });
+            this.companionSignature = signature;
+        }
+        catch {
+            this.companionCards = [];
+            this.companionSignature = "";
+        }
     }
     sparklineTemplate(entity, label) {
         const raw = entity?.attributes.trend;
@@ -830,15 +1239,128 @@ class GitHubInsightsCard extends i {
         if (repositories.length === 0)
             return A;
         return b `
-      <section class="repositories" aria-label="Discovered repositories">
+      <section class="repositories ${this.definition.kind === "dashboard" ? "dashboard-repositories" : ""}" aria-label="Discovered repositories">
+        ${this.definition.kind === "dashboard"
+            ? b `<div class="section-heading">
+              <div>
+                <span class="eyebrow">Portfolio</span>
+                <h3>Repositories</h3>
+              </div>
+              <span class="count">${repositories.length}</span>
+            </div>`
+            : A}
+        <div class="repository-list">
         ${repositories.map((repository) => b `
             <article class="repository">
+              <ha-icon icon="mdi:source-repository" aria-hidden="true"></ha-icon>
               <strong>${favorites.has(repository) ? "★ " : ""}${repository}</strong>
               <span class="meta">${this.config?.group_by === "organization"
             ? repository.split("/", 1)[0]
             : "GitHub repository"}</span>
             </article>
           `)}
+        </div>
+      </section>
+    `;
+    }
+    dashboardHeaderTemplate(account) {
+        const avatarUrl = safeHttpUrl(account?.attributes.avatar_url);
+        const blocked = this.resolveEntity("actions_blocked")?.state === "on";
+        const warning = this.resolveEntity("actions_budget_warning")?.state === "on";
+        const status = blocked ? "Blocked" : warning ? "Attention" : "Operational";
+        const statusClass = blocked ? "critical" : warning ? "warning" : "healthy";
+        return b `
+      <header class="dashboard-hero">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="hero-copy">
+          <span class="eyebrow">Live GitHub operations</span>
+          <div class="hero-title">
+            ${avatarUrl
+            ? b `<img
+                  src=${avatarUrl}
+                  alt=""
+                  width="52"
+                  height="52"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
+                />`
+            : b `<span class="hero-mark"><ha-icon icon="mdi:github"></ha-icon></span>`}
+            <div>
+              <h2>${this.config?.title ?? "Engineering command center"}</h2>
+              <p>Delivery, spend, adoption, and risk in one view.</p>
+            </div>
+          </div>
+        </div>
+        <span class="health-pill ${statusClass}">
+          <span aria-hidden="true"></span>${status}
+        </span>
+      </header>
+    `;
+    }
+    dashboardMetricsTemplate(metrics) {
+        const groups = [
+            {
+                title: "Usage & spend",
+                icon: "mdi:chart-donut",
+                keys: ["actions_usage_percent", "actions_budget_percent", "copilot_paid_usage", "actions_cost"],
+            },
+            {
+                title: "Delivery",
+                icon: "mdi:rocket-launch-outline",
+                keys: ["public_repositories", "open_pull_requests", "workflow_health", "commits"],
+            },
+            {
+                title: "Risk & freshness",
+                icon: "mdi:shield-check-outline",
+                keys: ["dependabot_alerts", "code_scanning_alerts", "secret_scanning_alerts", "last_successful_sync"],
+            },
+        ];
+        const configured = new Set(metrics);
+        const grouped = new Set(groups.flatMap((group) => group.keys));
+        const remaining = metrics.filter((key) => !grouped.has(key));
+        if (remaining.length > 0) {
+            groups.push({
+                title: "More insights",
+                icon: "mdi:view-grid-plus-outline",
+                keys: remaining,
+            });
+        }
+        return b `
+      <div class="dashboard-sections">
+        ${groups.map((group) => {
+            const keys = group.keys.filter((key) => configured.has(key));
+            if (keys.length === 0)
+                return A;
+            return b `
+            <section class="dashboard-section">
+              <div class="section-heading">
+                <div class="section-title">
+                  <ha-icon .icon=${group.icon}></ha-icon>
+                  <h3>${group.title}</h3>
+                </div>
+              </div>
+              <div class="grid">${keys.map((key) => this.metricTemplate(key))}</div>
+            </section>
+          `;
+        })}
+      </div>
+    `;
+    }
+    companionCardsTemplate() {
+        if (this.definition.kind !== "dashboard" || this.companionCards.length === 0) {
+            return A;
+        }
+        for (const card of this.companionCards)
+            card.hass = this.hass;
+        return b `
+      <section
+        class="companion-grid"
+        aria-label="Optional dashboard visualizations"
+        @pointerdown=${(event) => event.stopPropagation()}
+        @pointerup=${(event) => event.stopPropagation()}
+        @contextmenu=${(event) => event.stopPropagation()}
+      >
+        ${this.companionCards}
       </section>
     `;
     }
@@ -963,7 +1485,7 @@ class GitHubInsightsCard extends i {
                 !metricDefinition(key).estimated);
         const anyConfigured = metrics.some((key) => this.resolveEntity(key));
         const account = this.resolveEntity("account");
-        const avatarUrl = safeHttpUrl(account?.attributes.avatar_url);
+        const isDashboard = this.definition.kind === "dashboard";
         const isLoading = Boolean(this.hass?.connection) &&
             !this.discoveryComplete &&
             !this.discoveryError;
@@ -985,26 +1507,28 @@ class GitHubInsightsCard extends i {
             void this.runAction(this.config?.hold_action);
         }}
       >
-        <section class="card">
-          <header class="header">
+        <section class="card ${isDashboard ? "dashboard-card" : ""}">
+          ${isDashboard
+            ? this.dashboardHeaderTemplate(account)
+            : b `<header class="header">
             <div class="account">
-              ${avatarUrl
-            ? b `<img
-                    src=${avatarUrl}
+              ${safeHttpUrl(account?.attributes.avatar_url)
+                ? b `<img
+                    src=${safeHttpUrl(account?.attributes.avatar_url)}
                     alt=""
                     width="40"
                     height="40"
                     loading="lazy"
                     referrerpolicy="no-referrer"
                   />`
-            : A}
+                : A}
               <div>
               <h2>${this.config.title ?? this.definition.name}</h2>
               <div class="subtitle">${this.definition.description}</div>
               </div>
             </div>
             <ha-icon .icon=${this.config.icon ?? this.definition.icon} aria-hidden="true"></ha-icon>
-          </header>
+          </header>`}
           ${this.statusTemplate()}
           ${isLoading
             ? b `<div class="status" role="status">Discovering GitHub Insights entities…</div>`
@@ -1013,7 +1537,10 @@ class GitHubInsightsCard extends i {
             ? b `<div class="status empty" role="status">
                 No supported metrics are available. Enable the relevant GitHub capability or select entities in the card editor.
               </div>`
-            : b `<div class="grid">${metrics.map((key) => this.metricTemplate(key))}</div>`}
+            : isDashboard
+                ? this.dashboardMetricsTemplate(metrics)
+                : b `<div class="grid">${metrics.map((key) => this.metricTemplate(key))}</div>`}
+          ${this.companionCardsTemplate()}
           ${this.repositoryTemplate()} ${this.heatmapTemplate()}
         </section>
       </ha-card>

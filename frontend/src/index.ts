@@ -4,6 +4,7 @@ import { createEditorClass } from "./editors/github-insights-editor";
 
 declare global {
   interface Window {
+    loadCardHelpers?: () => Promise<import("./models/home-assistant").LovelaceCardHelpers>;
     customCards?: Array<{
       type: string;
       name: string;
