@@ -4,10 +4,11 @@ GitHub usage, Actions billing, Copilot metrics, and repository insights for
 Home Assistant.
 
 > [!IMPORTANT]
-> GitHub Insights is currently at **Phase 2: core integration development**.
-> Version `0.1.0-beta.1` implements a read-only Home Assistant config flow,
-> GitHub account discovery, rate-limit diagnostics, and account sensors. It is
-> intentionally unreleased while hosted and real-instance validation continues.
+> Version `0.1.0-beta.1` includes the Phase 2 read-only account integration and
+> the complete Phase 6-8 frontend card suite. Backend billing, repository,
+> workflow, Copilot, activity, contribution, and security entities remain
+> separate implementation phases. Cards handle those absent capabilities
+> without fabricated data. No release has been published.
 
 ## One integration and one installation
 
@@ -22,12 +23,12 @@ GitHub Insights is designed as exactly:
   card.
 
 The TypeScript source under `frontend/` is build-time source only. Its
-deterministic bundle will be placed in
+deterministic bundle is placed in
 `custom_components/github_insights/frontend/github-insights-cards.js` and
 installed with the integration. There will be no separately installed frontend
 package, plugin, repository, HACS entry, or version.
 
-## Planned features
+## Features
 
 - GitHub account, organization, repository, workflow, activity, contribution,
   traffic, and authorized security data.
@@ -37,15 +38,21 @@ package, plugin, repository, HACS entry, or version.
   official endpoints.
 - Explicit separation of workflow runtime, included usage, paid usage, monetary
   cost, budgets, and estimated equivalent minutes.
-- Eleven responsive Lit-based cards with visual editors and Home Assistant
-  theme integration.
+- Eleven responsive Lit-based cards, each with a visual editor, card-picker
+  defaults, Home Assistant theme integration, keyboard support, screen-reader
+  semantics, reduced-motion behavior, and missing/unavailable/error states.
 - Read-only operation by default; budget writes require explicit opt-in and
   confirmation for every mutation.
 
 ## Screenshots
 
-Screenshots will be added after the Phase 6 frontend implementation. No mock
-screenshots are presented as completed functionality.
+Screenshot placeholders are retained until the cards are validated against a
+live Home Assistant instance in Phase 9:
+
+- Overview and usage desktop layout
+- Repository operations grid
+- Compact mobile layout
+- Dark-theme executive dashboard
 
 ## Compatibility target
 
@@ -58,7 +65,7 @@ screenshots are presented as completed functionality.
 | Authentication | Personal access token first; GitHub App/OAuth abstraction reserved |
 | Browser | Current Home Assistant-supported browsers |
 
-## Planned HACS installation
+## HACS custom-repository installation
 
 After a validated prerelease exists:
 
@@ -68,25 +75,27 @@ After a validated prerelease exists:
 3. Install **GitHub Insights**.
 4. Restart Home Assistant if HACS requires it.
 5. Add the GitHub Insights integration from **Settings > Devices & services**.
-6. Register the bundled module resource only if the integration cannot do so
-   through a supported Home Assistant mechanism:
+6. Add the bundled JavaScript module under
+   **Settings > Dashboards > Resources**:
    `/github_insights/frontend/github-insights-cards.js`.
 
-The exact resource URL will be validated before the first release. Adding a
-custom repository is not acceptance into the standard HACS catalog.
+The integration serves this installed file through Home Assistant's static-path
+API. Lovelace resource registration remains manual because Home Assistant does
+not provide a stable public API for integrations to mutate dashboard resources.
+Adding a custom repository is not acceptance into the standard HACS catalog.
 
-## Planned manual installation
+## Manual installation
 
-The release archive will expand to one `github_insights` directory. Copy that
+The release archive expands to one `github_insights` directory. Copy that
 directory to:
 
 ```text
 <config>/custom_components/github_insights
 ```
 
-The directory will contain both Python integration files and the frontend
-bundle. Source files, tests, source maps, and development dependencies will not
-be shipped.
+The directory contains both Python integration files and the frontend bundle.
+Then add the same Lovelace module resource shown above. Source files, tests,
+source maps, and development dependencies are not shipped.
 
 ## Setup and permissions
 
@@ -123,14 +132,14 @@ It will always be labeled **estimated**, identify the selected runner/SKU and
 price snapshot, and never replace GitHub-reported quantities or enforcement
 status.
 
-## Planned entities and cards
+## Entities and cards
 
 The initial design targets 24 default-enabled account/category entities plus 6
 default-enabled entities per explicitly selected repository. Six write-capable
 budget controls are conditional on budget-management mode. Detailed and
 diagnostic entities are disabled by default.
 
-Cards:
+Bundled cards:
 
 - `custom:github-insights-overview`
 - `custom:github-insights-usage`
@@ -144,6 +153,9 @@ Cards:
 - `custom:github-insights-compact`
 - `custom:github-insights-dashboard`
 
+Every card has a visual editor. Entity discovery filters the Home Assistant
+entity registry by the `github_insights` platform and uses stable translation
+keys; explicit `entities` mappings are supported as a compatibility override.
 See [card specifications](docs/card-specifications.md).
 
 ## Example configuration
@@ -174,6 +186,31 @@ actions_limit:
 - Partial failures retain last-known-good data and expose freshness and the
   affected capability rather than converting stale values into success.
 - Reporting freshness depends on GitHub's own data pipeline.
+- GitHub-provided strings are rendered as text and external actions accept only
+  HTTP(S) URLs.
+
+## Data availability and limitations
+
+- Workflow runtime is not authoritative billed consumption.
+- Included usage, paid usage, monetary budget usage, and workflow runtime are
+  distinct and are never merged into one progress value.
+- GitHub budgets are monetary limits. Equivalent minutes depend on a selected
+  runner/SKU and are always labeled **estimated**.
+- Billing and Copilot endpoints may require organization or enterprise scope,
+  specific plans, account roles, or extra token permissions.
+- Stop-usage enforcement is controlled by GitHub and can block workflows,
+  including Actions workloads initiated by Copilot features.
+- Repository, billing, security, activity, and Copilot card sections remain
+  empty/unavailable until their backend phases expose authorized entities.
+- Data freshness follows GitHub's reporting cadence and may lag source events.
+
+## Dashboard companions
+
+GitHub Insights does not require another card package. The
+[dashboard examples](docs/dashboard-examples.md) also show polished optional
+layouts using separately installed Mushroom cards for headings/status,
+ApexCharts for history, and Auto Entities for registry views, with native Home
+Assistant fallbacks.
 
 ## Development
 
@@ -187,6 +224,8 @@ ruff format --check .
 mypy
 pytest
 npm run check --prefix frontend
+python scripts/build_release.py
+python scripts/validate_release_artifact.py
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [architecture](docs/architecture.md),
@@ -194,8 +233,11 @@ and [the implementation plan](docs/implementation-plan.md).
 
 ## Release and publication status
 
-No release has been created. HACS custom-repository installation and standard
-catalog submission remain blocked until implementation, automated validation,
-artifact installation testing, and safe Home Assistant validation succeed.
+No release has been created. The deterministic `github_insights.zip` builder
+and validator are implemented, but release creation remains gated on successful
+HACS Action, Hassfest, custom-repository installation, complete backend
+validation, and safe Home Assistant validation. Standard HACS catalog
+publication additionally requires a full release and external maintainer
+review; it must not be described as available until merged.
 See [release process](docs/release-process.md) and
 [HACS publication](docs/hacs-publication.md).

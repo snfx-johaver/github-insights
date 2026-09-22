@@ -1,5 +1,12 @@
 # Card specifications
 
+## Implementation status
+
+The Phase 6-8 frontend registers all eleven cards and eleven visual editors
+from one Lit/TypeScript bundle. Cards tolerate capability-dependent entities
+that are absent or unavailable. Backend entities beyond the Phase 2 account
+surface remain future backend work; the frontend does not fabricate them.
+
 All cards are custom elements in one deterministic
 `github-insights-cards.js` bundle installed with the `github_insights`
 integration. Each card has a visual editor, `getStubConfig`, card-picker
@@ -8,8 +15,12 @@ loading/empty/error/stale/partial states.
 
 ## Shared behavior
 
-- Discovery uses the Home Assistant registries and stable integration/config
-  entry/device identifiers, never entity-ID naming conventions.
+- Discovery reads Home Assistant entity/device registries, filters entity
+  registry entries whose platform is `github_insights`, and keys metrics by the
+  registry `translation_key`. The stable fallback is the suffix of the
+  backend unique ID (`<immutable-owner-id>_<metric_key>`). Explicit
+  `entities: { metric_key: entity_id }` mappings are available for migrations
+  and unusual installations; discovery never depends on a display name.
 - Concise and detailed YAML normalize into immutable typed config.
 - Card defaults cascade to per-module or per-repository overrides.
 - Repository selectors support auto discovery, explicit lists, include/exclude
@@ -20,6 +31,35 @@ loading/empty/error/stale/partial states.
 - Tap, hold, and double-tap use Home Assistant action semantics.
 - Values include provenance and freshness; estimated values always contain the
   word "estimated".
+- Rendering uses Lit text bindings and validated HTTP(S) links; GitHub content
+  is never injected through unsafe HTML.
+- All card shells are keyboard-focusable, expose progress semantics and status
+  announcements, use touch-sized controls, and disable transitions under
+  `prefers-reduced-motion`.
+
+## Shared configuration
+
+```yaml
+type: custom:github-insights-actions
+title: Actions
+layout: responsive
+metrics:
+  - actions_runtime
+  - actions_included_usage
+  - actions_billable_usage
+  - actions_cost
+  - actions_budget
+  - actions_estimated_minutes_remaining
+entities: # optional override; registry discovery is the default
+  actions_runtime: sensor.github_insights_actions_runtime
+tap_action:
+  action: more-info
+  entity: sensor.github_insights_actions_runtime
+```
+
+Every card supports `title`, `layout`, `metrics`, `entities`, `tap_action`,
+`hold_action`, and `double_tap_action`. Editors expose the relevant common and
+card-specific fields. All picker stubs are usable without YAML.
 
 ## Card suite
 
@@ -101,4 +141,3 @@ metrics:
   - actions_usage
 show_forks: true
 ```
-

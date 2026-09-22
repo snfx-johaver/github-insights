@@ -2,9 +2,10 @@
 
 ## Current status
 
-The repository is public and prepared structurally, but version `0.0.0` is not
-functional, `hide_default_branch` is enabled, no release exists, and no HACS
-catalog claim is made.
+The repository is public, Phase 2 account behavior and the bundled frontend are
+implemented, `hide_default_branch` is enabled, no release exists, and no HACS
+catalog claim is made. Remaining backend phases and live installation
+validation still block release.
 
 ## Repository requirements
 
@@ -42,10 +43,10 @@ version, checksum, and release serve both backend and cards.
 
 HACS normally treats integrations and dashboard plugins as different
 categories. GitHub Insights deliberately chooses the less conventional bundled
-integration path to satisfy the one-install requirement. Release is blocked
-unless Phase 6 proves a supported Home Assistant resource-serving and
-registration method; a second Dashboard/plugin repository is not an allowed
-fallback.
+integration path to satisfy the one-install requirement. The integration now serves the bundled directory through Home Assistant's
+supported static-path API. Lovelace resource registration is manual because no
+stable public integration API exists for mutating resources. A second
+Dashboard/plugin repository is not an allowed fallback.
 
 ## Custom repository process
 
@@ -96,13 +97,14 @@ changes and config-entry migrations. A failed install restores only the prior
 - [ ] Tag, manifest, frontend, archive, and release versions match
 - [ ] Backend and frontend validation pass
 - [ ] HACS Action and Hassfest pass without ignores
-- [ ] Archive content and checksum are verified
+- [ ] Deterministic archive paths and deployment-manifest hashes are verified
 - [ ] Secret scans pass
 - [ ] Isolated install/upgrade/removal tests pass
 - [ ] Safe local validation passes
 - [ ] README permissions and limitations match behavior
-- [ ] Full GitHub Release exists
 - [ ] HACS custom-repository install succeeds
+- [ ] Version-matched release readiness marker records the preceding gates
+- [ ] Full GitHub Release exists after the validation gates
 - [ ] Catalog PR is submitted only after all preceding checks
 
 ## Sources

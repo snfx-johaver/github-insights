@@ -2,8 +2,10 @@
 
 ## Status and invariant
 
-This document defines the Phase 1 target architecture; no production
-integration behavior is implemented in version `0.0.0`.
+Version `0.1.0-beta.1` implements the Phase 2 account integration and the
+Phase 6-8 frontend architecture described here. Billing, repository, workflow,
+Copilot, activity, contribution, and security backend categories remain future
+work and are never simulated by the cards.
 
 The non-negotiable packaging invariant is **one integration, one HACS
 repository, one HACS installation**. Backend and all cards share:
@@ -16,8 +18,8 @@ repository, one HACS installation**. Backend and all cards share:
 - one zip artifact and GitHub Release; and
 - one upgrade and rollback lifecycle.
 
-`frontend/` contains build-time source. The built, source-map-free
-`github-insights-cards.js` is copied into
+`frontend/` contains build-time source. Rollup writes the built,
+source-map-free `github-insights-cards.js` directly into
 `custom_components/github_insights/frontend/` before packaging. A design that
 requires a second HACS plugin or separate card installation is invalid.
 
@@ -169,6 +171,12 @@ names.
 All controls use semantic buttons/links, keyboard focus, ARIA labels, touch
 targets, localized relative time, reduced-motion support, and validated
 backend-provided GitHub/GitHub Enterprise URLs.
+
+The integration registers `/github_insights/frontend/` through Home
+Assistant's supported static-path API. Lovelace resource mutation is not a
+documented integration API, so users register the bundled module URL once.
+This compatibility boundary is isolated and tested rather than reaching into
+private Lovelace internals.
 
 ## Security boundaries
 
