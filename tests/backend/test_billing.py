@@ -2,17 +2,21 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from decimal import Decimal
+from types import SimpleNamespace
 from typing import Any, cast
+from unittest.mock import patch
 
 import pytest
 import voluptuous as vol
 from aiohttp import ClientSession
-from homeassistant.core import ServiceCall
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 
 from custom_components.github_insights.api import GitHubAPIError, GitHubClient
 from custom_components.github_insights.binary_sensor import _budget_flags
+from custom_components.github_insights.const import CONF_ACTIONS_INCLUDED_MINUTES
 from custom_components.github_insights.coordinator import (
     _merge_billing_last_known_good,
 )
@@ -20,7 +24,12 @@ from custom_components.github_insights.models import (
     BillingScope,
     BillingScopeType,
     CapabilityStatus,
+    DataClass,
 )
+from custom_components.github_insights.repairs import (
+    async_update_configured_allowance_issue,
+)
+from custom_components.github_insights.sensor import GitHubInsightsBillingSensor
 from custom_components.github_insights.services import (
     CREATE_SCHEMA,
     _create_confirmation,
@@ -425,3 +434,226 @@ def test_billing_last_known_good_preserves_failed_category() -> None:
 
     assert merged.scopes["organization:example-org"].usage is not None
     assert merged.scopes["organization:example-org"].budgets
+
+
+def test_configured_actions_allowance_uses_discounted_minutes() -> None:
+    """Configured allowance derivations use included/discounted, never net quantity."""
+    snapshot = billing_snapshot()
+    scope_data = snapshot.scopes["organization:example-org"]
+    coordinator = cast(
+        Any,
+        SimpleNamespace(
+            data=snapshot,
+            config_entry=SimpleNamespace(
+                data={"account_id": 42},
+                options={CONF_ACTIONS_INCLUDED_MINUTES: 3000},
+            ),
+            last_update_success=True,
+        ),
+    )
+
+    included = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_configured_included_minutes"
+    )
+    used = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_configured_minutes_used"
+    )
+    remaining = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_configured_minutes_remaining"
+    )
+    percent = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_configured_minutes_used_percent"
+    )
+
+    assert included.available
+    assert included.native_value == Decimal("3000")
+    assert used.native_value == Decimal("250")
+    assert remaining.native_value == Decimal("2750")
+    assert percent.native_value == Decimal("8.333333333333333333333333333")
+    assert included.extra_state_attributes["data_class"] is DataClass.CONFIGURED
+    assert used.extra_state_attributes["data_class"] is DataClass.CALCULATED
+    assert remaining.extra_state_attributes["data_class"] is DataClass.CALCULATED
+    assert percent.extra_state_attributes["data_class"] is DataClass.CALCULATED
+    assert "user-configured" in remaining.extra_state_attributes["source"]
+    assert used.extra_state_attributes["usage_basis"] == (
+        "discounted_or_included_quantity"
+    )
+    assert "net or billed quantity" in used.extra_state_attributes["derivation"]
+
+
+def test_configured_actions_allowance_falls_back_to_gross_minutes() -> None:
+    """Detailed usage can derive configured consumption from gross minutes."""
+    snapshot = billing_snapshot()
+    scope_data = snapshot.scopes["organization:example-org"]
+    usage = scope_data.usage
+    assert usage is not None
+    detail_only = replace(usage, summary_items=())
+
+    assert detail_only.configured_actions_minutes == (
+        Decimal("1000"),
+        "gross_quantity",
+        None,
+    )
+
+
+def test_configured_actions_allowance_can_exceed_one_hundred_percent() -> None:
+    """Usage beyond the configured allowance remains visible while remaining floors."""
+    snapshot = billing_snapshot()
+    scope_data = snapshot.scopes["organization:example-org"]
+    coordinator = cast(
+        Any,
+        SimpleNamespace(
+            data=snapshot,
+            config_entry=SimpleNamespace(
+                data={"account_id": 42},
+                options={CONF_ACTIONS_INCLUDED_MINUTES: 200},
+            ),
+            last_update_success=True,
+        ),
+    )
+    remaining = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_configured_minutes_remaining"
+    )
+    percent = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_configured_minutes_used_percent"
+    )
+
+    assert remaining.native_value == Decimal()
+    assert percent.native_value == Decimal("125")
+
+
+@pytest.mark.parametrize(
+    ("unit_types", "reason"),
+    [
+        (("Minutes", "GigabyteHours"), "actions_usage_units_mixed"),
+        (("GigabyteHours",), "actions_usage_unit_not_minutes"),
+    ],
+)
+def test_configured_actions_allowance_rejects_non_minute_usage(
+    unit_types: tuple[str, ...], reason: str
+) -> None:
+    """Mixed or non-minute usage is unavailable instead of being conflated."""
+    snapshot = billing_snapshot()
+    scope_data = snapshot.scopes["organization:example-org"]
+    usage = scope_data.usage
+    assert usage is not None
+    source = usage.summary_items[0]
+    items = tuple(
+        replace(source, sku=f"sku-{index}", unit_type=unit)
+        for index, unit in enumerate(unit_types)
+    )
+    invalid_usage = replace(usage, summary_items=items)
+    invalid_scope = replace(scope_data, usage=invalid_usage)
+    invalid_snapshot = snapshot.__class__.create(
+        scopes={invalid_scope.scope.key: invalid_scope},
+        fetched_at=snapshot.fetched_at,
+    )
+    coordinator = cast(
+        Any,
+        SimpleNamespace(
+            data=invalid_snapshot,
+            config_entry=SimpleNamespace(
+                data={"account_id": 42},
+                options={CONF_ACTIONS_INCLUDED_MINUTES: 3000},
+            ),
+            last_update_success=True,
+        ),
+    )
+    sensor = GitHubInsightsBillingSensor(
+        coordinator, invalid_scope, "actions_configured_minutes_remaining"
+    )
+
+    assert not sensor.available
+    assert sensor.native_value is None
+    assert sensor.extra_state_attributes["availability_reason"] == reason
+
+
+def test_configured_actions_allowance_unset_is_explicitly_unavailable() -> None:
+    """Zero is the safe unset default and does not imply a GitHub allowance."""
+    snapshot = billing_snapshot()
+    scope_data = snapshot.scopes["organization:example-org"]
+    coordinator = cast(
+        Any,
+        SimpleNamespace(
+            data=snapshot,
+            config_entry=SimpleNamespace(
+                data={"account_id": 42},
+                options={CONF_ACTIONS_INCLUDED_MINUTES: 0},
+            ),
+            last_update_success=True,
+        ),
+    )
+    sensor = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_configured_minutes_remaining"
+    )
+
+    assert not sensor.available
+    assert sensor.extra_state_attributes["availability_reason"] == (
+        "configured_allowance_unset"
+    )
+
+
+def test_configured_allowance_remains_available_without_usage() -> None:
+    """The configured value does not depend on GitHub billing availability."""
+    snapshot = billing_snapshot()
+    scope_data = replace(
+        snapshot.scopes["organization:example-org"],
+        usage=None,
+    )
+    unavailable_snapshot = snapshot.__class__.create(
+        scopes={scope_data.scope.key: scope_data},
+        fetched_at=snapshot.fetched_at,
+    )
+    coordinator = cast(
+        Any,
+        SimpleNamespace(
+            data=unavailable_snapshot,
+            config_entry=SimpleNamespace(
+                data={"account_id": 42},
+                options={CONF_ACTIONS_INCLUDED_MINUTES: 3000},
+            ),
+            last_update_success=True,
+        ),
+    )
+    allowance = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_configured_included_minutes"
+    )
+    used = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_configured_minutes_used"
+    )
+
+    assert allowance.available
+    assert allowance.native_value == Decimal("3000")
+    assert allowance.extra_state_attributes["data_class"] is DataClass.CONFIGURED
+    assert not used.available
+    assert used.extra_state_attributes["availability_reason"] == (
+        "actions_usage_unavailable"
+    )
+
+
+def test_configured_actions_allowance_repair_is_sanitized() -> None:
+    """Allowance repairs report only bounded reasons and clear when unset."""
+    hass = cast(HomeAssistant, object())
+    with (
+        patch(
+            "custom_components.github_insights.repairs.ir.async_create_issue"
+        ) as create_issue,
+        patch(
+            "custom_components.github_insights.repairs.ir.async_delete_issue"
+        ) as delete_issue,
+    ):
+        async_update_configured_allowance_issue(
+            hass,
+            "entry-id",
+            3000,
+            {"actions_usage_units_mixed"},
+        )
+        create_issue.assert_called_once()
+        assert "example-org" not in str(create_issue.call_args)
+        async_update_configured_allowance_issue(
+            hass,
+            "entry-id",
+            0,
+            {"actions_usage_units_mixed"},
+        )
+        delete_issue.assert_called_once()

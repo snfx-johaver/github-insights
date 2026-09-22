@@ -9,6 +9,7 @@
       "cannot_connect": "Unable to connect to the GitHub server",
       "invalid_auth": "GitHub rejected the access token",
       "invalid_server": "Enter a valid HTTPS GitHub or GitHub Enterprise Server origin",
+      "invalid_actions_allowance": "Enter a whole number from 0 to 100000000",
       "unknown": "Unexpected GitHub API response",
       "wrong_account": "The token belongs to a different GitHub account"
     },
@@ -74,6 +75,7 @@
           "budget_management": "Enable confirmed budget management",
           "budget_warning_threshold": "Budget warning threshold",
           "estimated_minutes": "Desired estimated Actions minutes",
+          "actions_included_minutes": "Configured Actions included minutes",
           "personal_billing": "Personal billing usage",
           "reference_runner": "Estimate reference runner",
           "update_interval": "Update interval"
@@ -84,6 +86,7 @@
           "billing_organizations": "Organizations whose enhanced-billing data should be requested",
           "budget_management": "Disabled by default. Every financial mutation also requires an exact action-specific confirmation through a GitHub Insights service.",
           "estimated_minutes": "Local estimate input only; it never changes GitHub usage or budgets.",
+          "actions_included_minutes": "Optional local allowance used to derive configured minutes used, remaining, and percent from GitHub-reported minute quantities. Use 0 to leave unset.",
           "personal_billing": "Requires a personal access token (classic). Fine-grained PATs are not supported by GitHub billing usage endpoints.",
           "reference_runner": "Price reference used only for clearly labeled estimates.",
           "enabled_categories": "Copilot billing requires a classic personal access token and an authorized billing role",
@@ -101,6 +104,10 @@
     "billing_unavailable": {
       "title": "GitHub billing data is partially unavailable",
       "description": "Billing data is unavailable because of {reason}. Account and repository data continues updating. GitHub billing usage requires a personal access token (classic)."
+    },
+    "configured_actions_allowance_unavailable": {
+      "title": "Configured Actions allowance cannot be calculated",
+      "description": "Configured Actions allowance sensors are unavailable because GitHub reported {reason}. Only unambiguous minute-based gross or discounted/included quantities can be used; net billed quantity is never treated as included-minute consumption."
     }
   },
   "entity": {
@@ -175,6 +182,18 @@
       },
       "actions_cost": {
         "name": "Actions net cost"
+      },
+      "actions_configured_included_minutes": {
+        "name": "Configured Actions included minutes"
+      },
+      "actions_configured_minutes_used": {
+        "name": "Configured Actions minutes used"
+      },
+      "actions_configured_minutes_remaining": {
+        "name": "Configured Actions minutes remaining"
+      },
+      "actions_configured_minutes_used_percent": {
+        "name": "Configured Actions minutes used"
       },
       "actions_discount": {
         "name": "Actions discount"

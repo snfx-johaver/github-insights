@@ -32,6 +32,7 @@ from .api import (
 from .const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
+    CONF_ACTIONS_INCLUDED_MINUTES,
     CONF_AUTO_DISCOVER,
     CONF_BILLING_ENTERPRISE,
     CONF_BILLING_INTERVAL,
@@ -51,6 +52,7 @@ from .const import (
     CONF_SERVER,
     CONF_TOKEN,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_ACTIONS_INCLUDED_MINUTES,
     DEFAULT_AUTO_DISCOVER,
     DEFAULT_BILLING_INTERVAL_MINUTES,
     DEFAULT_BUDGET_CRITICAL_THRESHOLD,
@@ -104,7 +106,7 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a GitHub Insights config flow."""
 
     VERSION = 3
-    MINOR_VERSION = 2
+    MINOR_VERSION = 3
 
     def __init__(self) -> None:
         """Initialize the flow."""
@@ -188,6 +190,7 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_BUDGET_MANAGEMENT: DEFAULT_BUDGET_MANAGEMENT,
                     CONF_REFERENCE_RUNNER: DEFAULT_REFERENCE_RUNNER,
                     CONF_ESTIMATED_MINUTES: DEFAULT_ESTIMATED_MINUTES,
+                    CONF_ACTIONS_INCLUDED_MINUTES: DEFAULT_ACTIONS_INCLUDED_MINUTES,
                     CONF_BUDGET_WARNING_THRESHOLD: DEFAULT_BUDGET_WARNING_THRESHOLD,
                     CONF_BUDGET_CRITICAL_THRESHOLD: DEFAULT_BUDGET_CRITICAL_THRESHOLD,
                 },
@@ -289,8 +292,19 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Update repository selection and polling interval."""
+        errors: dict[str, str] = {}
         if user_input is not None:
-            return self.async_create_entry(data=user_input)
+            allowance = user_input.get(
+                CONF_ACTIONS_INCLUDED_MINUTES, DEFAULT_ACTIONS_INCLUDED_MINUTES
+            )
+            if (
+                isinstance(allowance, bool)
+                or not isinstance(allowance, int)
+                or not 0 <= allowance <= 100_000_000
+            ):
+                errors[CONF_ACTIONS_INCLUDED_MINUTES] = "invalid_actions_allowance"
+            else:
+                return self.async_create_entry(data=user_input)
 
         runtime = getattr(self._entry, "runtime_data", None)
         snapshot = runtime.coordinator.data if runtime is not None else None
@@ -388,6 +402,20 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
                     )
                 ),
                 vol.Required(
+                    CONF_ACTIONS_INCLUDED_MINUTES,
+                    default=self._entry.options.get(
+                        CONF_ACTIONS_INCLUDED_MINUTES,
+                        DEFAULT_ACTIONS_INCLUDED_MINUTES,
+                    ),
+                ): NumberSelector(
+                    NumberSelectorConfig(
+                        min=0,
+                        max=100_000_000,
+                        step=1,
+                        mode=NumberSelectorMode.BOX,
+                    )
+                ),
+                vol.Required(
                     CONF_BUDGET_WARNING_THRESHOLD,
                     default=self._entry.options.get(
                         CONF_BUDGET_WARNING_THRESHOLD,
@@ -411,7 +439,7 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
                 ),
             }
         )
-        return self.async_show_form(step_id="init", data_schema=schema)
+        return self.async_show_form(step_id="init", data_schema=schema, errors=errors)
 
 
 def _scope_schema(

@@ -19,6 +19,7 @@ from custom_components.github_insights import (
 from custom_components.github_insights.const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
+    CONF_ACTIONS_INCLUDED_MINUTES,
     CONF_ENABLED_CATEGORIES,
     CONF_MAX_REPOSITORIES,
     CONF_SERVER,
@@ -103,6 +104,7 @@ async def test_diagnostics_redact_token(hass: HomeAssistant) -> None:
             CONF_ACCOUNT_LOGIN: "octocat",
         },
         options={
+            CONF_ACTIONS_INCLUDED_MINUTES: 3000,
             "organizations": ["private-org"],
             "repositories": ["private-org/private-repo"],
         },
@@ -129,6 +131,9 @@ async def test_diagnostics_redact_token(hass: HomeAssistant) -> None:
     assert "example-org" not in str(diagnostics)
     assert "budget-1" not in str(diagnostics)
     assert diagnostics["runtime"]["billing"]["scope_count"] == 1
+    assert (
+        diagnostics["entry"]["options"]["configured_actions_included_minutes"] == 3000
+    )
 
 
 async def test_migrate_legacy_host_key(hass: HomeAssistant) -> None:
@@ -146,8 +151,9 @@ async def test_migrate_legacy_host_key(hass: HomeAssistant) -> None:
 
     assert await async_migrate_entry(hass, entry)
     assert entry.version == 3
-    assert entry.minor_version == 2
+    assert entry.minor_version == 3
     assert entry.data[CONF_SERVER] == "https://github.example.com"
     assert entry.data[CONF_ACCOUNT_LOGIN] == "octocat"
     assert "repositories" in entry.options[CONF_ENABLED_CATEGORIES]
     assert entry.options[CONF_MAX_REPOSITORIES] == 10
+    assert entry.options[CONF_ACTIONS_INCLUDED_MINUTES] == 0

@@ -20,6 +20,7 @@ from .api import (
 )
 from .const import (
     CONF_ACCOUNT_LOGIN,
+    CONF_ACTIONS_INCLUDED_MINUTES,
     CONF_AUTO_DISCOVER,
     CONF_BILLING_ENTERPRISE,
     CONF_BILLING_INTERVAL,
@@ -32,6 +33,7 @@ from .const import (
     CONF_PERSONAL_BILLING,
     CONF_REPOSITORIES,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_ACTIONS_INCLUDED_MINUTES,
     DEFAULT_AUTO_DISCOVER,
     DEFAULT_BILLING_INTERVAL_MINUTES,
     DEFAULT_ENABLED_CATEGORIES,
@@ -54,7 +56,11 @@ from .models import (
     GitHubSecurityAlerts,
     GitHubSnapshot,
 )
-from .repairs import async_update_billing_issues, async_update_capability_issues
+from .repairs import (
+    async_update_billing_issues,
+    async_update_capability_issues,
+    async_update_configured_allowance_issue,
+)
 from .repository_data import RepositoryCollectionOptions
 
 
@@ -215,6 +221,21 @@ class GitHubInsightsBillingCoordinator(DataUpdateCoordinator[BillingSnapshot]):
             snapshot = replace(snapshot, last_mutation=self._last_mutation)
         async_update_billing_issues(
             self.hass, self.config_entry.entry_id, snapshot.errors
+        )
+        allowance = self.config_entry.options.get(
+            CONF_ACTIONS_INCLUDED_MINUTES, DEFAULT_ACTIONS_INCLUDED_MINUTES
+        )
+        async_update_configured_allowance_issue(
+            self.hass,
+            self.config_entry.entry_id,
+            allowance if isinstance(allowance, int) else 0,
+            {
+                reason
+                for scope_data in snapshot.scopes.values()
+                if scope_data.usage is not None
+                for _, _, reason in [scope_data.usage.configured_actions_minutes]
+                if reason is not None
+            },
         )
         return snapshot
 

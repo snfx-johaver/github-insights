@@ -13,6 +13,7 @@ from custom_components.github_insights.config_flow import ValidatedSetup
 from custom_components.github_insights.const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
+    CONF_ACTIONS_INCLUDED_MINUTES,
     CONF_AUTO_DISCOVER,
     CONF_BILLING_ENTERPRISE,
     CONF_BILLING_INTERVAL,
@@ -161,9 +162,47 @@ async def test_options_flow(hass: HomeAssistant) -> None:
             CONF_BUDGET_MANAGEMENT: False,
             CONF_REFERENCE_RUNNER: "linux_standard",
             CONF_ESTIMATED_MINUTES: 1000,
+            CONF_ACTIONS_INCLUDED_MINUTES: 3000,
             CONF_BUDGET_WARNING_THRESHOLD: 75,
             CONF_BUDGET_CRITICAL_THRESHOLD: 90,
         },
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_UPDATE_INTERVAL] == 30
+    assert result["data"][CONF_ACTIONS_INCLUDED_MINUTES] == 3000
+
+
+async def test_options_reject_fractional_actions_allowance(
+    hass: HomeAssistant,
+) -> None:
+    """The configured Actions allowance must be a bounded integer."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_SERVER: DEFAULT_SERVER,
+            CONF_TOKEN: "token",
+            CONF_ACCOUNT_ID: 42,
+            CONF_ACCOUNT_LOGIN: "octocat",
+        },
+        options={CONF_AUTO_DISCOVER: True},
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    assert result["data_schema"] is not None
+    values = {
+        key.schema: key.default()
+        for key in result["data_schema"].schema
+        if hasattr(key, "default")
+    }
+    values[CONF_ACTIONS_INCLUDED_MINUTES] = 12.5
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], values
+    )
+
+    assert result["type"] is FlowResultType.FORM
+    assert result["errors"] == {
+        CONF_ACTIONS_INCLUDED_MINUTES: "invalid_actions_allowance"
+    }
