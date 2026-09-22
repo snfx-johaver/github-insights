@@ -159,13 +159,15 @@ class BillingUsageReport:
     summary_items: tuple[BillingUsageItem, ...]
     detail_items: tuple[BillingUsageItem, ...]
     currency: str = "USD"
+    unavailable_sections: tuple[str, ...] = ()
 
     @property
     def actions_items(self) -> tuple[BillingUsageItem, ...]:
         """Return GitHub Actions rows only."""
+        source = self.summary_items or self.detail_items
         return tuple(
             item
-            for item in self.summary_items
+            for item in source
             if item.product.casefold() in {"actions", "github actions"}
         )
 
