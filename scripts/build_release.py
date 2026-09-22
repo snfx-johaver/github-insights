@@ -10,6 +10,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parents[1]
 SOURCE = ROOT / "custom_components" / "github_insights"
+MANIFEST = SOURCE / "manifest.json"
 DIST = ROOT / "dist"
 STAGING = DIST / "github_insights"
 FRONTEND_BUILD = SOURCE / "frontend" / "github-insights-cards.js"
@@ -40,9 +41,11 @@ shutil.copytree(
 )
 
 runtime_files = sorted(path for path in STAGING.rglob("*") if path.is_file())
+version = json.loads(MANIFEST.read_text(encoding="utf-8"))["version"]
 deployment_manifest = {
     "format": 1,
     "root": "custom_components/github_insights",
+    "version": version,
     "files": [
         {
             "path": path.relative_to(STAGING).as_posix(),

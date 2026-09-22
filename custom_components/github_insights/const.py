@@ -10,7 +10,7 @@ from homeassistant.const import Platform
 
 DOMAIN: Final = "github_insights"
 NAME: Final = "GitHub Insights"
-VERSION: Final = "0.1.0-beta.1"
+VERSION: Final = "0.2.0-beta.1"
 
 PLATFORMS: Final = [
     Platform.BINARY_SENSOR,

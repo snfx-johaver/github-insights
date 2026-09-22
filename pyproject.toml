@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "github-insights"
-version = "0.1.0b1"
+version = "0.2.0b1"
 description = "Home Assistant integration for GitHub account insights"
 requires-python = ">=3.13"
 license = "MIT"
