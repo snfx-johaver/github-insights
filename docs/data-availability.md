@@ -33,7 +33,8 @@ Official GitHub documentation currently describes:
   repository attribution at supported scopes;
 - billing budgets containing amount, consumed amount, scope, product/SKU,
   alerting, and `prevent_further_usage`;
-- personal and organization AI-credit and premium-request billing reports; and
+- personal and organization AI-credit and premium-request billing reports
+  using a personal access token (classic); and
 - organization/enterprise Copilot usage reports where policy and role permit.
 
 These surfaces are **API availability**, not proof that a particular user's
@@ -61,6 +62,11 @@ an "authoritative workflow cost" from runtime.
   period; otherwise no streak entity is created.
 - Copilot adoption/activity reports and AI-credit/premium-request billing are
   different products and may have different scopes and reporting delays.
+- Current Copilot adoption, coding-agent, and code-review reports are delivered
+  through expiring signed JSON/NDJSON downloads. GitHub Insights accepts only
+  HTTPS `githubusercontent.com` report hosts, sends no authorization header to
+  the download host, caps each report at 10 MB, parses documented aggregate
+  fields, and never persists or exposes the signed URL.
 - Copilot activity does not imply Actions consumption, although Copilot code
   review can consume Actions minutes for private repositories.
 - GitHub Enterprise Server may not expose GitHub.com billing, budget, Copilot,
