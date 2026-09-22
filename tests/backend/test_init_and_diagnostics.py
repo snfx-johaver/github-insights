@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+from typing import cast
 from unittest.mock import AsyncMock, patch
 
 from homeassistant.core import HomeAssistant
@@ -29,14 +31,19 @@ from custom_components.github_insights.diagnostics import (
 from .helpers import snapshot
 
 
-async def test_setup_registers_bundled_frontend_once(
-    hass: HomeAssistant,
-) -> None:
+async def test_setup_registers_bundled_frontend_once() -> None:
     """The integration exposes its bundled card asset idempotently."""
     register = AsyncMock()
-    with patch.object(hass.http, "async_register_static_paths", new=register):
-        assert await async_setup(hass, {})
-        assert await async_setup(hass, {})
+    fake_hass = cast(
+        HomeAssistant,
+        SimpleNamespace(
+            data={},
+            http=SimpleNamespace(async_register_static_paths=register),
+        ),
+    )
+
+    assert await async_setup(fake_hass, {})
+    assert await async_setup(fake_hass, {})
 
     register.assert_awaited_once()
     awaited = register.await_args
@@ -45,7 +52,7 @@ async def test_setup_registers_bundled_frontend_once(
     assert static_path.url_path == FRONTEND_URL
     assert static_path.path == str(FRONTEND_PATH)
     assert static_path.cache_headers is True
-    assert hass.data[FRONTEND_REGISTERED] is True
+    assert fake_hass.data[FRONTEND_REGISTERED] is True
 
 
 async def test_setup_creates_account_sensors(hass: HomeAssistant) -> None:

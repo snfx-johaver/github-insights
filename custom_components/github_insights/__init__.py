@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+import homeassistant.helpers.config_validation as cv
 from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -29,6 +30,7 @@ from .coordinator import (
 FRONTEND_URL = "/github_insights/frontend"
 FRONTEND_PATH = Path(__file__).parent / "frontend"
 FRONTEND_REGISTERED = f"{DOMAIN}_frontend_registered"
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 
 async def async_setup(hass: HomeAssistant, config: dict[str, Any]) -> bool:

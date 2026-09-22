@@ -5,7 +5,9 @@
     "@snfx-johaver"
   ],
   "config_flow": true,
-  "dependencies": [],
+  "dependencies": [
+    "http"
+  ],
   "documentation": "https://github.com/snfx-johaver/github-insights",
   "integration_type": "service",
   "iot_class": "cloud_polling",
