@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import tomllib
@@ -55,6 +56,7 @@ REQUIRED_CARDS = {
 BUNDLED_CARD_PATTERN = re.compile(r"type:\s*custom:github-insights-[\w-]+")
 BUNDLED_RESOURCE_URL = "/github_insights/frontend/github-insights-cards.js"
 DASHBOARD = ROOT / "docs" / "release-candidate-dashboard.yaml"
+DASHBOARD_SHA256 = "97fc8f3208cfbfa29731c656333afdb2237fadafb67c896eb61eec867be690d5"
 RESOURCE_CONFIG = ROOT / "docs" / "release-candidate-lovelace-resources.yaml"
 RESOURCE_EVIDENCE = ROOT / "release-ready.json"
 DYNAMIC_DASHBOARD_FILTERS = {
@@ -79,6 +81,12 @@ def pep440_version(version: str) -> str:
         lambda match: markers[match.group(1)],
         version,
     )
+
+
+def canonical_text_sha256(path: Path) -> str:
+    """Hash text consistently across LF and CRLF checkouts."""
+    content = path.read_bytes().replace(b"\r\n", b"\n")
+    return hashlib.sha256(content).hexdigest()
 
 
 def has_bundled_resource_registration() -> bool:
@@ -125,6 +133,10 @@ def main() -> None:
     pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
     assert pyproject["project"]["version"] == pep440_version(str(manifest["version"]))
     assert (ROOT / "frontend" / "package-lock.json").is_file()
+    assert canonical_text_sha256(DASHBOARD) == DASHBOARD_SHA256, (
+        "release-candidate-dashboard.yaml is the exact storage-dashboard import "
+        "template and must not change without an intentional template revision"
+    )
     dashboard = DASHBOARD.read_text(encoding="utf-8")
     bundled_card_references = BUNDLED_CARD_PATTERN.findall(dashboard)
     assert not bundled_card_references or has_bundled_resource_registration(), (
@@ -153,6 +165,11 @@ def main() -> None:
         f"entity_id: {entity_filter}" in dashboard
         for entity_filter in DYNAMIC_DASHBOARD_FILTERS
     )
+    deployment_docs = (ROOT / "docs" / "deployment.md").read_text(encoding="utf-8")
+    assert "storage dashboard" in deployment_docs
+    assert "mode: yaml" in deployment_docs
+    assert "non-editable in the UI" in deployment_docs
+    assert "Never edit `.storage` directly" in deployment_docs
 
 
 if __name__ == "__main__":

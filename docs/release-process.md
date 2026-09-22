@@ -12,6 +12,8 @@ release asset is prohibited; corrections require a new semantic version.
 
 Backend and all cards always ship together in `github_insights.zip`. There is no
 frontend release, npm publication, plugin artifact, or second HACS lifecycle.
+The release-candidate dashboard remains a repository import template and is not
+added to the archive or installed as a file-backed YAML dashboard.
 
 ## CI release flow
 
@@ -27,7 +29,9 @@ frontend release, npm publication, plugin artifact, or second HACS lifecycle.
    sorted paths, fixed permissions, and a hashed `deployment-manifest.json`.
 8. Inspect archive paths and reject tests, fixtures, source, node modules,
    secrets, maps, or extra top-level integrations.
-9. Install-test the archive in an isolated Home Assistant environment.
+9. Install-test the archive in an isolated Home Assistant environment and
+   import `docs/release-candidate-dashboard.yaml` into a user-created storage
+   dashboard through the UI or supported authenticated Lovelace WebSocket API.
 10. Scan source, history, and artifact for secrets.
 11. Generate and attach `github_insights.zip.sha256`, and publish GitHub build
     provenance for the exact archive.
@@ -60,6 +64,12 @@ HACS Action and Hassfest runs. Only after the prerelease asset exists can the
 custom-repository gate be tested. A tag alone is not a release and is
 insufficient for HACS catalog submission.
 
+Live dashboard evidence must use a storage-mode dashboard by default and
+confirm that it remains editable in the UI. A `lovelace: dashboards:` entry
+with `mode: yaml` is acceptable only as an explicitly tested advanced path
+because it is intentionally non-editable in the UI. Never create, migrate, or
+repair Lovelace state by editing `.storage` directly.
+
 ## Versioning
 
 - `0.0.0`: unreleased architecture scaffold.
@@ -71,4 +81,5 @@ insufficient for HACS catalog submission.
 
 Retain the previous verified zip and deployment manifest. Restore only the
 `custom_components/github_insights` directory and its GitHub Insights resource
-registration. Never roll back unrelated Home Assistant files or dashboards.
+registration. Restore a dashboard only from its own backup or supported
+Lovelace API. Never roll back unrelated Home Assistant files or edit `.storage`.
