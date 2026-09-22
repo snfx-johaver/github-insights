@@ -36,11 +36,12 @@ capability is unavailable.
 
 ## Important billing limitation
 
-GitHub enhanced-billing and Copilot billing endpoints require a personal access
-token (classic). GitHub does not support fine-grained PATs for these endpoints.
-A fine-grained PAT continues to provide supported account, repository,
-workflow, activity, traffic, and security data; billing is reported unavailable
-with remediation guidance instead of failing integration setup.
+The billing usage endpoints used by GitHub Insights do not support fine-grained
+PATs and require a personal access token (classic). Budget permissions and
+availability are capability-detected separately. A fine-grained PAT continues
+to provide supported account, repository, workflow, activity, traffic, and
+security data; billing usage is reported unavailable with remediation guidance
+instead of failing integration setup.
 
 ## Rollback
 
