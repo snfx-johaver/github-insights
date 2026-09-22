@@ -28,20 +28,33 @@ frontend release, npm publication, plugin artifact, or second HACS lifecycle.
    secrets, maps, or extra top-level integrations.
 9. Install-test the archive in an isolated Home Assistant environment.
 10. Scan source, history, and artifact for secrets.
-11. Publish SHA-256 checksum and build provenance/attestation where supported.
-12. Create a full GitHub Release and attach the artifact.
+11. Generate and attach `github_insights.zip.sha256`, and publish GitHub build
+    provenance for the exact archive.
+12. Create a full GitHub Release and attach the artifact and checksum. Semantic
+    versions containing a prerelease suffix such as `alpha`, `beta`, or `rc`
+    are published as GitHub prereleases.
 13. Verify the release page and HACS custom-repository installation.
 
-`check_release_readiness.py` requires a version-matched `release-ready.json`
-confirming successful HACS validation, Hassfest validation, and a clean HACS
-custom-repository installation test. The marker is intentionally absent while
-backend/product validation is incomplete. A tag must exactly match the
-manifest/frontend version. `validate_release_artifact.py` independently rejects
-extra roots, development files, missing bundles, and hash mismatches.
+`check_release_readiness.py` uses two fail-closed evidence stages. Before a
+prerelease tag, version-matched `release-ready.json` must record successful
+source validation, HACS Action, Hassfest, artifact validation, secret scanning,
+and live Home Assistant validation, plus the exact archive hash, size, and file
+count. It must not claim a HACS custom-repository installation, because
+`zip_release` and `hide_default_branch` make that exact test possible only after
+the first immutable release asset exists.
 
-Before creating that marker, retain links to successful non-ignored HACS Action
-and Hassfest runs. Only then create a full GitHub Release; a tag alone is not a
-release and is insufficient for HACS catalog submission.
+After the prerelease is published, install and upgrade through HACS using that
+exact asset and record the result in `post-release-validation.json`. A failure
+is corrected with a new semantic version; the published asset is never
+replaced. Stable publication remains blocked until post-release custom install
+and upgrade evidence exists. A tag must exactly match the manifest/frontend
+version. `validate_release_artifact.py` independently rejects extra roots,
+development files, missing bundles, version mismatches, and hash mismatches.
+
+Before creating pre-release evidence, retain links to successful non-ignored
+HACS Action and Hassfest runs. Only after the prerelease asset exists can the
+custom-repository gate be tested. A tag alone is not a release and is
+insufficient for HACS catalog submission.
 
 ## Versioning
 

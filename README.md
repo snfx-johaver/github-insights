@@ -4,7 +4,7 @@ GitHub usage, Actions billing, Copilot metrics, and repository insights for
 Home Assistant.
 
 > [!IMPORTANT]
-> Version `0.1.0-beta.1` includes the Phase 2 core, Phase 3 Actions billing and
+> Version `0.2.0-beta.1` includes the Phase 2 core, Phase 3 Actions billing and
 > budgets, Phase 4 repository and workflow collection, Phase 5 official
 > Copilot/AI collection, and the complete Phase 6-8 bundled frontend card suite.
 > It remains intentionally unreleased while hosted and real-instance validation
@@ -45,8 +45,9 @@ package, plugin, repository, HACS entry, or version.
 - Read-only operation by default; budget writes require explicit opt-in and
   confirmation for every mutation.
 
-Repository/workflow detail and Copilot/activity/security backend reporting
-remain later phases; the cards already render safe empty/unavailable states.
+Repository/workflow detail, activity/security reporting, and official
+Copilot/AI collection are included with capability-aware empty and unavailable
+states where GitHub does not authorize or provide data.
 
 ## Screenshots
 
@@ -87,6 +88,10 @@ The integration serves this installed file through Home Assistant's static-path
 API. Lovelace resource registration remains manual because Home Assistant does
 not provide a stable public API for integrations to mutate dashboard resources.
 Adding a custom repository is not acceptance into the standard HACS catalog.
+The `0.2.0-beta.1` candidate is intended only for opt-in prerelease/custom
+repository validation. Standard HACS catalog submission is deferred until a
+stable release is ready because the default catalog does not accept projects
+that are still explicitly in alpha or beta testing.
 
 ## Manual installation
 
