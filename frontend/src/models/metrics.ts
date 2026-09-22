@@ -13,6 +13,8 @@ export interface MetricDefinition {
   icon: string;
   format: MetricFormat;
   estimated?: boolean;
+  sourceLabel?: string;
+  prominent?: boolean;
   group:
     | "account"
     | "actions"
@@ -31,7 +33,18 @@ const metric = (
   format: MetricFormat,
   group: MetricDefinition["group"],
   estimated = false,
-): MetricDefinition => ({ key, label, icon, format, group, estimated });
+  sourceLabel?: string,
+  prominent = false,
+): MetricDefinition => ({
+  key,
+  label,
+  icon,
+  format,
+  group,
+  estimated,
+  sourceLabel,
+  prominent,
+});
 
 export const METRICS: Record<string, MetricDefinition> = Object.fromEntries(
   [
@@ -53,9 +66,13 @@ export const METRICS: Record<string, MetricDefinition> = Object.fromEntries(
     metric("actions_billable_usage", "Paid usage", "mdi:cash-plus", "number", "actions"),
     metric("actions_minutes_remaining", "Actions remaining", "mdi:timer-sand", "number", "actions"),
     metric("actions_usage_percent", "Actions usage", "mdi:gauge", "percent", "actions"),
-    metric("actions_cost", "Current cost", "mdi:cash", "currency", "billing"),
-    metric("actions_gross_cost", "Gross cost", "mdi:cash-multiple", "currency", "billing"),
-    metric("actions_discount", "Discount", "mdi:sale", "currency", "billing"),
+    metric("actions_configured_included_minutes", "Configured allowance", "mdi:timer-check-outline", "number", "actions", false, "Configured GitHub Actions allowance", true),
+    metric("actions_configured_minutes_used", "Allowance used", "mdi:timer-play-outline", "number", "actions", false, "Configured allowance calculation", true),
+    metric("actions_configured_minutes_remaining", "Allowance remaining", "mdi:timer-sand", "number", "actions", false, "Configured allowance calculation", true),
+    metric("actions_configured_minutes_used_percent", "Allowance used", "mdi:gauge", "percent", "actions", false, "Configured allowance calculation", true),
+    metric("actions_cost", "Net cost", "mdi:cash", "currency", "billing", false, "Authoritative GitHub billing", true),
+    metric("actions_gross_cost", "Gross cost", "mdi:cash-multiple", "currency", "billing", false, "Authoritative GitHub billing", true),
+    metric("actions_discount", "Discount", "mdi:sale", "currency", "billing", false, "Authoritative GitHub billing", true),
     metric("actions_budget", "GitHub-enforced budget", "mdi:shield-lock", "currency", "billing"),
     metric("actions_budget_remaining", "Budget remaining", "mdi:piggy-bank-outline", "currency", "billing"),
     metric("actions_budget_percent", "Budget utilization", "mdi:chart-donut", "percent", "billing"),

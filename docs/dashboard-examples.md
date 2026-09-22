@@ -81,6 +81,12 @@ cards:
   - type: custom:github-insights-usage
     layout: hero
     sections: [actions, storage, budgets]
+    metrics:
+      - actions_configured_minutes_remaining
+      - actions_configured_minutes_used_percent
+      - actions_gross_cost
+      - actions_discount
+      - actions_cost
     show_forecast: true
     show_estimated_minutes: true
     reference_runner: linux_standard
@@ -107,9 +113,11 @@ cards:
     show_empty: false
 ```
 
-Do not stack runtime and paid usage into one quantity: their units and billing
-meaning can differ. The card always labels runner-converted values as
-**estimated equivalent minutes**.
+The configured allowance defaults to unset and must be entered in integration
+options. It is not a GitHub-reported plan allowance. Do not stack runtime and
+paid usage into one quantity: their units and billing meaning can differ. The
+card always labels gross/discount/net cost as GitHub-reported and
+runner-converted values as **estimated equivalent minutes**.
 
 ## 3. GitHub Copilot and AI usage
 
@@ -161,10 +169,17 @@ cards:
     metrics: [open_pull_requests, workflow_health, actions_usage_percent]
     show_archived: false
     show_forks: true
+    show_debug: false
 ```
 
 Auto Entities is optional convenience; registry discovery is built into the
-GitHub Insights repositories card.
+GitHub Insights repositories card. Set `view: compact` for dense rows or
+`view: expanded` for richer repository cards with metric badges and safe GitHub
+links. Favorites and stable multi-key sorting are available in both modes.
+
+The optional debug panel can be enabled in the visual editor or with
+`show_debug: true`. It includes only sanitized resolved configuration and
+discovered metric-to-entity mappings, never entity states or attributes.
 
 ## 5. Home Assistant development
 

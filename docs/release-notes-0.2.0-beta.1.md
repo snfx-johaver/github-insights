@@ -12,11 +12,17 @@ published only after the remaining release gates pass.
 - Authoritative enhanced-billing usage and cost data, monetary budgets,
   confirmed budget-management services, and clearly labeled runner-based
   estimated equivalent minutes.
+- Optional configured Actions included-minutes tracking, with configured used,
+  remaining, and percent values derived from minute-based GitHub usage without
+  conflating net billed quantity.
 - Official Copilot and AI billing, adoption, coding-agent, and code-review data
   where GitHub exposes it for the authenticated scope.
 - One source-map-free frontend bundle with overview, usage, repositories,
   repository, Actions, Copilot, activity, contributions, security, compact,
   and dashboard cards.
+- Rich repository and billing presentation, safe GitHub deep links, favorites,
+  stable sorting, metric badges, editors, and an optional sanitized diagnostics
+  panel, all in that same bundled artifact.
 
 ## Install after publication
 
@@ -62,6 +68,12 @@ availability are capability-detected separately. A fine-grained PAT continues
 to provide supported account, repository, workflow, activity, traffic, and
 security data; billing usage is reported unavailable with remediation guidance
 instead of failing integration setup.
+
+GitHub's current public enhanced-billing API exposes Actions gross, discount,
+and net quantities and amounts, but not the historical included-minutes
+endpoint. GitHub Insights does not call undocumented endpoints, scrape the
+billing UI, or infer plan allowances. The optional configured allowance
+defaults to unset and is always labeled as configured/derived.
 
 ## Rollback
 

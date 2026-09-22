@@ -10,6 +10,12 @@ rate-limit documentation.
 Reference implementation names are intentionally absent from product naming,
 labels, examples, and marketing. No source file was copied.
 
+The independently implemented repository-card interaction patterns were
+informed in part by design research into the MIT-licensed
+`maxwroc/github-flexi-card`. GitHub Insights does not copy its code or assets,
+does not depend on it, and does not claim configuration or runtime
+compatibility.
+
 ## Patterns retained
 
 - Zero-configuration repository discovery, with explicit include, exclude, and
@@ -75,4 +81,3 @@ Release automation must build from the exact immutable tag, verify that
 manifest/frontend/tag versions match, create one deterministic archive, publish
 a checksum and provenance/attestation where supported, and install-test that
 archive. Locally rebuilt or manually substituted assets are not acceptable.
-

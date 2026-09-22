@@ -10,8 +10,9 @@ reporting, and selected/auto-discovered repositories.
 
 Options now cover personal billing, selected billing organizations, an optional
 enterprise slug, a 30–1440 minute billing interval, read-only budgets, optional
-budget management, a reference runner, desired estimated minutes, and local
-warning/critical thresholds.
+budget management, an optional configured Actions included-minutes allowance,
+a reference runner, desired estimated minutes, and local warning/critical
+thresholds.
 
 Current options cover explicit repository selection, bounded automatic
 discovery, archived/fork filters, a 1–50 repository request ceiling, enabled
@@ -82,6 +83,24 @@ entities:
 The mapping keys are canonical metric keys, not translated names. Missing
 entities remain empty or unavailable and do not prevent other metrics from
 rendering.
+
+## Configured Actions included minutes
+
+Set **Configured Actions included minutes** in integration options only when
+you want a local allowance comparison. The default is `0` (unset); no plan
+allowance is inferred. GitHub's current public enhanced-billing API reports
+gross, discount, and net quantities and amounts but does not report the
+historical included-minutes allowance.
+
+When configured, four clearly labeled sensors expose the configured allowance,
+GitHub-reported minutes used, remaining minutes, and percent used. The used
+value prefers an unambiguous `discountQuantity` (discounted or included
+consumption) and falls back to `grossQuantity` when required. It never uses
+`netQuantity`. If Actions rows contain mixed units, a non-minute unit, or no
+usable quantity, the configured allowance remains visible while its
+used/remaining/percent derivations are unavailable with an explicit reason.
+These configured values remain separate from the existing runner-price
+estimate and from GitHub-enforced monetary budgets.
 
 ## Authentication for billing
 

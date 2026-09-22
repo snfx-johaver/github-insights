@@ -32,6 +32,37 @@ describe("card configuration", () => {
     expect(config.severity).toEqual({ green: 0, amber: 65, red: 85 });
   });
 
+  it("copies and sanitizes repository display overrides", () => {
+    const definition = CARD_DEFINITIONS.find((card) => card.kind === "repositories")!;
+    const metrics = ["stars"];
+    const config = normalizeConfig(
+      {
+        type: `custom:${definition.tag}`,
+        repository_overrides: {
+          "octo/repo": {
+            title: "Important",
+            view: "expanded",
+            favorite: true,
+            metrics,
+            metric_badges: [{ attribute: "visibility", label: "Access" }],
+          },
+        },
+      },
+      definition,
+    );
+    metrics.push("forks");
+
+    expect(config.repository_overrides?.["octo/repo"]).toEqual({
+      title: "Important",
+      view: "expanded",
+      favorite: true,
+      metrics: ["stars"],
+      metric_badges: [
+        { attribute: "visibility", icon: undefined, label: "Access" },
+      ],
+    });
+  });
+
   it("rejects a mismatched card type", () => {
     expect(() =>
       normalizeConfig(
@@ -39,6 +70,30 @@ describe("card configuration", () => {
         CARD_DEFINITIONS[0],
       ),
     ).toThrow("Expected type");
+  });
+
+  it("normalizes the legacy show_forks option into repository exclusion", () => {
+    const definition = CARD_DEFINITIONS.find((card) => card.kind === "repositories")!;
+
+    expect(
+      normalizeConfig(
+        {
+          type: `custom:${definition.tag}`,
+          show_forks: false,
+        },
+        definition,
+      ).exclude?.forked,
+    ).toBe(true);
+    expect(
+      normalizeConfig(
+        {
+          type: `custom:${definition.tag}`,
+          show_forks: false,
+          exclude: { forked: false },
+        },
+        definition,
+      ).exclude?.forked,
+    ).toBe(false);
   });
 
   it("keeps billing concepts as distinct metric keys", () => {

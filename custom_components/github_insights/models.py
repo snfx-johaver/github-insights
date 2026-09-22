@@ -25,6 +25,7 @@ class DataClass(StrEnum):
 
     AUTHORITATIVE = "authoritative"
     CALCULATED = "calculated"
+    CONFIGURED = "configured"
     ESTIMATED = "estimated"
 
 
@@ -419,6 +420,49 @@ class BillingUsageReport:
             for item in source
             if item.product.casefold() in {"actions", "github actions"}
         )
+
+    @property
+    def configured_actions_minutes(
+        self,
+    ) -> tuple[Decimal | None, str | None, str | None]:
+        """Return an unambiguous minute quantity for a configured allowance."""
+        items = self.actions_items
+        if not items:
+            return None, None, "actions_usage_unavailable"
+        units = {item.unit_type.strip().casefold() for item in items}
+        if len(units) != 1:
+            return None, None, "actions_usage_units_mixed"
+        if units != {"minutes"}:
+            return None, None, "actions_usage_unit_not_minutes"
+        if all(item.discount_quantity is not None for item in items):
+            return (
+                sum(
+                    (
+                        item.discount_quantity
+                        if item.discount_quantity is not None
+                        else Decimal()
+                        for item in items
+                    ),
+                    start=Decimal(),
+                ),
+                "discounted_or_included_quantity",
+                None,
+            )
+        if all(item.gross_quantity is not None for item in items):
+            return (
+                sum(
+                    (
+                        item.gross_quantity
+                        if item.gross_quantity is not None
+                        else Decimal()
+                        for item in items
+                    ),
+                    start=Decimal(),
+                ),
+                "gross_quantity",
+                None,
+            )
+        return None, None, "actions_usage_quantity_unavailable"
 
 
 @dataclass(frozen=True, slots=True)

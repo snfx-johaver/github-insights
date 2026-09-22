@@ -86,9 +86,22 @@ export const cardStyles = css`
     border: 1px solid color-mix(in srgb, var(--divider-color) 68%, transparent);
   }
 
+  .metric.prominent {
+    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--divider-color));
+    background: color-mix(in srgb, var(--primary-color) 15%, var(--card-background-color));
+  }
+
   .metric-heading {
     gap: 7px;
     min-height: 24px;
+  }
+
+  .metric-link,
+  .repository a {
+    color: var(--primary-text-color);
+    font-weight: 650;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
   }
 
   ha-icon {
@@ -165,17 +178,100 @@ export const cardStyles = css`
   .repositories {
     display: grid;
     gap: 8px;
+    margin-top: 12px;
   }
 
   .repository {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: block;
     gap: 8px;
   }
 
-  .repository strong {
+  .repository-heading {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .repository-heading strong,
+  .repository-heading a {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .favorite {
+    width: 1em;
+    color: var(--warning-color, #f5b301);
+  }
+
+  .repository-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .repository.compact .repository-metrics {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+
+  .repository.compact .metric {
+    flex: 1 0 120px;
+    padding: 9px;
+  }
+
+  .repository.compact .metric .meta,
+  .repository.compact .metric svg {
+    display: none;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    color: var(--secondary-text-color);
+    background: color-mix(in srgb, var(--divider-color) 50%, transparent);
+  }
+
+  .badge ha-icon {
+    --mdc-icon-size: 14px;
+  }
+
+  .badge-label {
+    font-weight: 650;
+  }
+
+  .diagnostics {
+    margin-top: 12px;
+    border-top: 1px solid var(--divider-color);
+    padding-top: 12px;
+  }
+
+  .diagnostics pre {
+    max-height: 260px;
+    overflow: auto;
+    padding: 10px;
+    border-radius: 8px;
+    color: var(--primary-text-color);
+    background: color-mix(in srgb, var(--divider-color) 35%, transparent);
+    font: 0.75rem/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   .heatmap {
@@ -212,7 +308,9 @@ export const cardStyles = css`
   }
 
   button:focus-visible,
-  a:focus-visible {
+  a:focus-visible,
+  ha-card:focus-visible,
+  pre:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
   }
@@ -235,7 +333,8 @@ export const cardStyles = css`
     }
 
     .grid,
-    :host([layout="compact"]) .grid {
+    :host([layout="compact"]) .grid,
+    .repository-metrics {
       grid-template-columns: 1fr 1fr;
     }
   }

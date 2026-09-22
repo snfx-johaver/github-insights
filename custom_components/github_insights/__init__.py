@@ -15,12 +15,14 @@ from .api import GitHubClient
 from .const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
+    CONF_ACTIONS_INCLUDED_MINUTES,
     CONF_ENABLED_CATEGORIES,
     CONF_INCLUDE_ARCHIVED,
     CONF_INCLUDE_FORKS,
     CONF_MAX_REPOSITORIES,
     CONF_SERVER,
     CONF_TOKEN,
+    DEFAULT_ACTIONS_INCLUDED_MINUTES,
     DEFAULT_ENABLED_CATEGORIES,
     DEFAULT_INCLUDE_ARCHIVED,
     DEFAULT_INCLUDE_FORKS,
@@ -124,7 +126,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if CONF_ACCOUNT_LOGIN not in data and entry.title:
             data[CONF_ACCOUNT_LOGIN] = entry.title
 
-    if entry.version < 3 or entry.minor_version < 2:
+    if entry.version < 3 or entry.minor_version < 3:
         hass.config_entries.async_update_entry(
             entry,
             data=data,
@@ -142,9 +144,13 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 CONF_MAX_REPOSITORIES: entry.options.get(
                     CONF_MAX_REPOSITORIES, DEFAULT_MAX_REPOSITORIES
                 ),
+                CONF_ACTIONS_INCLUDED_MINUTES: entry.options.get(
+                    CONF_ACTIONS_INCLUDED_MINUTES,
+                    DEFAULT_ACTIONS_INCLUDED_MINUTES,
+                ),
             },
             version=3,
-            minor_version=2,
+            minor_version=3,
         )
 
     return True

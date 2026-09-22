@@ -24,6 +24,22 @@ export function normalizeConfig(
     search: value.search,
     group_by: value.group_by ?? "none",
     favorites: [...(value.favorites ?? [])],
+    repository_overrides: Object.fromEntries(
+      Object.entries(value.repository_overrides ?? {}).map(([repository, override]) => [
+        repository,
+        {
+          title: override.title,
+          view: override.view,
+          favorite: override.favorite,
+          metrics: override.metrics ? [...override.metrics] : undefined,
+          metric_badges: override.metric_badges?.map((badge) => ({
+            attribute: badge.attribute,
+            icon: badge.icon,
+            label: badge.label,
+          })),
+        },
+      ]),
+    ),
     include: {
       names: [...(value.include?.names ?? [])],
       visibility: [...(value.include?.visibility ?? [])],
@@ -31,9 +47,11 @@ export function normalizeConfig(
     exclude: {
       names: [...(value.exclude?.names ?? [])],
       archived: value.exclude?.archived ?? !value.show_archived,
-      forked: value.exclude?.forked ?? false,
+      forked: value.exclude?.forked ?? value.show_forks === false,
     },
     sort: (value.sort ?? [
+      { field: "workflow_health", direction: "ascending", nulls: "last" },
+      { field: "last_push", direction: "descending", nulls: "last" },
       { field: "name", direction: "ascending", nulls: "last" },
     ]).map((sort) => ({ ...sort })),
     sections: [...(value.sections ?? [])],
@@ -45,6 +63,13 @@ export function normalizeConfig(
     show_archived: value.show_archived ?? false,
     show_forks: value.show_forks ?? true,
     show_estimated_minutes: value.show_estimated_minutes ?? true,
+    show_metric_badges: value.show_metric_badges ?? true,
+    show_debug: value.show_debug ?? false,
+    metric_badges: (value.metric_badges ?? []).map((badge) => ({
+      attribute: badge.attribute,
+      icon: badge.icon,
+      label: badge.label,
+    })),
     reference_runner: value.reference_runner ?? "linux_standard",
     primary_metric: value.primary_metric ?? definition.defaultMetrics[0],
     secondary_metric: value.secondary_metric ?? definition.defaultMetrics[1],

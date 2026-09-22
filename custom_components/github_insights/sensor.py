@@ -23,8 +23,10 @@ from .const import (
     ATTR_DATA_CLASS,
     ATTR_FRESHNESS,
     ATTR_SOURCE,
+    CONF_ACTIONS_INCLUDED_MINUTES,
     CONF_ESTIMATED_MINUTES,
     CONF_REFERENCE_RUNNER,
+    DEFAULT_ACTIONS_INCLUDED_MINUTES,
     DEFAULT_ESTIMATED_MINUTES,
     DEFAULT_REFERENCE_RUNNER,
     REFERENCE_RUNNER_PRICES,
@@ -481,6 +483,7 @@ async def async_setup_entry(
     async_add_entities(
         GitHubInsightsSensor(coordinator, description) for description in SENSORS
     )
+    async_add_entities([GitHubInsightsConfiguredAllowanceSensor(coordinator)])
     async_add_entities(
         GitHubInsightsBillingSensor(billing_coordinator, scope_data, key)
         for scope_data in billing_coordinator.data.scopes.values()
@@ -581,6 +584,42 @@ class GitHubInsightsSensor(GitHubInsightsEntity, SensorEntity):
         return attributes
 
 
+class GitHubInsightsConfiguredAllowanceSensor(GitHubInsightsEntity, SensorEntity):
+    """Expose the user-configured Actions allowance independently of billing."""
+
+    _attr_translation_key = "actions_configured_included_minutes"
+    _attr_native_unit_of_measurement = "min"
+    _attr_suggested_display_precision = 0
+
+    def __init__(self, coordinator: GitHubInsightsCoordinator) -> None:
+        """Initialize the configured allowance sensor."""
+        super().__init__(coordinator, "actions_configured_included_minutes")
+
+    @property
+    def available(self) -> bool:
+        """Return whether the user configured a positive allowance."""
+        return _configured_actions_allowance(self.coordinator.config_entry) > 0
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the configured allowance without depending on billing data."""
+        allowance = _configured_actions_allowance(self.coordinator.config_entry)
+        return allowance if allowance > 0 else None
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any]:
+        """Return configured provenance without implying a GitHub plan value."""
+        allowance = _configured_actions_allowance(self.coordinator.config_entry)
+        attributes: dict[str, Any] = {
+            ATTR_DATA_CLASS: DataClass.CONFIGURED,
+            ATTR_SOURCE: "User-configured Actions included-minutes allowance",
+            "configured_allowance": allowance,
+        }
+        if allowance <= 0:
+            attributes["availability_reason"] = "configured_allowance_unset"
+        return attributes
+
+
 BILLING_SENSOR_KEYS = (
     "billing_period",
     "actions_billable_usage",
@@ -588,6 +627,9 @@ BILLING_SENSOR_KEYS = (
     "actions_gross_cost",
     "actions_discount",
     "actions_cost",
+    "actions_configured_minutes_used",
+    "actions_configured_minutes_remaining",
+    "actions_configured_minutes_used_percent",
     "actions_budget_count",
     "actions_budget",
     "actions_budget_remaining",
@@ -624,9 +666,16 @@ class GitHubInsightsBillingSensor(GitHubInsightsBillingEntity, SensorEntity):
         elif key == "actions_budget_percent":
             self._attr_native_unit_of_measurement = "%"
             self._attr_suggested_display_precision = 1
-        elif key == "actions_estimated_minutes_remaining":
+        elif key in {
+            "actions_estimated_minutes_remaining",
+            "actions_configured_minutes_used",
+            "actions_configured_minutes_remaining",
+        }:
             self._attr_native_unit_of_measurement = "min"
             self._attr_suggested_display_precision = 0
+        elif key == "actions_configured_minutes_used_percent":
+            self._attr_native_unit_of_measurement = "%"
+            self._attr_suggested_display_precision = 1
         elif key in {"actions_billable_usage", "actions_discounted_usage"}:
             self._attr_suggested_display_precision = 2
 
@@ -638,6 +687,13 @@ class GitHubInsightsBillingSensor(GitHubInsightsBillingEntity, SensorEntity):
         data = self.scope_data
         if self._key == "billing_period":
             return data.usage is not None
+        if self._key.startswith("actions_configured_"):
+            allowance = _configured_actions_allowance(self.coordinator.config_entry)
+            return (
+                allowance > 0
+                and data.usage is not None
+                and data.usage.configured_actions_minutes[0] is not None
+            )
         if self._key.startswith("actions_budget") or self._key == (
             "actions_estimated_minutes_remaining"
         ):
@@ -682,6 +738,19 @@ class GitHubInsightsBillingSensor(GitHubInsightsBillingEntity, SensorEntity):
                 if usage
                 else None
             )
+        if self._key.startswith("actions_configured_"):
+            allowance = Decimal(
+                _configured_actions_allowance(self.coordinator.config_entry)
+            )
+            used = usage.configured_actions_minutes[0] if usage is not None else None
+            if allowance <= 0 or used is None:
+                return None
+            if self._key == "actions_configured_minutes_used":
+                return used
+            if self._key == "actions_configured_minutes_remaining":
+                return max(allowance - used, Decimal())
+            if self._key == "actions_configured_minutes_used_percent":
+                return used * Decimal(100) / allowance
         if self._key == "actions_budget_count":
             return len(_actions_budgets(data))
         if self._key == "actions_budget":
@@ -740,6 +809,44 @@ class GitHubInsightsBillingSensor(GitHubInsightsBillingEntity, SensorEntity):
                     ),
                 }
             )
+        elif self._key.startswith("actions_configured_"):
+            allowance = _configured_actions_allowance(self.coordinator.config_entry)
+            used, basis, usage_reason = (
+                usage.configured_actions_minutes
+                if usage is not None
+                else (None, None, "actions_usage_unavailable")
+            )
+            availability_reason = None
+            if allowance <= 0:
+                availability_reason = "configured_allowance_unset"
+            else:
+                availability_reason = usage_reason
+            if self._key == "actions_configured_minutes_used":
+                data_class = DataClass.CALCULATED
+                source = "Calculated from GitHub enhanced billing minute quantities"
+            else:
+                data_class = DataClass.CALCULATED
+                source = (
+                    "Calculated from a user-configured allowance and GitHub "
+                    "enhanced billing minute quantities"
+                )
+            attributes.update(
+                {
+                    ATTR_DATA_CLASS: data_class,
+                    ATTR_SOURCE: source,
+                    "configured_allowance": allowance,
+                    "usage_basis": basis,
+                    "derivation": (
+                        "Uses GitHub discounted-or-included minute quantity when "
+                        "available, otherwise gross minute quantity; never uses "
+                        "net or billed quantity."
+                    ),
+                }
+            )
+            if availability_reason is not None:
+                attributes["availability_reason"] = availability_reason
+            if used is not None:
+                attributes["github_reported_minutes_used"] = str(used)
         else:
             attributes[ATTR_DATA_CLASS] = DataClass.AUTHORITATIVE
         if usage and self._key in {
@@ -810,6 +917,16 @@ def _common_quantity(
         return None
     values = (getattr(item, attribute) for item in items)
     return _sum_decimal(value for value in values if value is not None)
+
+
+def _configured_actions_allowance(
+    entry: GitHubInsightsConfigEntry,
+) -> int:
+    """Return the validated user-configured Actions minute allowance."""
+    value = entry.options.get(
+        CONF_ACTIONS_INCLUDED_MINUTES, DEFAULT_ACTIONS_INCLUDED_MINUTES
+    )
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def _usage_item_attributes(item: BillingUsageItem) -> dict[str, str]:
@@ -930,6 +1047,7 @@ def _repository_attributes(item: GitHubRepositoryInsights) -> Mapping[str, Any]:
         "full_name": repository.full_name,
         "description": repository.description,
         "url": repository.html_url,
+        "repository_url": repository.html_url,
         "visibility": repository.visibility,
         "default_branch": repository.default_branch,
         "language": repository.language,

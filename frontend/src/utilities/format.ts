@@ -70,6 +70,28 @@ export function safeHttpUrl(value: unknown): string | undefined {
   }
 }
 
+export function safeHttpsUrl(value: unknown): string | undefined {
+  const url = safeHttpUrl(value);
+  return url?.startsWith("https:") ? url : undefined;
+}
+
+export function safeText(value: unknown, maximumLength = 160): string | undefined {
+  if (
+    typeof value !== "string" &&
+    typeof value !== "number" &&
+    typeof value !== "boolean"
+  ) {
+    return undefined;
+  }
+  const text = Array.from(String(value), (character) => {
+    const code = character.charCodeAt(0);
+    return code <= 31 || code === 127 ? " " : character;
+  })
+    .join("")
+    .trim();
+  return text ? text.slice(0, maximumLength) : undefined;
+}
+
 export function severityClass(
   value: number | undefined,
   severity: { amber?: number; red?: number } | undefined,

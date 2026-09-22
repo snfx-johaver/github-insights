@@ -40,6 +40,7 @@ export interface GitHubInsightsCardConfig {
   search?: string;
   group_by?: "none" | "organization" | "visibility" | "workflow_status";
   favorites?: string[];
+  repository_overrides?: Record<string, RepositoryDisplayOverride>;
   include?: {
     names?: string[];
     visibility?: string[];
@@ -63,6 +64,9 @@ export interface GitHubInsightsCardConfig {
   show_archived?: boolean;
   show_forks?: boolean;
   show_estimated_minutes?: boolean;
+  show_metric_badges?: boolean;
+  show_debug?: boolean;
+  metric_badges?: MetricBadgeConfig[];
   reference_runner?: string;
   primary_metric?: string;
   secondary_metric?: string;
@@ -71,6 +75,20 @@ export interface GitHubInsightsCardConfig {
   tap_action?: CardAction;
   hold_action?: CardAction;
   double_tap_action?: CardAction;
+}
+
+export interface MetricBadgeConfig {
+  attribute: string;
+  icon?: string;
+  label?: string;
+}
+
+export interface RepositoryDisplayOverride {
+  title?: string;
+  view?: "compact" | "expanded";
+  metrics?: string[];
+  metric_badges?: MetricBadgeConfig[];
+  favorite?: boolean;
 }
 
 export interface DiscoveredEntity {

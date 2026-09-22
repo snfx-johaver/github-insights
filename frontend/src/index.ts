@@ -21,6 +21,7 @@ export * from "./models/metrics";
 export * from "./services/entity-discovery";
 export * from "./utilities/config";
 export * from "./utilities/format";
+export * from "./utilities/repositories";
 
 for (const definition of CARD_DEFINITIONS) {
   if (!customElements.get(definition.editorTag)) {

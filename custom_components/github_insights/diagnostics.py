@@ -9,6 +9,7 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    CONF_ACTIONS_INCLUDED_MINUTES,
     CONF_ENABLED_CATEGORIES,
     CONF_INCLUDE_ARCHIVED,
     CONF_INCLUDE_FORKS,
@@ -62,6 +63,9 @@ async def async_get_config_entry_diagnostics(
                     "include_archived": entry.options.get(CONF_INCLUDE_ARCHIVED, False),
                     "include_forks": entry.options.get(CONF_INCLUDE_FORKS, True),
                     "repository_limit": entry.options.get(CONF_MAX_REPOSITORIES, 10),
+                    "configured_actions_included_minutes": entry.options.get(
+                        CONF_ACTIONS_INCLUDED_MINUTES, 0
+                    ),
                 },
                 "version": entry.version,
                 "minor_version": entry.minor_version,
