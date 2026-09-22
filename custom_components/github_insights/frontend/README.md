@@ -9,5 +9,5 @@ integration serves it at:
 ```
 
 Register that URL once as a Lovelace JavaScript module resource. The bundle,
-backend, and all eleven cards share one HACS integration installation and
+backend, and both user-facing cards share one HACS integration installation and
 release lifecycle.

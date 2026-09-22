@@ -43,6 +43,16 @@ export const cardStyles = css`
     line-height: 1.35;
   }
 
+  h3 {
+    margin: 16px 0 8px;
+    font-size: 0.9rem;
+    text-transform: capitalize;
+  }
+
+  .metric-section:first-of-type h3 {
+    margin-top: 0;
+  }
+
   .subtitle,
   .label,
   .meta,
@@ -227,6 +237,10 @@ export const cardStyles = css`
   .repository.compact .metric .meta,
   .repository.compact .metric svg {
     display: none;
+  }
+
+  .repository.detail .repository-metrics {
+    grid-template-columns: 1fr;
   }
 
   .badges {

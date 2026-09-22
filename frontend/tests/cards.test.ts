@@ -80,7 +80,7 @@ async function renderDiscoveredRepositories(
       };
     }),
   );
-  const card = document.createElement("github-insights-repositories") as TestCard;
+  const card = document.createElement("github-insights-repository-card") as TestCard;
   card.hass = {
     states,
     connection: {
@@ -94,7 +94,7 @@ async function renderDiscoveredRepositories(
     },
   };
   card.setConfig({
-    type: "custom:github-insights-repositories",
+    type: "custom:github-insights-repository-card",
     metrics: ["stars", "workflow_health"],
     ...config,
   });
@@ -125,12 +125,18 @@ describe("GitHub Insights cards", () => {
       expect(customElements.get(definition.tag)).toBeDefined();
       expect(customElements.get(definition.editorTag)).toBeDefined();
     }
-    expect(window.customCards).toHaveLength(11);
+    expect(window.customCards).toHaveLength(2);
+    expect(window.customCards?.map((card) => card.type)).toEqual([
+      "github-insights-card",
+      "github-insights-repository-card",
+    ]);
+    expect(customElements.get("github-insights-overview")).toBeUndefined();
+    expect(customElements.get("github-insights-repositories")).toBeUndefined();
   });
 
   it("renders a useful empty state for absent capability entities", async () => {
     const card = await renderCard(
-      "github-insights-copilot",
+      "github-insights-card",
       { entities: {} },
       {},
     );
@@ -141,7 +147,7 @@ describe("GitHub Insights cards", () => {
 
   it("renders unavailable values and their reason", async () => {
     const card = await renderCard(
-      "github-insights-security",
+      "github-insights-card",
       {
         metrics: ["dependabot_alerts"],
         entities: { dependabot_alerts: "sensor.dependabot" },
@@ -160,7 +166,7 @@ describe("GitHub Insights cards", () => {
 
   it("visibly labels estimated equivalent minutes", async () => {
     const card = await renderCard(
-      "github-insights-usage",
+      "github-insights-card",
       {
         metrics: ["actions_estimated_minutes_remaining"],
         entities: {
@@ -181,7 +187,7 @@ describe("GitHub Insights cards", () => {
 
   it("can hide estimated values without hiding authoritative usage", async () => {
     const card = await renderCard(
-      "github-insights-usage",
+      "github-insights-card",
       {
         show_estimated_minutes: false,
         metrics: [
@@ -212,7 +218,7 @@ describe("GitHub Insights cards", () => {
 
   it("announces budget warnings and blocked usage", async () => {
     const card = await renderCard(
-      "github-insights-actions",
+      "github-insights-card",
       {
         metrics: ["actions_cost"],
         entities: {
@@ -233,7 +239,7 @@ describe("GitHub Insights cards", () => {
 
   it("provides keyboard focus and accessible progress semantics", async () => {
     const card = await renderCard(
-      "github-insights-overview",
+      "github-insights-card",
       {
         metrics: ["actions_usage_percent"],
         entities: { actions_usage_percent: "sensor.usage" },
@@ -306,7 +312,7 @@ describe("GitHub Insights cards", () => {
   it("preserves the browser context menu on interactive GitHub links", async () => {
     const callService = vi.fn();
     const card = await renderCard(
-      "github-insights-actions",
+      "github-insights-card",
       {
         metrics: ["actions_cost"],
         entities: { actions_cost: "sensor.cost" },
@@ -374,7 +380,7 @@ describe("GitHub Insights cards", () => {
 
   it("prominently labels configured allowance and authoritative costs", async () => {
     const card = await renderCard(
-      "github-insights-actions",
+      "github-insights-card",
       {
         metrics: [
           "actions_configured_included_minutes",
@@ -413,7 +419,7 @@ describe("GitHub Insights cards", () => {
 
   it("announces over-quota percentages without expanding the visual bar", async () => {
     const card = await renderCard(
-      "github-insights-actions",
+      "github-insights-card",
       {
         metrics: ["actions_configured_minutes_used_percent"],
         entities: {
@@ -458,13 +464,13 @@ describe("GitHub Insights cards", () => {
   });
 
   it("exposes picker-safe editor controls for repository display and diagnostics", async () => {
-    const definition = CARD_DEFINITIONS.find((item) => item.kind === "repositories");
+    const definition = CARD_DEFINITIONS.find((item) => item.kind === "repository");
     expect(definition).toBeDefined();
     const editor = document.createElement(definition!.editorTag) as TestEditor;
     editor.setConfig({ type: `custom:${definition!.tag}` });
     document.body.append(editor);
     await editor.updateComplete;
-    expect(editor.shadowRoot?.querySelector('[aria-label="Repository view"]')).toBeTruthy();
+    expect(editor.shadowRoot?.querySelector('[aria-label="Card presentation"]')).toBeTruthy();
     expect(editor.shadowRoot?.querySelector('[aria-label="Favorite repositories"]')).toBeTruthy();
     expect(editor.shadowRoot?.querySelector('[aria-label="Primary repository sort"]')).toBeTruthy();
     expect(editor.shadowRoot?.textContent).toContain("Show sanitized diagnostics panel");
@@ -473,7 +479,7 @@ describe("GitHub Insights cards", () => {
 
   it("keeps a stable accessible compact-card snapshot", async () => {
     const card = await renderCard(
-      "github-insights-compact",
+      "github-insights-card",
       {
         title: "Actions snapshot",
         primary_metric: "actions_configured_minutes_used_percent",
@@ -490,8 +496,30 @@ describe("GitHub Insights cards", () => {
     );
     expect(card.shadowRoot?.textContent?.replace(/\s+/g, " ").trim())
       .toMatchInlineSnapshot(
-        `"Actions snapshot One primary and secondary metric for dense dashboards. Allowance used 25% Source: Configured allowance calculation Net cost $4.00 Source: Authoritative GitHub billing"`,
+        `"Actions snapshot Configurable account, usage, Actions, Copilot, activity, contributions, and security insights. Usage Net cost $4.00 Source: Authoritative GitHub billing Actions Allowance used 25% Source: Configured allowance calculation"`,
       );
+  });
+
+  it("renders enabled account sections in configured order", async () => {
+    const card = await renderCard(
+      "github-insights-card",
+      {
+        sections: ["security", "overview"],
+        metrics: ["account", "dependabot_alerts"],
+        entities: {
+          account: "sensor.account",
+          dependabot_alerts: "sensor.dependabot",
+        },
+      },
+      {
+        "sensor.account": entity("sensor.account", "octocat"),
+        "sensor.dependabot": entity("sensor.dependabot", "2"),
+      },
+    );
+    const headings = queryAll(card.shadowRoot, "h3").map(
+      (heading) => heading.textContent?.trim(),
+    );
+    expect(headings).toEqual(["Security", "Overview"]);
   });
 
   it("includes responsive and reduced-motion styles", () => {

@@ -1,24 +1,30 @@
-export type CardKind =
+export type CardKind = "insights" | "repository";
+
+export type CardLayout =
+  | "responsive"
+  | "compact"
+  | "expanded"
+  | "detail";
+
+export type InsightsPreset =
   | "overview"
   | "usage"
-  | "repositories"
-  | "repository"
   | "actions"
   | "copilot"
   | "activity"
   | "contributions"
   | "security"
-  | "compact"
-  | "dashboard";
+  | "dashboard"
+  | "compact";
 
-export type CardLayout =
-  | "responsive"
-  | "compact"
-  | "hero"
-  | "gauges"
-  | "stacked"
-  | "list"
-  | "grid";
+export type InsightsSection =
+  | "overview"
+  | "usage"
+  | "actions"
+  | "copilot"
+  | "activity"
+  | "contributions"
+  | "security";
 
 export interface CardAction {
   action?: "more-info" | "navigate" | "url" | "call-service" | "none";
@@ -31,6 +37,7 @@ export interface CardAction {
 
 export interface GitHubInsightsCardConfig {
   type: string;
+  preset?: InsightsPreset;
   title?: string;
   account?: string;
   entity?: string;
@@ -55,10 +62,10 @@ export interface GitHubInsightsCardConfig {
     direction?: "ascending" | "descending";
     nulls?: "first" | "last";
   }>;
-  sections?: string[];
+  sections?: InsightsSection[];
   metrics?: string[];
   layout?: CardLayout;
-  view?: "compact" | "expanded" | "list" | "grid";
+  view?: "compact" | "expanded" | "detail";
   period?: string;
   show_forecast?: boolean;
   show_archived?: boolean;
@@ -85,7 +92,7 @@ export interface MetricBadgeConfig {
 
 export interface RepositoryDisplayOverride {
   title?: string;
-  view?: "compact" | "expanded";
+  view?: "compact" | "expanded" | "detail";
   metrics?: string[];
   metric_badges?: MetricBadgeConfig[];
   favorite?: boolean;
@@ -107,5 +114,6 @@ export interface CardDefinition {
   description: string;
   icon: string;
   defaultMetrics: string[];
+  defaultSections: InsightsSection[];
   defaultLayout: CardLayout;
 }

@@ -1,0 +1,3 @@
+resources:
+  - url: /github_insights/frontend/github-insights-cards.js
+    type: module

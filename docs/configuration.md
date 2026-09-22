@@ -73,7 +73,8 @@ Cards normally discover entities through Home Assistant's entity and device
 registries. An explicit mapping is supported when required:
 
 ```yaml
-type: custom:github-insights-usage
+type: custom:github-insights-card
+preset: usage
 entities:
   actions_cost: sensor.github_insights_actions_cost
   actions_budget: sensor.github_insights_actions_budget

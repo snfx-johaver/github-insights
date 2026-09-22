@@ -2,6 +2,7 @@ import type {
   CardDefinition,
   GitHubInsightsCardConfig,
 } from "../models/config";
+import { PRESET_CONFIGS } from "../cards/definitions";
 
 export function normalizeConfig(
   value: GitHubInsightsCardConfig,
@@ -13,8 +14,16 @@ export function normalizeConfig(
   if (value.type && value.type !== `custom:${definition.tag}`) {
     throw new Error(`Expected type custom:${definition.tag}.`);
   }
+  const preset =
+    definition.kind === "insights"
+      ? PRESET_CONFIGS[value.preset ?? "dashboard"]
+      : undefined;
   return {
     type: `custom:${definition.tag}`,
+    preset:
+      definition.kind === "insights"
+        ? value.preset ?? "dashboard"
+        : undefined,
     title: value.title,
     account: value.account,
     entity: value.entity,
@@ -54,9 +63,18 @@ export function normalizeConfig(
       { field: "last_push", direction: "descending", nulls: "last" },
       { field: "name", direction: "ascending", nulls: "last" },
     ]).map((sort) => ({ ...sort })),
-    sections: [...(value.sections ?? [])],
-    metrics: [...(value.metrics ?? definition.defaultMetrics)],
-    layout: value.layout ?? definition.defaultLayout,
+    sections: [
+      ...(value.sections ?? preset?.sections ?? definition.defaultSections),
+    ],
+    metrics: [
+      ...(value.metrics ??
+        (value.primary_metric || value.secondary_metric
+          ? [value.primary_metric, value.secondary_metric].filter(
+              (metric): metric is string => Boolean(metric),
+            )
+          : preset?.metrics ?? definition.defaultMetrics)),
+    ],
+    layout: value.layout ?? preset?.layout ?? definition.defaultLayout,
     view: value.view ?? "compact",
     period: value.period ?? "current_billing_cycle",
     show_forecast: value.show_forecast ?? true,

@@ -41,6 +41,10 @@ REQUIRED_MODULES = {
     "switch.py",
 }
 REQUIRED_CARDS = {
+    "github-insights-card",
+    "github-insights-repository-card",
+}
+FORBIDDEN_CARD_TAGS = {
     "github-insights-overview",
     "github-insights-usage",
     "github-insights-repositories",
@@ -56,7 +60,7 @@ REQUIRED_CARDS = {
 BUNDLED_CARD_PATTERN = re.compile(r"type:\s*custom:github-insights-[\w-]+")
 BUNDLED_RESOURCE_URL = "/github_insights/frontend/github-insights-cards.js"
 DASHBOARD = ROOT / "docs" / "release-candidate-dashboard.yaml"
-DASHBOARD_SHA256 = "97fc8f3208cfbfa29731c656333afdb2237fadafb67c896eb61eec867be690d5"
+DASHBOARD_SHA256 = "850676004b98279e07dfa3f2efc002a32084fb4dbee9fbf80e3bac419091c37d"
 RESOURCE_CONFIG = ROOT / "docs" / "release-candidate-lovelace-resources.yaml"
 RESOURCE_EVIDENCE = ROOT / "release-ready.json"
 DYNAMIC_DASHBOARD_FILTERS = {
@@ -123,6 +127,11 @@ def main() -> None:
     assert bundle.is_file()
     bundle_text = bundle.read_text(encoding="utf-8")
     assert all(card in bundle_text for card in REQUIRED_CARDS)
+    assert not any(
+        f'"{card}"' in bundle_text or f"'{card}'" in bundle_text
+        for card in FORBIDDEN_CARD_TAGS
+    )
+    assert "11 cards registered" not in bundle_text
     frontend = load_json(ROOT / "frontend" / "package.json")
     frontend_lock = load_json(ROOT / "frontend" / "package-lock.json")
     assert frontend["version"] == manifest["version"]

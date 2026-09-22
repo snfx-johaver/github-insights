@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export const GITHUB_INSIGHTS_IMPLEMENTATION_PHASE = 8;
+export const GITHUB_INSIGHTS_IMPLEMENTATION_PHASE = 9;
 export { CARD_DEFINITIONS };
 export * from "./models/config";
 export * from "./models/home-assistant";

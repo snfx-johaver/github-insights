@@ -4,6 +4,7 @@ import type {
   CardDefinition,
   DiscoveredEntity,
   GitHubInsightsCardConfig,
+  InsightsSection,
   MetricBadgeConfig,
 } from "../models/config";
 import type {
@@ -248,7 +249,7 @@ export class GitHubInsightsCard extends LitElement {
   private repositoryTemplate() {
     if (!this.config) return nothing;
     let repositories = buildRepositories(this.discovered, this.hass, this.config);
-    if (this.definition.kind === "repository" && this.config.repository) {
+    if (this.config.repository) {
       repositories = repositories.filter(
         (repository) => repository.name === this.config?.repository,
       );
@@ -259,7 +260,15 @@ export class GitHubInsightsCard extends LitElement {
       <section class="repositories" aria-label="Discovered repositories">
         ${repositories.map(
           (repository) => {
-            const view = repository.override?.view ?? this.config?.view ?? "compact";
+            const view =
+              repository.override?.view ??
+              (this.config?.layout === "detail"
+                ? "detail"
+                : this.config?.layout === "expanded"
+                  ? "expanded"
+                  : this.config?.layout === "compact"
+                    ? "compact"
+                    : this.config?.view ?? "compact");
             const metrics =
               repository.override?.metrics ?? this.config?.metrics ?? this.definition.defaultMetrics;
             const configuredBadges =
@@ -289,7 +298,11 @@ export class GitHubInsightsCard extends LitElement {
                   : html`<strong>${repository.title}</strong>`}
                 <span class="meta">${this.config?.group_by === "organization"
                   ? repository.name.split("/", 1)[0]
-                  : view === "expanded" ? "Expanded repository details" : "GitHub repository"}</span>
+                  : view === "detail"
+                    ? "Detailed repository view"
+                    : view === "expanded"
+                      ? "Expanded repository details"
+                      : "GitHub repository"}</span>
               </div>
               <div class="repository-metrics" aria-label=${`${repository.title} metrics`}>
                 ${metrics.map((key) =>
@@ -392,7 +405,12 @@ export class GitHubInsightsCard extends LitElement {
   }
 
   private heatmapTemplate() {
-    if (this.definition.kind !== "contributions") return nothing;
+    if (
+      this.definition.kind !== "insights" ||
+      !this.config?.sections?.includes("contributions")
+    ) {
+      return nothing;
+    }
     const entity = this.resolveEntity("contributions");
     const raw = entity?.attributes.calendar;
     const values = Array.isArray(raw)
@@ -444,6 +462,39 @@ export class GitHubInsightsCard extends LitElement {
       </div>`;
     }
     return nothing;
+  }
+
+  private sectionForMetric(key: string): InsightsSection {
+    if (["contributions", "current_streak", "longest_streak"].includes(key)) {
+      return "contributions";
+    }
+    const group = metricDefinition(key).group;
+    if (group === "billing") return "usage";
+    if (group === "actions") return "actions";
+    if (group === "copilot") return "copilot";
+    if (group === "activity") return "activity";
+    if (group === "security") return "security";
+    return "overview";
+  }
+
+  private metricSectionsTemplate(metrics: string[]) {
+    const sections = this.config?.sections ?? this.definition.defaultSections;
+    return sections.map((section) => {
+      const sectionMetrics = metrics.filter(
+        (key) => this.sectionForMetric(key) === section,
+      );
+      if (sectionMetrics.length === 0) return nothing;
+      return html`
+        <section class="metric-section" aria-labelledby=${`${this.definition.tag}-${section}`}>
+          <h3 id=${`${this.definition.tag}-${section}`}>
+            ${section.replace(/^\w/, (value) => value.toUpperCase())}
+          </h3>
+          <div class="grid">
+            ${sectionMetrics.map((key) => this.metricTemplate(key))}
+          </div>
+        </section>
+      `;
+    });
   }
 
   private actionFor(event: Event): CardAction | undefined {
@@ -519,24 +570,23 @@ export class GitHubInsightsCard extends LitElement {
 
   protected render() {
     if (!this.config) return nothing;
-    const metrics =
-      this.definition.kind === "compact"
-        ? [this.config.primary_metric, this.config.secondary_metric].filter(
-            (value): value is string => Boolean(value),
+    const metrics = (this.config.metrics ?? this.definition.defaultMetrics).filter(
+      (key) =>
+        this.config?.show_estimated_minutes !== false ||
+        !metricDefinition(key).estimated,
+    );
+    const visibleMetrics =
+      this.definition.kind === "insights"
+        ? metrics.filter((key) =>
+            this.config?.sections?.includes(this.sectionForMetric(key)),
           )
-        : (this.config.metrics ?? this.definition.defaultMetrics).filter(
-            (key) =>
-              this.config?.show_estimated_minutes !== false ||
-              !metricDefinition(key).estimated,
-          );
-    const anyConfigured = metrics.some((key) => this.resolveEntity(key));
-    const isRepositoryCard =
-      this.definition.kind === "repositories" || this.definition.kind === "repository";
+        : metrics;
+    const anyConfigured = visibleMetrics.some((key) => this.resolveEntity(key));
+    const isRepositoryCard = this.definition.kind === "repository";
     const hasRepositories =
       isRepositoryCard &&
       buildRepositories(this.discovered, this.hass, this.config).some(
         (repository) =>
-          this.definition.kind !== "repository" ||
           !this.config?.repository ||
           repository.name === this.config.repository,
       );
@@ -596,7 +646,7 @@ export class GitHubInsightsCard extends LitElement {
               </div>`
             : isRepositoryCard
               ? nothing
-              : html`<div class="grid">${metrics.map((key) => this.metricTemplate(key))}</div>`}
+              : this.metricSectionsTemplate(visibleMetrics)}
           ${this.repositoryTemplate()} ${this.heatmapTemplate()} ${this.diagnosticsTemplate()}
         </section>
       </ha-card>
