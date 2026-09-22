@@ -13,6 +13,13 @@ _CAPABILITY_ISSUES = {
     "organizations": "organizations_unavailable",
     "repositories": "repositories_unavailable",
     "rate_limit": "rate_limit_unavailable",
+    "workflows": "workflows_unavailable",
+    "releases": "releases_unavailable",
+    "activity": "activity_unavailable",
+    "deployments": "deployments_unavailable",
+    "traffic": "traffic_unavailable",
+    "security": "security_unavailable",
+    "copilot": "copilot_unavailable",
 }
 
 

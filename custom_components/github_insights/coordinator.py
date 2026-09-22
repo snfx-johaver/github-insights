@@ -27,6 +27,19 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     DEFAULT_BILLING_INTERVAL_MINUTES,
     DEFAULT_PERSONAL_BILLING,
+    CONF_AUTO_DISCOVER,
+    CONF_ENABLED_CATEGORIES,
+    CONF_INCLUDE_ARCHIVED,
+    CONF_INCLUDE_FORKS,
+    CONF_MAX_REPOSITORIES,
+    CONF_ORGANIZATIONS,
+    CONF_REPOSITORIES,
+    CONF_UPDATE_INTERVAL,
+    DEFAULT_AUTO_DISCOVER,
+    DEFAULT_ENABLED_CATEGORIES,
+    DEFAULT_INCLUDE_ARCHIVED,
+    DEFAULT_INCLUDE_FORKS,
+    DEFAULT_MAX_REPOSITORIES,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
     LOGGER,
@@ -37,9 +50,12 @@ from .models import (
     BillingScopeData,
     BillingScopeType,
     BillingSnapshot,
+    GitHubRepositoryInsights,
+    GitHubSecurityAlerts,
     GitHubSnapshot,
 )
 from .repairs import async_update_billing_issues, async_update_capability_issues
+from .repository_data import RepositoryCollectionOptions
 
 
 @dataclass(slots=True)
@@ -82,7 +98,34 @@ class GitHubInsightsCoordinator(DataUpdateCoordinator[GitHubSnapshot]):
     async def _async_update_data(self) -> GitHubSnapshot:
         """Fetch a normalized GitHub snapshot."""
         try:
-            snapshot = await self.client.async_fetch_snapshot()
+            snapshot = await self.client.async_fetch_snapshot(
+                repository_options=RepositoryCollectionOptions(
+                    selected=tuple(
+                        self.config_entry.options.get(CONF_REPOSITORIES, ())
+                    ),
+                    auto_discover=self.config_entry.options.get(
+                        CONF_AUTO_DISCOVER, DEFAULT_AUTO_DISCOVER
+                    ),
+                    include_archived=self.config_entry.options.get(
+                        CONF_INCLUDE_ARCHIVED, DEFAULT_INCLUDE_ARCHIVED
+                    ),
+                    include_forks=self.config_entry.options.get(
+                        CONF_INCLUDE_FORKS, DEFAULT_INCLUDE_FORKS
+                    ),
+                    enabled_categories=frozenset(
+                        self.config_entry.options.get(
+                            CONF_ENABLED_CATEGORIES,
+                            DEFAULT_ENABLED_CATEGORIES,
+                        )
+                    ),
+                    repository_limit=self.config_entry.options.get(
+                        CONF_MAX_REPOSITORIES, DEFAULT_MAX_REPOSITORIES
+                    ),
+                ),
+                copilot_organizations=tuple(
+                    self.config_entry.options.get(CONF_ORGANIZATIONS, ())
+                ),
+            )
         except GitHubAuthenticationError as err:
             raise ConfigEntryAuthFailed("GitHub credentials were rejected") from err
         except GitHubRateLimitError as err:
@@ -185,7 +228,7 @@ def _merge_last_known_good(
     current: GitHubSnapshot,
 ) -> GitHubSnapshot:
     """Retain prior category values when an optional endpoint is stale."""
-    if previous is None or not current.errors:
+    if previous is None:
         return current
 
     return replace(
@@ -200,6 +243,15 @@ def _merge_last_known_good(
             if "repositories" in current.errors
             else current.repositories
         ),
+        repository_insights=(
+            previous.repository_insights
+            if "repository_insights" in current.errors
+            else _merge_repository_insights(
+                previous.repository_insights,
+                current.repository_insights,
+            )
+        ),
+        copilot=previous.copilot if "copilot" in current.errors else current.copilot,
         rate_limit=(
             previous.rate_limit
             if "rate_limit" in current.errors
@@ -234,3 +286,110 @@ def _merge_billing_last_known_good(
         errors=current.errors,
         last_mutation=current.last_mutation or previous.last_mutation,
     )
+
+
+def _merge_repository_insights(
+    previous: tuple[GitHubRepositoryInsights, ...],
+    current: tuple[GitHubRepositoryInsights, ...],
+) -> tuple[GitHubRepositoryInsights, ...]:
+    """Retain last-known-good fields for failed per-repository capabilities."""
+    previous_by_id = {item.repository.id: item for item in previous}
+    merged: list[GitHubRepositoryInsights] = []
+    for item in current:
+        old = previous_by_id.get(item.repository.id)
+        if old is None or not item.errors:
+            merged.append(item)
+            continue
+        activity_failed = any(
+            key in item.errors
+            for key in ("commits", "pull_requests", "issues", "releases")
+        )
+        security_failed = any(
+            key in item.errors
+            for key in ("dependabot", "code_scanning", "secret_scanning")
+        )
+        security = item.security
+        if security_failed and old.security is not None:
+            current_security = item.security
+            security = GitHubSecurityAlerts(
+                dependabot=(
+                    old.security.dependabot
+                    if "dependabot" in item.errors
+                    else current_security.dependabot
+                    if current_security
+                    else None
+                ),
+                code_scanning=(
+                    old.security.code_scanning
+                    if "code_scanning" in item.errors
+                    else current_security.code_scanning
+                    if current_security
+                    else None
+                ),
+                secret_scanning=(
+                    old.security.secret_scanning
+                    if "secret_scanning" in item.errors
+                    else current_security.secret_scanning
+                    if current_security
+                    else None
+                ),
+                severity=old.security.severity,
+            )
+        merged.append(
+            replace(
+                item,
+                repository=(
+                    old.repository
+                    if "repository_metadata" in item.errors
+                    else item.repository
+                ),
+                open_pull_requests=(
+                    old.open_pull_requests
+                    if "pull_requests" in item.errors
+                    else item.open_pull_requests
+                ),
+                open_issues=(
+                    old.open_issues if "issues" in item.errors else item.open_issues
+                ),
+                latest_commit=(
+                    old.latest_commit
+                    if "commits" in item.errors
+                    else item.latest_commit
+                ),
+                latest_release=(
+                    old.latest_release
+                    if "releases" in item.errors
+                    else item.latest_release
+                ),
+                latest_issue=(
+                    old.latest_issue if "issues" in item.errors else item.latest_issue
+                ),
+                latest_pull_request=(
+                    old.latest_pull_request
+                    if "pull_requests" in item.errors
+                    else item.latest_pull_request
+                ),
+                workflow_runs=(
+                    old.workflow_runs
+                    if "workflows" in item.errors
+                    else item.workflow_runs
+                ),
+                workflow_status=(
+                    old.workflow_status
+                    if "workflows" in item.errors
+                    else item.workflow_status
+                ),
+                deployment=(
+                    old.deployment if "deployments" in item.errors else item.deployment
+                ),
+                environments=(
+                    old.environments
+                    if "deployments" in item.errors
+                    else item.environments
+                ),
+                traffic=(old.traffic if "traffic" in item.errors else item.traffic),
+                security=security,
+                activity=old.activity if activity_failed else item.activity,
+            )
+        )
+    return tuple(merged)

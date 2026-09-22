@@ -38,9 +38,22 @@ CONF_REFERENCE_RUNNER: Final = "reference_runner"
 CONF_ESTIMATED_MINUTES: Final = "estimated_minutes"
 CONF_BUDGET_WARNING_THRESHOLD: Final = "budget_warning_threshold"
 CONF_BUDGET_CRITICAL_THRESHOLD: Final = "budget_critical_threshold"
+CONF_INCLUDE_ARCHIVED: Final = "include_archived"
+CONF_INCLUDE_FORKS: Final = "include_forks"
+CONF_ENABLED_CATEGORIES: Final = "enabled_categories"
+CONF_MAX_REPOSITORIES: Final = "max_repositories"
 
 DEFAULT_SERVER: Final = "https://github.com"
 DEFAULT_AUTO_DISCOVER: Final = True
+DEFAULT_INCLUDE_ARCHIVED: Final = False
+DEFAULT_INCLUDE_FORKS: Final = True
+DEFAULT_ENABLED_CATEGORIES: Final = (
+    "repositories",
+    "workflows",
+    "releases",
+    "activity",
+    "deployments",
+)
 DEFAULT_UPDATE_INTERVAL_MINUTES: Final = 15
 DEFAULT_BILLING_INTERVAL_MINUTES: Final = 60
 DEFAULT_PERSONAL_BILLING: Final = True
@@ -67,6 +80,14 @@ REFERENCE_RUNNER_PRICES: Final[dict[str, str]] = {
     "windows_standard": "0.016",
     "macos_standard": "0.080",
 }
+MIN_SELECTED_REPOSITORIES: Final = 1
+MAX_SELECTED_REPOSITORIES: Final = 50
+DEFAULT_MAX_REPOSITORIES: Final = 10
+MAX_ACTIVITY_ITEMS: Final = 1000
+MAX_RECENT_WORKFLOW_RUNS: Final = 20
+MAX_SECURITY_ALERTS: Final = 1000
+API_VERSION_DOTCOM: Final = "2026-03-10"
+API_VERSION_GHES: Final = "2022-11-28"
 
 ATTR_DATA_CLASS: Final = "data_class"
 ATTR_FRESHNESS: Final = "freshness"

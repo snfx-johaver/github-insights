@@ -8,6 +8,10 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    CONF_ENABLED_CATEGORIES,
+    CONF_INCLUDE_ARCHIVED,
+    CONF_INCLUDE_FORKS,
+    CONF_MAX_REPOSITORIES,
     CONF_ORGANIZATIONS,
     CONF_REPOSITORIES,
     CONF_SERVER,
@@ -51,6 +55,12 @@ async def async_get_config_entry_diagnostics(
                     "repository_selection_count": len(
                         entry.options.get(CONF_REPOSITORIES, [])
                     ),
+                    "enabled_categories": sorted(
+                        entry.options.get(CONF_ENABLED_CATEGORIES, [])
+                    ),
+                    "include_archived": entry.options.get(CONF_INCLUDE_ARCHIVED, False),
+                    "include_forks": entry.options.get(CONF_INCLUDE_FORKS, True),
+                    "repository_limit": entry.options.get(CONF_MAX_REPOSITORIES, 10),
                 },
                 "version": entry.version,
                 "minor_version": entry.minor_version,
@@ -66,6 +76,8 @@ async def async_get_config_entry_diagnostics(
             "token_type": entry.runtime_data.client.token_type,
             "organization_count": len(snapshot.organizations),
             "repository_count": len(snapshot.repositories),
+            "selected_repository_count": len(snapshot.repository_insights),
+            "copilot_scope_count": len(snapshot.copilot),
             "capabilities": {
                 key: {
                     "status": capability.status,
