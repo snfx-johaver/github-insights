@@ -1,9 +1,10 @@
 # Deployment
 
-## Phase 1 status
+## Current status
 
-No deployment was attempted. The repository contains only an architecture
-scaffold and release guards. Home Assistant must not receive version `0.0.0`.
+No deployment or restart was attempted by the frontend work. The card bundle
+and release archive are validated locally, but live Home Assistant validation
+belongs to Phase 9.
 
 The configured share `\\192.168.1.4\config` was inaccessible from this
 workspace on 2026-09-18. TCP connection to `192.168.1.5:10513` failed, and the
@@ -32,16 +33,19 @@ separate `/community/` plugin and has no independent HACS entry.
 
 ## Resource registration
 
-Phase 6 must select a supported Home Assistant resource-registration path and
-validate the final URL. Preferred order:
+The integration idempotently registers its bundled `frontend/` directory with
+Home Assistant's supported HTTP static-path API. Register this Lovelace module
+resource manually:
 
-1. integration-served static URL registered through supported Home Assistant
-   APIs; or
-2. documented manual Lovelace module resource pointing to the bundle inside the
-   installed integration.
+```text
+/github_insights/frontend/github-insights-cards.js
+```
 
-No undocumented frontend internals may be used without a small isolated adapter
-and documented compatibility risk.
+Manual resource registration is deliberate: Home Assistant does not document a
+stable public API for integrations to mutate Lovelace resources. The static
+path is isolated in `custom_components/github_insights/__init__.py` and tested.
+If that supported API changes, the fallback is to copy the same bundled asset
+to `www/` and update the resource URL; no second HACS repository is needed.
 
 ## Safe deployment procedure
 
@@ -69,4 +73,3 @@ the Home Assistant version/system overview, find the integration's config entry,
 list devices/entities belonging to `github_insights`, inspect availability, and
 confirm health after an approved restart. Do not expose the endpoint in normal
 product configuration and do not operate unrelated entities or automations.
-

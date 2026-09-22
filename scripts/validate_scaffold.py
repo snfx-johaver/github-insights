@@ -37,6 +37,19 @@ REQUIRED_MODULES = {
     "sensor.py",
     "switch.py",
 }
+REQUIRED_CARDS = {
+    "github-insights-overview",
+    "github-insights-usage",
+    "github-insights-repositories",
+    "github-insights-repository",
+    "github-insights-actions",
+    "github-insights-copilot",
+    "github-insights-activity",
+    "github-insights-contributions",
+    "github-insights-security",
+    "github-insights-compact",
+    "github-insights-dashboard",
+}
 
 
 def load_json(path: Path) -> dict[str, object]:
@@ -62,8 +75,13 @@ def main() -> None:
     assert REQUIRED_DOCS <= {path.name for path in (ROOT / "docs").glob("*.md")}
     assert REQUIRED_MODULES <= {path.name for path in INTEGRATION.glob("*.py")}
     assert (INTEGRATION / "frontend" / "README.md").is_file()
+    bundle = INTEGRATION / "frontend" / "github-insights-cards.js"
+    assert bundle.is_file()
+    bundle_text = bundle.read_text(encoding="utf-8")
+    assert all(card in bundle_text for card in REQUIRED_CARDS)
     frontend = load_json(ROOT / "frontend" / "package.json")
     assert frontend["version"] == manifest["version"]
+    assert (ROOT / "frontend" / "package-lock.json").is_file()
 
 
 if __name__ == "__main__":

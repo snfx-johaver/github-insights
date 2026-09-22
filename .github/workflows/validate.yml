@@ -33,10 +33,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
-      - run: npm install --no-audit --no-fund
+      - run: npm ci --no-audit --no-fund
         working-directory: frontend
       - run: npm run check
         working-directory: frontend
+      - run: python scripts/build_release.py
+      - run: python scripts/validate_release_artifact.py
 
   metadata:
     runs-on: ubuntu-latest

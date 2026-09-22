@@ -4,10 +4,10 @@ import typescript from "@rollup/plugin-typescript";
 export default {
   input: "src/index.ts",
   output: {
-    file: "build/github-insights-cards.js",
+    file: "../custom_components/github_insights/frontend/github-insights-cards.js",
     format: "es",
     sourcemap: false,
+    generatedCode: "es2015",
   },
   plugins: [resolve(), typescript()],
 };
-

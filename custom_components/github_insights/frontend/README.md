@@ -1,6 +1,13 @@
-# Bundled frontend destination
+# Bundled frontend
 
-Phase 6 will place the production `github-insights-cards.js` bundle here.
-HACS will install it with the `github_insights` integration so the cards never
-require a separate repository, plugin, HACS entry, version, or installation.
+`github-insights-cards.js` is the deterministic production bundle built from
+`frontend/`. HACS installs it inside the `github_insights` integration and the
+integration serves it at:
 
+```text
+/github_insights/frontend/github-insights-cards.js
+```
+
+Register that URL once as a Lovelace JavaScript module resource. The bundle,
+backend, and all eleven cards share one HACS integration installation and
+release lifecycle.

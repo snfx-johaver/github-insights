@@ -1,0 +1,61 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`card configuration > snapshots registered card metadata 1`] = `
+[
+  {
+    "editorTag": "github-insights-overview-editor",
+    "kind": "overview",
+    "tag": "github-insights-overview",
+  },
+  {
+    "editorTag": "github-insights-usage-editor",
+    "kind": "usage",
+    "tag": "github-insights-usage",
+  },
+  {
+    "editorTag": "github-insights-repositories-editor",
+    "kind": "repositories",
+    "tag": "github-insights-repositories",
+  },
+  {
+    "editorTag": "github-insights-repository-editor",
+    "kind": "repository",
+    "tag": "github-insights-repository",
+  },
+  {
+    "editorTag": "github-insights-actions-editor",
+    "kind": "actions",
+    "tag": "github-insights-actions",
+  },
+  {
+    "editorTag": "github-insights-copilot-editor",
+    "kind": "copilot",
+    "tag": "github-insights-copilot",
+  },
+  {
+    "editorTag": "github-insights-activity-editor",
+    "kind": "activity",
+    "tag": "github-insights-activity",
+  },
+  {
+    "editorTag": "github-insights-contributions-editor",
+    "kind": "contributions",
+    "tag": "github-insights-contributions",
+  },
+  {
+    "editorTag": "github-insights-security-editor",
+    "kind": "security",
+    "tag": "github-insights-security",
+  },
+  {
+    "editorTag": "github-insights-compact-editor",
+    "kind": "compact",
+    "tag": "github-insights-compact",
+  },
+  {
+    "editorTag": "github-insights-dashboard-editor",
+    "kind": "dashboard",
+    "tag": "github-insights-dashboard",
+  },
+]
+`;

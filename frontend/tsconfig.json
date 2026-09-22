@@ -6,8 +6,10 @@
     ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
+    "noEmit": true,
     "strict": true,
-    "target": "ES2023"
+    "target": "ES2023",
+    "useDefineForClassFields": false
   },
   "include": [
     "src/**/*.ts",

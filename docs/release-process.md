@@ -1,6 +1,6 @@
 # Release process
 
-No Phase 1 release or tag is permitted.
+No release or tag is created by the Phase 6-8 frontend branch.
 
 ## Version and artifact invariant
 
@@ -18,11 +18,12 @@ frontend release, npm publication, plugin artifact, or second HACS lifecycle.
 2. Run frontend lint, typing, tests, accessibility/snapshots, and production
    build without source maps.
 3. Verify repository/manifest/frontend/tag versions.
-4. Require a committed frontend lockfile and install exactly from that lock.
+4. Require a committed frontend lockfile and install exactly with `npm ci`.
 5. Copy only runtime integration files and the compiled card bundle into a
    clean staging directory.
 6. Generate `deployment-manifest.json` with paths and SHA-256 hashes.
-7. Create deterministic `github_insights.zip`.
+7. Create deterministic `github_insights.zip` with normalized ZIP timestamps,
+   sorted paths, fixed permissions, and a hashed `deployment-manifest.json`.
 8. Inspect archive paths and reject tests, fixtures, source, node modules,
    secrets, maps, or extra top-level integrations.
 9. Install-test the archive in an isolated Home Assistant environment.
@@ -31,9 +32,16 @@ frontend release, npm publication, plugin artifact, or second HACS lifecycle.
 12. Create a full GitHub Release and attach the artifact.
 13. Verify the release page and HACS custom-repository installation.
 
-The current workflow runs `check_release_readiness.py`, which intentionally
-blocks version `0.0.0`. Later phases must extend artifact validation rather than
-remove the safety gate.
+`check_release_readiness.py` requires a version-matched `release-ready.json`
+confirming successful HACS validation, Hassfest validation, and a clean HACS
+custom-repository installation test. The marker is intentionally absent while
+backend/product validation is incomplete. A tag must exactly match the
+manifest/frontend version. `validate_release_artifact.py` independently rejects
+extra roots, development files, missing bundles, and hash mismatches.
+
+Before creating that marker, retain links to successful non-ignored HACS Action
+and Hassfest runs. Only then create a full GitHub Release; a tag alone is not a
+release and is insufficient for HACS catalog submission.
 
 ## Versioning
 
