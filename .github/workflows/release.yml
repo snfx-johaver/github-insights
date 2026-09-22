@@ -49,7 +49,7 @@ jobs:
       - uses: actions/attest-build-provenance@v2
         with:
           subject-path: dist/github_insights.zip
-      - uses: softprops/action-gh-release@v2
+      - uses: softprops/action-gh-release@v3
         with:
           body_path: ${{ steps.release-type.outputs.notes }}
           generate_release_notes: true
