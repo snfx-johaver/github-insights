@@ -40,3 +40,26 @@ def async_update_capability_issues(
                 "reason": errors[capability],
             },
         )
+
+
+def async_update_billing_issues(
+    hass: HomeAssistant,
+    entry_id: str,
+    errors: Mapping[str, str],
+) -> None:
+    """Create one sanitized billing issue without exposing scope names."""
+    issue_id = f"{entry_id}_billing_unavailable"
+    if not errors:
+        ir.async_delete_issue(hass, DOMAIN, issue_id)
+        return
+    reasons = sorted(set(errors.values()))
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        issue_id,
+        is_fixable=False,
+        is_persistent=True,
+        severity=ir.IssueSeverity.WARNING,
+        translation_key="billing_unavailable",
+        translation_placeholders={"reason": ", ".join(reasons)},
+    )

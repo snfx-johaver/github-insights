@@ -12,7 +12,14 @@ DOMAIN: Final = "github_insights"
 NAME: Final = "GitHub Insights"
 VERSION: Final = "0.1.0-beta.1"
 
-PLATFORMS: Final = [Platform.SENSOR]
+PLATFORMS: Final = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
+]
 
 CONF_SERVER: Final = "server"
 CONF_TOKEN: Final = "token"
@@ -22,14 +29,44 @@ CONF_ORGANIZATIONS: Final = "organizations"
 CONF_REPOSITORIES: Final = "repositories"
 CONF_AUTO_DISCOVER: Final = "auto_discover"
 CONF_UPDATE_INTERVAL: Final = "update_interval"
+CONF_BILLING_INTERVAL: Final = "billing_interval"
+CONF_PERSONAL_BILLING: Final = "personal_billing"
+CONF_BILLING_ORGANIZATIONS: Final = "billing_organizations"
+CONF_BILLING_ENTERPRISE: Final = "billing_enterprise"
+CONF_BUDGET_MANAGEMENT: Final = "budget_management"
+CONF_REFERENCE_RUNNER: Final = "reference_runner"
+CONF_ESTIMATED_MINUTES: Final = "estimated_minutes"
+CONF_BUDGET_WARNING_THRESHOLD: Final = "budget_warning_threshold"
+CONF_BUDGET_CRITICAL_THRESHOLD: Final = "budget_critical_threshold"
 
 DEFAULT_SERVER: Final = "https://github.com"
 DEFAULT_AUTO_DISCOVER: Final = True
 DEFAULT_UPDATE_INTERVAL_MINUTES: Final = 15
+DEFAULT_BILLING_INTERVAL_MINUTES: Final = 60
+DEFAULT_PERSONAL_BILLING: Final = True
+DEFAULT_BUDGET_MANAGEMENT: Final = False
+DEFAULT_REFERENCE_RUNNER: Final = "linux_standard"
+DEFAULT_ESTIMATED_MINUTES: Final = 1000
+DEFAULT_BUDGET_WARNING_THRESHOLD: Final = 75
+DEFAULT_BUDGET_CRITICAL_THRESHOLD: Final = 90
 MIN_UPDATE_INTERVAL_MINUTES: Final = 5
 MAX_UPDATE_INTERVAL_MINUTES: Final = 360
+MIN_BILLING_INTERVAL_MINUTES: Final = 30
+MAX_BILLING_INTERVAL_MINUTES: Final = 1440
 MAX_DISCOVERED_REPOSITORIES: Final = 100
-API_VERSION: Final = "2022-11-28"
+API_VERSION: Final = "2026-03-10"
+MAX_BUDGET_PAGES: Final = 10
+
+SERVICE_CREATE_BUDGET: Final = "create_budget"
+SERVICE_UPDATE_BUDGET: Final = "update_budget"
+SERVICE_DELETE_BUDGET: Final = "delete_budget"
+SERVICE_SET_STOP_USAGE: Final = "set_stop_usage"
+
+REFERENCE_RUNNER_PRICES: Final[dict[str, str]] = {
+    "linux_standard": "0.008",
+    "windows_standard": "0.016",
+    "macos_standard": "0.080",
+}
 
 ATTR_DATA_CLASS: Final = "data_class"
 ATTR_FRESHNESS: Final = "freshness"

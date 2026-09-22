@@ -22,10 +22,12 @@ from .const import (
     PLATFORMS,
 )
 from .coordinator import (
+    GitHubInsightsBillingCoordinator,
     GitHubInsightsConfigEntry,
     GitHubInsightsCoordinator,
     GitHubInsightsRuntimeData,
 )
+from .services import async_register_services, async_unregister_services
 
 FRONTEND_URL = "/github_insights/frontend"
 FRONTEND_PATH = Path(__file__).parent / "frontend"
@@ -60,7 +62,9 @@ async def async_setup_entry(
         entry.data[CONF_SERVER],
     )
     coordinator = GitHubInsightsCoordinator(hass, entry, client)
+    billing_coordinator = GitHubInsightsBillingCoordinator(hass, entry, client)
     await coordinator.async_config_entry_first_refresh()
+    await billing_coordinator.async_config_entry_first_refresh()
 
     if CONF_ACCOUNT_ID not in entry.data:
         hass.config_entries.async_update_entry(
@@ -76,8 +80,10 @@ async def async_setup_entry(
     entry.runtime_data = GitHubInsightsRuntimeData(
         client=client,
         coordinator=coordinator,
+        billing_coordinator=billing_coordinator,
     )
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
+    await async_register_services(hass)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
@@ -86,7 +92,10 @@ async def async_unload_entry(
     hass: HomeAssistant, entry: GitHubInsightsConfigEntry
 ) -> bool:
     """Unload GitHub Insights."""
-    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    unloaded = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+    if unloaded:
+        await async_unregister_services(hass)
+    return unloaded
 
 
 async def async_reload_entry(
@@ -98,7 +107,7 @@ async def async_reload_entry(
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Migrate legacy Phase 2 config-entry data."""
-    if entry.version > 2:
+    if entry.version > 3:
         return False
 
     if entry.version == 1:
@@ -114,5 +123,12 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     elif entry.minor_version < 1:
         hass.config_entries.async_update_entry(entry, minor_version=1)
+
+    if entry.version == 2:
+        hass.config_entries.async_update_entry(
+            entry,
+            version=3,
+            minor_version=1,
+        )
 
     return True

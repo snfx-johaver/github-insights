@@ -6,14 +6,25 @@ import ipaddress
 import json
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from decimal import Decimal, InvalidOperation
+from types import MappingProxyType
 from typing import Any
 from urllib.parse import parse_qs, urlencode
 
 from aiohttp import ClientError, ClientResponse, ClientSession
 from yarl import URL
 
-from .const import API_VERSION, MAX_DISCOVERED_REPOSITORIES
+from .const import API_VERSION, MAX_BUDGET_PAGES, MAX_DISCOVERED_REPOSITORIES
 from .models import (
+    BillingBudget,
+    BillingPeriod,
+    BillingScope,
+    BillingScopeData,
+    BillingScopeType,
+    BillingSnapshot,
+    BillingUsageItem,
+    BillingUsageReport,
+    BudgetAlerting,
     CapabilityStatus,
     GitHubAccount,
     GitHubCapability,
@@ -126,6 +137,9 @@ class GitHubClient:
         """Initialize the client."""
         self._session = session
         self._token = token
+        self.token_type = (
+            "fine_grained_pat" if token.startswith("github_pat_") else "classic_pat"
+        )
         self.server = normalize_server(server)
         self._etag_cache: dict[str, tuple[str, Any]] = {}
         self._token_scopes: tuple[str, ...] = ()
@@ -195,6 +209,219 @@ class GitHubClient:
             remaining=_required_int(core, "remaining"),
             used=_required_int(core, "used"),
             reset_at=datetime.fromtimestamp(_required_int(core, "reset"), UTC),
+        )
+
+    async def async_get_billing_usage(
+        self,
+        scope: BillingScope,
+        *,
+        year: int | None = None,
+        month: int | None = None,
+    ) -> BillingUsageReport:
+        """Return official enhanced-billing detail and summary reports."""
+        if not self.server.is_dotcom:
+            raise GitHubAPIError(404, "enhanced_billing_unsupported")
+        now = datetime.now(UTC)
+        selected_year = year or now.year
+        selected_month = month or now.month
+        params = {"year": str(selected_year), "month": str(selected_month)}
+        base_path = _billing_scope_path(scope)
+        detail = await self._request_json("GET", f"{base_path}/usage", params=params)
+        summary = await self._request_json(
+            "GET", f"{base_path}/usage/summary", params=params
+        )
+        summary_object = _as_object(summary, "invalid_usage_summary")
+        time_period = _required_object(summary_object, "timePeriod")
+        period = BillingPeriod(
+            year=_required_int(time_period, "year"),
+            month=_optional_int(time_period.get("month")),
+            day=_optional_int(time_period.get("day")),
+        )
+        return BillingUsageReport(
+            scope=scope,
+            period=period,
+            summary_items=_parse_summary_usage_items(summary_object.get("usageItems")),
+            detail_items=_parse_detail_usage_items(
+                _as_object(detail, "invalid_usage_report").get("usageItems")
+            ),
+        )
+
+    async def async_get_budgets(
+        self,
+        scope: BillingScope,
+    ) -> tuple[BillingBudget, ...]:
+        """Return all documented budgets for an organization or enterprise."""
+        if scope.scope_type is BillingScopeType.USER:
+            raise GitHubAPIError(404, "personal_budgets_unsupported")
+        if not self.server.is_dotcom:
+            raise GitHubAPIError(404, "enhanced_billing_unsupported")
+        base_path = f"{_billing_scope_path(scope)}/budgets"
+        budgets: list[BillingBudget] = []
+        for page in range(1, MAX_BUDGET_PAGES + 1):
+            data = _as_object(
+                await self._request_json(
+                    "GET",
+                    base_path,
+                    params={"page": str(page), "per_page": "100"},
+                ),
+                "invalid_budgets",
+            )
+            raw_budgets = data.get("budgets")
+            if not isinstance(raw_budgets, list):
+                raise GitHubAPIError(502, "invalid_budgets")
+            budgets.extend(_parse_budget(item, scope) for item in raw_budgets)
+            if data.get("has_next_page") is not True:
+                break
+        return tuple(budgets)
+
+    async def async_create_budget(
+        self,
+        scope: BillingScope,
+        payload: Mapping[str, Any],
+    ) -> BillingBudget:
+        """Create a documented organization or enterprise budget."""
+        data = _as_object(
+            await self._request_json(
+                "POST",
+                f"{_billing_scope_path(scope)}/budgets",
+                json_data=payload,
+            ),
+            "invalid_budget",
+        )
+        return _parse_budget(_required_object(data, "budget"), scope)
+
+    async def async_update_budget(
+        self,
+        scope: BillingScope,
+        budget_id: str,
+        payload: Mapping[str, Any],
+    ) -> BillingBudget:
+        """Update a documented organization or enterprise budget."""
+        data = _as_object(
+            await self._request_json(
+                "PATCH",
+                f"{_billing_scope_path(scope)}/budgets/{budget_id}",
+                json_data=payload,
+            ),
+            "invalid_budget",
+        )
+        return _parse_budget(_required_object(data, "budget"), scope)
+
+    async def async_delete_budget(
+        self,
+        scope: BillingScope,
+        budget_id: str,
+    ) -> None:
+        """Delete a documented organization or enterprise budget."""
+        await self._request_json(
+            "DELETE", f"{_billing_scope_path(scope)}/budgets/{budget_id}"
+        )
+
+    async def async_fetch_billing_snapshot(
+        self,
+        scopes: tuple[BillingScope, ...],
+    ) -> BillingSnapshot:
+        """Fetch configured billing scopes with capability-level isolation."""
+        results: dict[str, BillingScopeData] = {}
+        errors: dict[str, str] = {}
+        for scope in scopes:
+            usage: BillingUsageReport | None = None
+            budgets: tuple[BillingBudget, ...] = ()
+            scope_errors: dict[str, str] = {}
+            if not self.server.is_dotcom:
+                usage_capability = GitHubCapability(
+                    CapabilityStatus.UNSUPPORTED, "github_dotcom_only"
+                )
+            elif self.token_type == "fine_grained_pat":
+                usage_capability = GitHubCapability(
+                    CapabilityStatus.FORBIDDEN,
+                    "classic_pat_required",
+                )
+                scope_errors["usage"] = "classic_pat_required"
+            else:
+                try:
+                    usage = await self.async_get_billing_usage(scope)
+                except GitHubPermissionError:
+                    usage_capability = GitHubCapability(
+                        CapabilityStatus.FORBIDDEN,
+                        "classic_pat_required_or_missing_billing_permission",
+                    )
+                    scope_errors["usage"] = usage_capability.reason or ""
+                except GitHubAPIError as err:
+                    if err.status == 404:
+                        usage_capability = GitHubCapability(
+                            CapabilityStatus.UNSUPPORTED,
+                            "enhanced_billing_unavailable",
+                        )
+                    else:
+                        usage_capability = GitHubCapability(
+                            CapabilityStatus.TEMPORARILY_UNAVAILABLE,
+                            "billing_usage_failed",
+                        )
+                    scope_errors["usage"] = usage_capability.reason or ""
+                except (GitHubConnectionError, GitHubRateLimitError):
+                    usage_capability = GitHubCapability(
+                        CapabilityStatus.TEMPORARILY_UNAVAILABLE,
+                        "billing_usage_failed",
+                    )
+                    scope_errors["usage"] = usage_capability.reason or ""
+                else:
+                    usage_capability = GitHubCapability(CapabilityStatus.AVAILABLE)
+
+            if scope.scope_type is BillingScopeType.USER:
+                budget_capability = GitHubCapability(
+                    CapabilityStatus.UNSUPPORTED,
+                    "personal_budget_api_not_documented",
+                )
+            elif not self.server.is_dotcom:
+                budget_capability = GitHubCapability(
+                    CapabilityStatus.UNSUPPORTED, "github_dotcom_only"
+                )
+            else:
+                try:
+                    budgets = await self.async_get_budgets(scope)
+                except GitHubPermissionError:
+                    budget_capability = GitHubCapability(
+                        CapabilityStatus.FORBIDDEN,
+                        "missing_budget_permission",
+                    )
+                    scope_errors["budgets"] = budget_capability.reason or ""
+                except GitHubAPIError as err:
+                    if err.status == 404:
+                        budget_capability = GitHubCapability(
+                            CapabilityStatus.UNSUPPORTED,
+                            "enhanced_billing_or_budgets_unavailable",
+                        )
+                    else:
+                        budget_capability = GitHubCapability(
+                            CapabilityStatus.TEMPORARILY_UNAVAILABLE,
+                            "budgets_failed",
+                        )
+                    scope_errors["budgets"] = budget_capability.reason or ""
+                except (GitHubConnectionError, GitHubRateLimitError):
+                    budget_capability = GitHubCapability(
+                        CapabilityStatus.TEMPORARILY_UNAVAILABLE,
+                        "budgets_failed",
+                    )
+                    scope_errors["budgets"] = budget_capability.reason or ""
+                else:
+                    budget_capability = GitHubCapability(CapabilityStatus.AVAILABLE)
+
+            results[scope.key] = BillingScopeData(
+                scope=scope,
+                usage=usage,
+                budgets=budgets,
+                usage_capability=usage_capability,
+                budget_capability=budget_capability,
+                errors=MappingProxyType(scope_errors),
+            )
+            errors.update(
+                {f"{scope.key}:{key}": value for key, value in scope_errors.items()}
+            )
+        return BillingSnapshot.create(
+            scopes=results,
+            fetched_at=datetime.now(UTC),
+            errors=errors,
         )
 
     async def async_fetch_snapshot(self) -> GitHubSnapshot:
@@ -306,9 +533,12 @@ class GitHubClient:
         path: str,
         *,
         params: Mapping[str, str] | None = None,
+        json_data: Mapping[str, Any] | None = None,
     ) -> Any:
         """Request a JSON response."""
-        data, _ = await self._request_json_with_response(method, path, params=params)
+        data, _ = await self._request_json_with_response(
+            method, path, params=params, json_data=json_data
+        )
         return data
 
     async def _request_json_with_response(
@@ -317,6 +547,7 @@ class GitHubClient:
         path: str,
         *,
         params: Mapping[str, str] | None = None,
+        json_data: Mapping[str, Any] | None = None,
     ) -> tuple[Any, ClientResponse]:
         """Request JSON and retain an ETag-backed response cache."""
         url = f"{self.server.api_url}{path}"
@@ -326,7 +557,7 @@ class GitHubClient:
             "X-GitHub-Api-Version": API_VERSION,
         }
         headers["Authorization"] = "Bearer " + self._token
-        cached = self._etag_cache.get(cache_key)
+        cached = self._etag_cache.get(cache_key) if method == "GET" else None
         if cached:
             headers["If-None-Match"] = cached[0]
 
@@ -336,6 +567,7 @@ class GitHubClient:
                 url,
                 headers=headers,
                 params=params,
+                json=json_data,
                 allow_redirects=False,
             ) as response:
                 self._record_scopes(response.headers)
@@ -369,8 +601,10 @@ class GitHubClient:
             raise GitHubConnectionError("cannot_connect") from err
 
         etag = response.headers.get("ETag")
-        if etag:
+        if etag and method == "GET":
             self._etag_cache[cache_key] = (etag, data)
+        elif method != "GET":
+            self._etag_cache.clear()
         return data, response
 
     def _record_scopes(self, headers: Mapping[str, str]) -> None:
@@ -405,6 +639,145 @@ def _next_link(value: str | None) -> str | None:
         if any(parameter.strip() == 'rel="next"' for parameter in parameters):
             return url_part.strip().removeprefix("<").removesuffix(">")
     return None
+
+
+def _billing_scope_path(scope: BillingScope) -> str:
+    """Return the documented enhanced-billing base path."""
+    if scope.scope_type is BillingScopeType.USER:
+        return f"/users/{scope.name}/settings/billing"
+    if scope.scope_type is BillingScopeType.ORGANIZATION:
+        return f"/organizations/{scope.name}/settings/billing"
+    return f"/enterprises/{scope.name}/settings/billing"
+
+
+def _parse_summary_usage_items(value: Any) -> tuple[BillingUsageItem, ...]:
+    """Parse aggregated usage rows with authoritative quantities and amounts."""
+    return tuple(
+        BillingUsageItem(
+            product=_required_str(item, "product"),
+            sku=_required_str(item, "sku"),
+            unit_type=_required_str(item, "unitType"),
+            price_per_unit=_required_decimal(item, "pricePerUnit"),
+            gross_quantity=_required_decimal(item, "grossQuantity"),
+            gross_amount=_required_decimal(item, "grossAmount"),
+            discount_quantity=_required_decimal(item, "discountQuantity"),
+            discount_amount=_required_decimal(item, "discountAmount"),
+            net_quantity=_required_decimal(item, "netQuantity"),
+            net_amount=_required_decimal(item, "netAmount"),
+            organization_name=_optional_str(item.get("organization")),
+        )
+        for item in _object_list(value, "invalid_usage_items")
+    )
+
+
+def _parse_detail_usage_items(value: Any) -> tuple[BillingUsageItem, ...]:
+    """Parse detailed usage rows used for dated repository breakdowns."""
+    return tuple(
+        BillingUsageItem(
+            product=_required_str(item, "product"),
+            sku=_required_str(item, "sku"),
+            unit_type=_required_str(item, "unitType"),
+            price_per_unit=_required_decimal(item, "pricePerUnit"),
+            gross_quantity=_required_decimal(item, "quantity"),
+            gross_amount=_required_decimal(item, "grossAmount"),
+            discount_quantity=None,
+            discount_amount=_required_decimal(item, "discountAmount"),
+            net_quantity=None,
+            net_amount=_required_decimal(item, "netAmount"),
+            date=_optional_str(item.get("date")),
+            repository_name=_optional_str(item.get("repositoryName")),
+            organization_name=_optional_str(item.get("organizationName")),
+        )
+        for item in _object_list(value, "invalid_usage_items")
+    )
+
+
+def _parse_budget(value: Mapping[str, Any], scope: BillingScope) -> BillingBudget:
+    """Parse a budget while tolerating documented optional response fields."""
+    item = _as_object(value, "invalid_budget")
+    alerting_raw = item.get("budget_alerting")
+    alerting = (
+        _as_object(alerting_raw, "invalid_budget_alerting")
+        if alerting_raw is not None
+        else {}
+    )
+    recipients = alerting.get("alert_recipients", [])
+    if not isinstance(recipients, list) or not all(
+        isinstance(recipient, str) for recipient in recipients
+    ):
+        raise GitHubAPIError(502, "invalid_alert_recipients")
+    return BillingBudget(
+        id=_required_identifier(item, "id"),
+        scope=scope,
+        budget_scope=(
+            _optional_str(item.get("budget_scope")) or scope.scope_type.value
+        ),
+        entity_name=_optional_str(item.get("budget_entity_name")) or "",
+        budget_type=_optional_str(item.get("budget_type")) or "",
+        product_sku=_optional_str(item.get("budget_product_sku")) or "",
+        amount=_required_decimal(item, "budget_amount"),
+        consumed_amount=_decimal_or_zero(item.get("consumed_amount")),
+        prevent_further_usage=item.get("prevent_further_usage") is True,
+        alerting=BudgetAlerting(
+            will_alert=alerting.get("will_alert") is True,
+            recipients=tuple(recipients),
+        ),
+        created_at=_optional_datetime(item.get("created_at")),
+        updated_at=_optional_datetime(item.get("updated_at")),
+        expires_at=_optional_str(item.get("expires_at")),
+    )
+
+
+def _as_object(value: Any, message: str) -> JsonObject:
+    """Return a JSON object or raise a typed API error."""
+    if not isinstance(value, dict):
+        raise GitHubAPIError(502, message)
+    return value
+
+
+def _object_list(value: Any, message: str) -> tuple[JsonObject, ...]:
+    """Return a strictly validated JSON object list."""
+    if not isinstance(value, list):
+        raise GitHubAPIError(502, message)
+    return tuple(_as_object(item, message) for item in value)
+
+
+def _required_identifier(value: Mapping[str, Any], key: str) -> str:
+    """Return a non-empty string or integer identifier."""
+    item = value.get(key)
+    if isinstance(item, (str, int)) and not isinstance(item, bool) and str(item):
+        return str(item)
+    raise GitHubAPIError(502, f"invalid_{key}")
+
+
+def _required_decimal(value: Mapping[str, Any], key: str) -> Decimal:
+    """Parse a required JSON number without binary floating-point loss."""
+    if key not in value:
+        raise GitHubAPIError(502, f"invalid_{key}")
+    try:
+        return Decimal(str(value[key]))
+    except (InvalidOperation, ValueError) as err:
+        raise GitHubAPIError(502, f"invalid_{key}") from err
+
+
+def _decimal_or_zero(value: Any) -> Decimal:
+    """Parse an optional JSON number."""
+    if value is None:
+        return Decimal()
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError) as err:
+        raise GitHubAPIError(502, "invalid_decimal") from err
+
+
+def _optional_datetime(value: Any) -> datetime | None:
+    """Parse an optional GitHub ISO timestamp."""
+    if not isinstance(value, str):
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
 
 
 def _record_capability_failure(
