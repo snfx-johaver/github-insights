@@ -35,11 +35,15 @@ GitHub App installation/user tokens are the preferred long-term organization
 model, but remain future work. Endpoint documentation and
 `X-Accepted-GitHub-Permissions` are the final authority.
 
-GitHub's billing tutorial explicitly requires a personal access token (classic)
-for usage and states that fine-grained PATs are unsupported. Budget
-documentation does not make the same PAT-type guarantee, so GitHub Insights
-feature-detects budget reads independently and does not claim fine-grained PAT
-support.
+GitHub's billing usage tutorial explicitly requires a personal access token
+(classic) for the usage report endpoints and states that fine-grained PATs are
+not supported. GitHub Insights therefore does not recommend fine-grained PATs
+for AI-credit, premium-request, Actions billing, or other billing usage
+categories. Capability probes remain authoritative, and a rejected billing
+probe never disables repository-only read functionality.
+Budget documentation does not make the same PAT-type guarantee, so GitHub
+Insights feature-detects budget reads independently and does not claim
+fine-grained PAT support.
 
 ## Token handling
 

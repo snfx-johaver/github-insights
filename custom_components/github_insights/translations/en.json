@@ -25,11 +25,19 @@
       "scope": {
         "data": {
           "auto_discover": "Automatically discover repositories",
+          "enabled_categories": "Enabled data categories",
+          "include_archived": "Include archived repositories",
+          "include_forks": "Include forked repositories",
+          "max_repositories": "Repository collection limit",
           "organizations": "Organizations",
           "repositories": "Repositories"
         },
         "data_description": {
           "auto_discover": "Keep repository discovery synchronized within the configured safety cap",
+          "enabled_categories": "Optional categories are capability-gated and continue independently when another category fails",
+          "include_archived": "Collect archived repositories when they pass selection filters",
+          "include_forks": "Collect forked repositories when they pass selection filters",
+          "max_repositories": "Maximum repositories collected per refresh, from 1 to 50",
           "organizations": "Organizations visible to this token",
           "repositories": "Repositories to include initially"
         },
@@ -53,6 +61,10 @@
       "init": {
         "data": {
           "auto_discover": "Automatically discover repositories",
+          "enabled_categories": "Enabled data categories",
+          "include_archived": "Include archived repositories",
+          "include_forks": "Include forked repositories",
+          "max_repositories": "Repository collection limit",
           "organizations": "Organizations",
           "repositories": "Repositories",
           "billing_enterprise": "Enterprise slug",
@@ -74,6 +86,8 @@
           "estimated_minutes": "Local estimate input only; it never changes GitHub usage or budgets.",
           "personal_billing": "Requires a personal access token (classic). Fine-grained PATs are not supported by GitHub billing usage endpoints.",
           "reference_runner": "Price reference used only for clearly labeled estimates.",
+          "enabled_categories": "Copilot billing requires a classic personal access token and an authorized billing role",
+          "max_repositories": "Maximum repositories collected per refresh, from 1 to 50",
           "update_interval": "Minutes between account and repository discovery refreshes"
         }
       }
@@ -179,6 +193,152 @@
       },
       "billing_period": {
         "name": "Billing period"
+      },
+      "stars": {
+        "name": "Stars"
+      },
+      "forks": {
+        "name": "Forks"
+      },
+      "open_issues": {
+        "name": "Open issues"
+      },
+      "open_pull_requests": {
+        "name": "Open pull requests"
+      },
+      "workflow_health": {
+        "name": "Workflow health"
+      },
+      "deployment_status": {
+        "name": "Deployment status"
+      },
+      "latest_commit": {
+        "name": "Latest commit"
+      },
+      "latest_release": {
+        "name": "Latest release"
+      },
+      "latest_issue": {
+        "name": "Latest issue"
+      },
+      "latest_pull_request": {
+        "name": "Latest pull request"
+      },
+      "traffic_views": {
+        "name": "Traffic views (14 days)"
+      },
+      "dependabot_alerts": {
+        "name": "Dependabot alerts"
+      },
+      "code_scanning_alerts": {
+        "name": "Code-scanning alerts"
+      },
+      "secret_scanning_alerts": {
+        "name": "Secret-scanning alerts"
+      },
+      "commits": {
+        "name": "Commits (90 days)"
+      },
+      "pull_requests_opened": {
+        "name": "Pull requests opened (90 days)"
+      },
+      "pull_requests_merged": {
+        "name": "Pull requests merged (90 days)"
+      },
+      "issues_opened": {
+        "name": "Issues opened (90 days)"
+      },
+      "reviews": {
+        "name": "Reviews (90 days)"
+      },
+      "releases": {
+        "name": "Releases (90 days)"
+      },
+      "contributions": {
+        "name": "Contributions (90 days)"
+      },
+      "current_streak": {
+        "name": "Current reliable streak"
+      },
+      "longest_streak": {
+        "name": "Longest reliable streak"
+      },
+      "repository_activity_90d": {
+        "name": "Activity (90 days)"
+      },
+      "repository_current_activity_streak": {
+        "name": "Current reliable activity streak"
+      },
+      "repository_deployment_status": {
+        "name": "Deployment status"
+      },
+      "repository_forks": {
+        "name": "Forks"
+      },
+      "repository_latest_release": {
+        "name": "Latest release"
+      },
+      "repository_latest_commit": {
+        "name": "Latest commit"
+      },
+      "repository_latest_issue": {
+        "name": "Latest issue"
+      },
+      "repository_latest_pull_request": {
+        "name": "Latest pull request"
+      },
+      "repository_open_issues": {
+        "name": "Open issues"
+      },
+      "repository_open_pull_requests": {
+        "name": "Open pull requests"
+      },
+      "repository_security_alerts": {
+        "name": "Open security alerts"
+      },
+      "repository_stars": {
+        "name": "Stars"
+      },
+      "repository_traffic_views": {
+        "name": "Traffic views (14 days)"
+      },
+      "repository_workflow_status": {
+        "name": "Workflow status"
+      },
+      "copilot_ai_credits_used": {
+        "name": "AI credits used"
+      },
+      "copilot_cost": {
+        "name": "Copilot net cost"
+      },
+      "copilot_premium_requests_used": {
+        "name": "Premium requests used"
+      },
+      "copilot_paid_usage": {
+        "name": "Paid premium requests"
+      },
+      "copilot_active_users": {
+        "name": "Copilot active users"
+      },
+      "copilot_engaged_users": {
+        "name": "Copilot engaged users"
+      },
+      "copilot_coding_agent_pull_requests": {
+        "name": "Coding agent pull requests"
+      },
+      "copilot_coding_agent_merged_pull_requests": {
+        "name": "Merged coding agent pull requests"
+      },
+      "copilot_code_review_pull_requests": {
+        "name": "Copilot-reviewed pull requests"
+      }
+    },
+    "binary_sensor": {
+      "repository_security_alert": {
+        "name": "Security alert"
+      },
+      "repository_workflow_failure": {
+        "name": "Workflow failure"
       }
     },
     "switch": {

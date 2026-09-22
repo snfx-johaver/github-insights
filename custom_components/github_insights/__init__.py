@@ -15,8 +15,16 @@ from .api import GitHubClient
 from .const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
+    CONF_ENABLED_CATEGORIES,
+    CONF_INCLUDE_ARCHIVED,
+    CONF_INCLUDE_FORKS,
+    CONF_MAX_REPOSITORIES,
     CONF_SERVER,
     CONF_TOKEN,
+    DEFAULT_ENABLED_CATEGORIES,
+    DEFAULT_INCLUDE_ARCHIVED,
+    DEFAULT_INCLUDE_FORKS,
+    DEFAULT_MAX_REPOSITORIES,
     DEFAULT_SERVER,
     DOMAIN,
     PLATFORMS,
@@ -106,29 +114,37 @@ async def async_reload_entry(
 
 
 async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Migrate legacy Phase 2 config-entry data."""
+    """Migrate legacy config-entry data to the combined Phase 3-5 schema."""
     if entry.version > 3:
         return False
 
+    data = dict(entry.data)
     if entry.version == 1:
-        data = dict(entry.data)
         data[CONF_SERVER] = data.pop("host", DEFAULT_SERVER)
         if CONF_ACCOUNT_LOGIN not in data and entry.title:
             data[CONF_ACCOUNT_LOGIN] = entry.title
+
+    if entry.version < 3 or entry.minor_version < 2:
         hass.config_entries.async_update_entry(
             entry,
             data=data,
-            version=2,
-            minor_version=1,
-        )
-    elif entry.minor_version < 1:
-        hass.config_entries.async_update_entry(entry, minor_version=1)
-
-    if entry.version == 2:
-        hass.config_entries.async_update_entry(
-            entry,
+            options={
+                **entry.options,
+                CONF_ENABLED_CATEGORIES: entry.options.get(
+                    CONF_ENABLED_CATEGORIES, list(DEFAULT_ENABLED_CATEGORIES)
+                ),
+                CONF_INCLUDE_ARCHIVED: entry.options.get(
+                    CONF_INCLUDE_ARCHIVED, DEFAULT_INCLUDE_ARCHIVED
+                ),
+                CONF_INCLUDE_FORKS: entry.options.get(
+                    CONF_INCLUDE_FORKS, DEFAULT_INCLUDE_FORKS
+                ),
+                CONF_MAX_REPOSITORIES: entry.options.get(
+                    CONF_MAX_REPOSITORIES, DEFAULT_MAX_REPOSITORIES
+                ),
+            },
             version=3,
-            minor_version=1,
+            minor_version=2,
         )
 
     return True

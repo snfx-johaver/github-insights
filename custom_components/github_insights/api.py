@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import ipaddress
 import json
+import random
 from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from types import MappingProxyType
@@ -14,7 +16,12 @@ from urllib.parse import parse_qs, urlencode
 from aiohttp import ClientError, ClientResponse, ClientSession
 from yarl import URL
 
-from .const import API_VERSION, MAX_BUDGET_PAGES, MAX_DISCOVERED_REPOSITORIES
+from .const import (
+    API_VERSION_DOTCOM,
+    API_VERSION_GHES,
+    MAX_BUDGET_PAGES,
+    MAX_DISCOVERED_REPOSITORIES,
+)
 from .models import (
     BillingBudget,
     BillingPeriod,
@@ -28,9 +35,11 @@ from .models import (
     CapabilityStatus,
     GitHubAccount,
     GitHubCapability,
+    GitHubCopilotUsage,
     GitHubOrganization,
     GitHubRateLimit,
     GitHubRepository,
+    GitHubRepositoryInsights,
     GitHubServer,
     GitHubSnapshot,
     JsonObject,
@@ -73,6 +82,14 @@ class GitHubAPIError(GitHubInsightsError):
         """Initialize an API error."""
         super().__init__(f"GitHub API returned HTTP {status}: {message}")
         self.status = status
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubPage:
+    """Bounded paginated result with coverage metadata."""
+
+    items: tuple[JsonObject, ...]
+    complete: bool
 
 
 def normalize_server(value: str) -> GitHubServer:
@@ -143,6 +160,7 @@ class GitHubClient:
         self.server = normalize_server(server)
         self._etag_cache: dict[str, tuple[str, Any]] = {}
         self._token_scopes: tuple[str, ...] = ()
+        self._secondary_rate_limit_attempts = 0
 
     @property
     def token_scopes(self) -> tuple[str, ...]:
@@ -187,17 +205,83 @@ class GitHubClient:
             },
             item_limit=MAX_DISCOVERED_REPOSITORIES,
         )
-        return tuple(
-            GitHubRepository(
-                id=_required_int(item, "id"),
-                full_name=_required_str(item, "full_name"),
-                private=_required_bool(item, "private"),
-                archived=_required_bool(item, "archived"),
-                fork=_required_bool(item, "fork"),
-                html_url=_required_str(item, "html_url"),
-            )
-            for item in items
+        return tuple(_repository(item) for item in items)
+
+    async def async_get_json(
+        self,
+        path: str,
+        *,
+        params: Mapping[str, str] | None = None,
+    ) -> Any:
+        """Return JSON from a same-origin GitHub API path."""
+        return await self._request_json("GET", path, params=params)
+
+    async def async_get_page(
+        self,
+        path: str,
+        *,
+        params: Mapping[str, str] | None = None,
+        item_limit: int,
+    ) -> GitHubPage:
+        """Return bounded items and whether all available pages were covered."""
+        items, complete = await self._request_pages(
+            path,
+            params=params,
+            item_limit=item_limit,
         )
+        return GitHubPage(tuple(items), complete)
+
+    async def async_get_signed_report(self, value: str) -> tuple[JsonObject, ...]:
+        """Download a bounded GitHub-hosted Copilot report without credentials."""
+        url = URL(value)
+        hostname = (url.host or "").lower().rstrip(".")
+        if (
+            url.scheme != "https"
+            or url.user is not None
+            or url.password is not None
+            or url.fragment
+            or not (
+                hostname == "copilot-reports.github.com"
+                or hostname == "githubusercontent.com"
+                or hostname.endswith(".githubusercontent.com")
+            )
+        ):
+            raise GitHubAPIError(502, "untrusted_report_url")
+        try:
+            async with self._session.get(
+                url,
+                headers={"Accept": "application/x-ndjson, application/json"},
+                allow_redirects=False,
+            ) as response:
+                if response.status >= 400:
+                    raise GitHubAPIError(response.status, "report_download_failed")
+                if int(response.headers.get("Content-Length", "0") or 0) > 10_000_000:
+                    raise GitHubAPIError(413, "report_too_large")
+                raw = await response.read()
+        except ClientError as err:
+            raise GitHubConnectionError("cannot_download_report") from err
+        if len(raw) > 10_000_000:
+            raise GitHubAPIError(413, "report_too_large")
+        try:
+            decoded = raw.decode("utf-8")
+        except UnicodeDecodeError as err:
+            raise GitHubAPIError(502, "invalid_report_encoding") from err
+        try:
+            payload = json.loads(decoded)
+        except json.JSONDecodeError:
+            try:
+                payload = [
+                    json.loads(line) for line in decoded.splitlines() if line.strip()
+                ]
+            except json.JSONDecodeError as err:
+                raise GitHubAPIError(502, "invalid_report") from err
+        if isinstance(payload, dict):
+            return (payload,)
+        if isinstance(payload, list) and all(
+            isinstance(item, dict) for item in payload
+        ):
+            return tuple(payload)
+        raise GitHubAPIError(502, "invalid_report")
 
     async def async_get_rate_limit(self) -> GitHubRateLimit:
         """Return the core REST rate-limit state."""
@@ -359,7 +443,7 @@ class GitHubClient:
                             "billing_usage_failed",
                         )
                     scope_errors["usage"] = usage_capability.reason or ""
-                except (GitHubConnectionError, GitHubRateLimitError):
+                except GitHubConnectionError:
                     usage_capability = GitHubCapability(
                         CapabilityStatus.TEMPORARILY_UNAVAILABLE,
                         "billing_usage_failed",
@@ -398,7 +482,7 @@ class GitHubClient:
                             "budgets_failed",
                         )
                     scope_errors["budgets"] = budget_capability.reason or ""
-                except (GitHubConnectionError, GitHubRateLimitError):
+                except GitHubConnectionError:
                     budget_capability = GitHubCapability(
                         CapabilityStatus.TEMPORARILY_UNAVAILABLE,
                         "budgets_failed",
@@ -424,7 +508,12 @@ class GitHubClient:
             errors=errors,
         )
 
-    async def async_fetch_snapshot(self) -> GitHubSnapshot:
+    async def async_fetch_snapshot(
+        self,
+        *,
+        repository_options: object | None = None,
+        copilot_organizations: tuple[str, ...] = (),
+    ) -> GitHubSnapshot:
         """Fetch account data and tolerate capability-specific failures."""
         account = await self.async_get_account()
         capabilities: dict[str, GitHubCapability] = {
@@ -435,6 +524,14 @@ class GitHubClient:
         organizations: tuple[GitHubOrganization, ...] = ()
         repositories: tuple[GitHubRepository, ...] = ()
         rate_limit: GitHubRateLimit | None = None
+        repository_insights: tuple[GitHubRepositoryInsights, ...] = ()
+        copilot: tuple[GitHubCopilotUsage, ...] = ()
+        repository_categories: frozenset[str] = frozenset()
+        if repository_options is not None:
+            from .repository_data import RepositoryCollectionOptions
+
+            if isinstance(repository_options, RepositoryCollectionOptions):
+                repository_categories = repository_options.enabled_categories
 
         try:
             organizations = await self.async_get_organizations()
@@ -442,7 +539,7 @@ class GitHubClient:
             _record_capability_failure(
                 capabilities, errors, "organizations", "missing_permission"
             )
-        except (GitHubConnectionError, GitHubAPIError, GitHubRateLimitError):
+        except (GitHubConnectionError, GitHubAPIError):
             _record_capability_failure(
                 capabilities,
                 errors,
@@ -458,7 +555,7 @@ class GitHubClient:
             _record_capability_failure(
                 capabilities, errors, "repositories", "missing_permission"
             )
-        except (GitHubConnectionError, GitHubAPIError, GitHubRateLimitError):
+        except (GitHubConnectionError, GitHubAPIError):
             _record_capability_failure(
                 capabilities,
                 errors,
@@ -467,6 +564,49 @@ class GitHubClient:
             )
         else:
             capabilities["repositories"] = GitHubCapability(CapabilityStatus.AVAILABLE)
+            if repository_options is not None:
+                from .repository_data import (
+                    async_collect_repository_insights,
+                )
+
+                if isinstance(repository_options, RepositoryCollectionOptions):
+                    try:
+                        repository_insights = await async_collect_repository_insights(
+                            self, repositories, repository_options
+                        )
+                    except (GitHubConnectionError, GitHubAPIError):
+                        _record_capability_failure(
+                            capabilities,
+                            errors,
+                            "repository_insights",
+                            "temporarily_unavailable",
+                        )
+                    else:
+                        _record_repository_capabilities(
+                            repository_insights,
+                            repository_options.enabled_categories,
+                            capabilities,
+                            errors,
+                        )
+
+        if "copilot" in repository_categories:
+            from .copilot_data import async_collect_copilot_billing
+
+            (
+                copilot,
+                copilot_capabilities,
+                copilot_errors,
+            ) = await async_collect_copilot_billing(
+                self,
+                account,
+                tuple(
+                    organization
+                    for organization in organizations
+                    if organization.login in set(copilot_organizations)
+                ),
+            )
+            capabilities.update(copilot_capabilities)
+            errors.update(copilot_errors)
 
         try:
             rate_limit = await self.async_get_rate_limit()
@@ -474,7 +614,7 @@ class GitHubClient:
             _record_capability_failure(
                 capabilities, errors, "rate_limit", "missing_permission"
             )
-        except (GitHubConnectionError, GitHubAPIError, GitHubRateLimitError):
+        except (GitHubConnectionError, GitHubAPIError):
             _record_capability_failure(
                 capabilities,
                 errors,
@@ -488,6 +628,8 @@ class GitHubClient:
             account=account,
             organizations=organizations,
             repositories=repositories,
+            repository_insights=repository_insights,
+            copilot=copilot,
             rate_limit=rate_limit,
             token_scopes=self.token_scopes,
             capabilities=capabilities,
@@ -503,8 +645,24 @@ class GitHubClient:
         item_limit: int = MAX_DISCOVERED_REPOSITORIES,
     ) -> list[JsonObject]:
         """Follow GitHub Link pagination up to a bounded item count."""
+        items, _ = await self._request_pages(
+            path,
+            params=params,
+            item_limit=item_limit,
+        )
+        return items
+
+    async def _request_pages(
+        self,
+        path: str,
+        *,
+        params: Mapping[str, str] | None,
+        item_limit: int,
+    ) -> tuple[list[JsonObject], bool]:
+        """Follow GitHub Link pagination with a hard coverage boundary."""
         page = 1
         collected: list[JsonObject] = []
+        complete = True
         while len(collected) < item_limit:
             page_params = dict(params or {})
             page_params.update({"page": str(page), "per_page": "100"})
@@ -520,12 +678,15 @@ class GitHubClient:
                 if len(collected) == item_limit:
                     break
             next_url = _next_link(response.headers.get("Link"))
-            if next_url is None or len(collected) == item_limit:
+            if next_url is None:
+                break
+            if len(collected) == item_limit:
+                complete = False
                 break
             self._validate_next_url(next_url)
             next_page = parse_qs(URL(next_url).query_string).get("page")
             page = int(next_page[0]) if next_page else page + 1
-        return collected
+        return collected, complete
 
     async def _request_json(
         self,
@@ -554,7 +715,9 @@ class GitHubClient:
         cache_key = f"{url}?{urlencode(sorted((params or {}).items()))}"
         headers = {
             "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": API_VERSION,
+            "X-GitHub-Api-Version": (
+                API_VERSION_DOTCOM if self.server.is_dotcom else API_VERSION_GHES
+            ),
         }
         headers["Authorization"] = "Bearer " + self._token
         cached = self._etag_cache.get(cache_key) if method == "GET" else None
@@ -577,10 +740,22 @@ class GitHubClient:
                     raise GitHubAuthenticationError("invalid_auth")
                 if response.status == 403:
                     retry_after = _retry_after(response)
+                    message = await _safe_error_message(response)
                     if (
                         retry_after is not None
                         or response.headers.get("X-RateLimit-Remaining") == "0"
+                        or "secondary rate limit" in message.lower()
+                        or "abuse detection" in message.lower()
                     ):
+                        if retry_after is None:
+                            self._secondary_rate_limit_attempts += 1
+                            retry_after = min(
+                                900,
+                                int(
+                                    2**self._secondary_rate_limit_attempts
+                                    + random.uniform(0, 3)
+                                ),
+                            )
                         raise GitHubRateLimitError(
                             "rate_limited", retry_after=retry_after
                         )
@@ -597,6 +772,7 @@ class GitHubClient:
                     data: Any = {}
                 else:
                     data = await response.json(content_type=None)
+                self._secondary_rate_limit_attempts = 0
         except ClientError as err:
             raise GitHubConnectionError("cannot_connect") from err
 
@@ -796,6 +972,42 @@ def _record_capability_failure(
     errors[key] = reason
 
 
+def _record_repository_capabilities(
+    repositories: tuple[GitHubRepositoryInsights, ...],
+    enabled_categories: frozenset[str],
+    capabilities: dict[str, GitHubCapability],
+    errors: dict[str, str],
+) -> None:
+    """Summarize per-repository capability state without exposing repo names."""
+    for category in enabled_categories & {
+        "workflows",
+        "releases",
+        "activity",
+        "deployments",
+        "traffic",
+        "security",
+    }:
+        category_capabilities = tuple(
+            repository.capabilities.get(category) for repository in repositories
+        )
+        if any(
+            capability is not None and capability.status is CapabilityStatus.AVAILABLE
+            for capability in category_capabilities
+        ):
+            capabilities[category] = GitHubCapability(CapabilityStatus.AVAILABLE)
+            continue
+        if category_capabilities:
+            capability = next(
+                (item for item in category_capabilities if item is not None),
+                GitHubCapability(
+                    CapabilityStatus.TEMPORARILY_UNAVAILABLE,
+                    "temporarily_unavailable",
+                ),
+            )
+            capabilities[category] = capability
+            errors[category] = capability.reason or capability.status
+
+
 def _retry_after(response: ClientResponse) -> int | None:
     """Return a safe retry interval from response headers."""
     value = response.headers.get("Retry-After")
@@ -848,9 +1060,48 @@ def _required_bool(value: Mapping[str, Any], key: str) -> bool:
     return item
 
 
+def _repository(item: Mapping[str, Any]) -> GitHubRepository:
+    """Normalize repository metadata from discovery or detail responses."""
+    full_name = _required_str(item, "full_name")
+    license_value = item.get("license")
+    license_name = (
+        _optional_str(license_value.get("name"))
+        if isinstance(license_value, dict)
+        else None
+    )
+    return GitHubRepository(
+        id=_required_int(item, "id"),
+        name=_optional_str(item.get("name")) or full_name.rsplit("/", 1)[-1],
+        full_name=full_name,
+        description=_optional_str(item.get("description")),
+        private=_required_bool(item, "private"),
+        visibility=_optional_str(item.get("visibility"))
+        or ("private" if _required_bool(item, "private") else "public"),
+        archived=_required_bool(item, "archived"),
+        fork=_required_bool(item, "fork"),
+        html_url=_required_str(item, "html_url"),
+        default_branch=_optional_str(item.get("default_branch")) or "",
+        language=_optional_str(item.get("language")),
+        license_name=license_name,
+        stargazers_count=_optional_int(item.get("stargazers_count")) or 0,
+        watchers_count=_optional_int(item.get("subscribers_count"))
+        or _optional_int(item.get("watchers_count"))
+        or 0,
+        forks_count=_optional_int(item.get("forks_count")) or 0,
+        open_issues_count=_optional_int(item.get("open_issues_count")) or 0,
+        has_discussions=_optional_bool(item.get("has_discussions")) or False,
+        size_kb=_optional_int(item.get("size")) or 0,
+        pushed_at=_optional_datetime(item.get("pushed_at")),
+    )
+
+
 def _optional_str(value: Any) -> str | None:
     return value if isinstance(value, str) else None
 
 
 def _optional_int(value: Any) -> int | None:
     return value if isinstance(value, int) else None
+
+
+def _optional_bool(value: Any) -> bool | None:
+    return value if isinstance(value, bool) else None

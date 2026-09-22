@@ -75,11 +75,260 @@ class GitHubRepository:
     """Repository discovery metadata."""
 
     id: int
+    name: str
     full_name: str
+    description: str | None
     private: bool
+    visibility: str
     archived: bool
     fork: bool
     html_url: str
+    default_branch: str
+    language: str | None
+    license_name: str | None
+    stargazers_count: int
+    watchers_count: int
+    forks_count: int
+    open_issues_count: int
+    has_discussions: bool
+    size_kb: int
+    pushed_at: datetime | None
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubItem:
+    """Latest repository item."""
+
+    number: int | None
+    title: str
+    html_url: str
+    created_at: datetime
+    author: str | None = None
+    state: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubCommit:
+    """Latest repository commit."""
+
+    sha: str
+    message: str
+    html_url: str
+    committed_at: datetime
+    author: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubWorkflowRun:
+    """Normalized workflow-run metadata."""
+
+    id: int
+    name: str
+    status: str
+    conclusion: str | None
+    event: str
+    html_url: str
+    created_at: datetime
+    updated_at: datetime
+    runtime_seconds: int | None
+    job_runtime_seconds: int | None = None
+    jobs: int | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubDeployment:
+    """Latest deployment state."""
+
+    id: int
+    environment: str
+    state: str | None
+    created_at: datetime
+    html_url: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubTraffic:
+    """Repository traffic within GitHub's API retention window."""
+
+    views: int
+    unique_visitors: int
+    clones: int
+    unique_cloners: int
+    referrers: tuple[GitHubItem, ...]
+    popular_paths: tuple[GitHubItem, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubSecurityAlerts:
+    """Open repository security-alert counts."""
+
+    dependabot: int | None
+    code_scanning: int | None
+    secret_scanning: int | None
+    severity: Mapping[str, int]
+
+    @property
+    def total(self) -> int | None:
+        """Return the total when at least one alert family is available."""
+        values = (
+            value
+            for value in (self.dependabot, self.code_scanning, self.secret_scanning)
+            if value is not None
+        )
+        collected = tuple(values)
+        return sum(collected) if collected else None
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubActivity:
+    """Bounded repository activity and coverage metadata."""
+
+    commits: int
+    pull_requests_opened: int
+    pull_requests_merged: int | None
+    issues_opened: int
+    issues_closed: int | None
+    reviews: int | None
+    releases: int
+    active_days: tuple[str, ...]
+    period_totals: Mapping[int, int]
+    weekday_distribution: Mapping[str, int]
+    current_streak: int | None
+    longest_streak: int | None
+    coverage_days: int
+    coverage_complete: bool
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubRepositoryInsights:
+    """Normalized data for one selected repository."""
+
+    repository: GitHubRepository
+    open_pull_requests: int | None
+    open_issues: int | None
+    latest_commit: GitHubCommit | None
+    latest_release: GitHubItem | None
+    latest_issue: GitHubItem | None
+    latest_pull_request: GitHubItem | None
+    workflow_runs: tuple[GitHubWorkflowRun, ...]
+    workflow_status: str | None
+    deployment: GitHubDeployment | None
+    environments: tuple[str, ...]
+    traffic: GitHubTraffic | None
+    security: GitHubSecurityAlerts | None
+    activity: GitHubActivity | None
+    capabilities: Mapping[str, GitHubCapability]
+    errors: Mapping[str, str]
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        repository: GitHubRepository,
+        open_pull_requests: int | None = None,
+        open_issues: int | None = None,
+        latest_commit: GitHubCommit | None = None,
+        latest_release: GitHubItem | None = None,
+        latest_issue: GitHubItem | None = None,
+        latest_pull_request: GitHubItem | None = None,
+        workflow_runs: tuple[GitHubWorkflowRun, ...] = (),
+        workflow_status: str | None = None,
+        deployment: GitHubDeployment | None = None,
+        environments: tuple[str, ...] = (),
+        traffic: GitHubTraffic | None = None,
+        security: GitHubSecurityAlerts | None = None,
+        activity: GitHubActivity | None = None,
+        capabilities: Mapping[str, GitHubCapability] | None = None,
+        errors: Mapping[str, str] | None = None,
+    ) -> GitHubRepositoryInsights:
+        """Create immutable repository insights."""
+        return cls(
+            repository=repository,
+            open_pull_requests=open_pull_requests,
+            open_issues=open_issues,
+            latest_commit=latest_commit,
+            latest_release=latest_release,
+            latest_issue=latest_issue,
+            latest_pull_request=latest_pull_request,
+            workflow_runs=workflow_runs,
+            workflow_status=workflow_status,
+            deployment=deployment,
+            environments=environments,
+            traffic=traffic,
+            security=security,
+            activity=activity,
+            capabilities=MappingProxyType(dict(capabilities or {})),
+            errors=MappingProxyType(dict(errors or {})),
+        )
+
+
+@dataclass(frozen=True, slots=True)
+class GitHubCopilotUsage:
+    """Official Copilot billing, adoption, or activity values."""
+
+    scope: str
+    scope_id: int
+    scope_type: str
+    premium_requests_used: float | None
+    premium_requests_included: float | None
+    premium_requests_paid: float | None
+    ai_credits_used: float | None
+    cost: float | None
+    currency: str | None
+    active_users: int | None
+    engaged_users: int | None
+    coding_agent_pull_requests: int | None
+    coding_agent_merged_pull_requests: int | None
+    code_review_pull_requests: int | None
+    product_breakdown: Mapping[str, float]
+    model_breakdown: Mapping[str, float]
+    repository_breakdown: Mapping[str, float]
+    reporting_day: str | None
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        scope: str,
+        scope_id: int,
+        scope_type: str,
+        premium_requests_used: float | None = None,
+        premium_requests_included: float | None = None,
+        premium_requests_paid: float | None = None,
+        ai_credits_used: float | None = None,
+        cost: float | None = None,
+        currency: str | None = None,
+        active_users: int | None = None,
+        engaged_users: int | None = None,
+        coding_agent_pull_requests: int | None = None,
+        coding_agent_merged_pull_requests: int | None = None,
+        code_review_pull_requests: int | None = None,
+        product_breakdown: Mapping[str, float] | None = None,
+        model_breakdown: Mapping[str, float] | None = None,
+        repository_breakdown: Mapping[str, float] | None = None,
+        reporting_day: str | None = None,
+    ) -> GitHubCopilotUsage:
+        """Create immutable Copilot usage."""
+        return cls(
+            scope=scope,
+            scope_id=scope_id,
+            scope_type=scope_type,
+            premium_requests_used=premium_requests_used,
+            premium_requests_included=premium_requests_included,
+            premium_requests_paid=premium_requests_paid,
+            ai_credits_used=ai_credits_used,
+            cost=cost,
+            currency=currency,
+            active_users=active_users,
+            engaged_users=engaged_users,
+            coding_agent_pull_requests=coding_agent_pull_requests,
+            coding_agent_merged_pull_requests=coding_agent_merged_pull_requests,
+            code_review_pull_requests=code_review_pull_requests,
+            product_breakdown=MappingProxyType(dict(product_breakdown or {})),
+            model_breakdown=MappingProxyType(dict(model_breakdown or {})),
+            repository_breakdown=MappingProxyType(dict(repository_breakdown or {})),
+            reporting_day=reporting_day,
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -267,11 +516,13 @@ class BillingSnapshot:
 
 @dataclass(frozen=True, slots=True)
 class GitHubSnapshot:
-    """Normalized data collected by the Phase 2 coordinator."""
+    """Normalized data collected by the GitHub Insights coordinator."""
 
     account: GitHubAccount
     organizations: tuple[GitHubOrganization, ...]
     repositories: tuple[GitHubRepository, ...]
+    repository_insights: tuple[GitHubRepositoryInsights, ...]
+    copilot: tuple[GitHubCopilotUsage, ...]
     rate_limit: GitHubRateLimit | None
     token_scopes: tuple[str, ...]
     capabilities: Mapping[str, GitHubCapability]
@@ -285,6 +536,8 @@ class GitHubSnapshot:
         account: GitHubAccount,
         organizations: tuple[GitHubOrganization, ...],
         repositories: tuple[GitHubRepository, ...],
+        repository_insights: tuple[GitHubRepositoryInsights, ...] = (),
+        copilot: tuple[GitHubCopilotUsage, ...] = (),
         rate_limit: GitHubRateLimit | None,
         token_scopes: tuple[str, ...],
         capabilities: Mapping[str, GitHubCapability],
@@ -296,6 +549,8 @@ class GitHubSnapshot:
             account=account,
             organizations=organizations,
             repositories=repositories,
+            repository_insights=repository_insights,
+            copilot=copilot,
             rate_limit=rate_limit,
             token_scopes=token_scopes,
             capabilities=MappingProxyType(dict(capabilities)),

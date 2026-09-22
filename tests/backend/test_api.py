@@ -8,6 +8,7 @@ import pytest
 from aiohttp import ClientSession
 
 from custom_components.github_insights.api import (
+    GitHubAPIError,
     GitHubAuthenticationError,
     GitHubClient,
     GitHubInvalidServerError,
@@ -140,3 +141,70 @@ async def test_authentication_and_rate_limit_errors() -> None:
     with pytest.raises(GitHubRateLimitError, match="rate_limited") as caught:
         await rate_client.async_get_account()
     assert caught.value.retry_after == 30
+
+
+async def test_secondary_rate_limit_without_header_gets_safe_backoff() -> None:
+    """A documented secondary-limit response is not mistaken for permission loss."""
+    client = GitHubClient(
+        cast(
+            ClientSession,
+            FakeSession(
+                FakeResponse(
+                    403,
+                    {"message": "You have exceeded a secondary rate limit."},
+                )
+            ),
+        ),
+        "token",
+        "https://github.com",
+    )
+
+    with pytest.raises(GitHubRateLimitError) as caught:
+        await client.async_get_account()
+
+    assert caught.value.retry_after is not None
+    assert caught.value.retry_after >= 2
+
+
+async def test_ghes_uses_compatible_api_version() -> None:
+    """GHES requests retain the broadly supported API version."""
+    session = FakeSession(
+        FakeResponse(
+            200,
+            {
+                "id": 42,
+                "login": "octocat",
+                "name": None,
+                "avatar_url": "https://github.example.com/avatar",
+                "html_url": "https://github.example.com/octocat",
+                "public_repos": 1,
+                "followers": 0,
+                "following": 0,
+            },
+        )
+    )
+    client = GitHubClient(
+        cast(ClientSession, session),
+        "token",
+        "https://github.example.com",
+    )
+
+    await client.async_get_account()
+
+    assert session.requests[0]["headers"]["X-GitHub-Api-Version"] == "2022-11-28"
+
+
+async def test_signed_report_download_is_bounded_and_credential_free() -> None:
+    """Copilot report downloads use a strict host allow-list and no token."""
+    session = FakeSession(FakeResponse(200, [{"daily_active_users": 3}]))
+    client = GitHubClient(cast(ClientSession, session), "secret", "https://github.com")
+
+    report = await client.async_get_signed_report(
+        "https://copilot-reports.github.com/report.json"
+    )
+
+    assert report[0]["daily_active_users"] == 3
+    assert "Authorization" not in session.requests[0]["headers"]
+
+    with pytest.raises(GitHubAPIError, match="untrusted_report_url"):
+        await client.async_get_signed_report("https://example.com/report.json")

@@ -1,7 +1,7 @@
 # Configuration
 
-Phase 3 implements account setup plus optional enhanced-billing scopes. No
-release has been published yet.
+Phases 2-5 implement account setup, repository capabilities, Copilot data, and
+optional enhanced-billing scopes. No release has been published yet.
 
 The first release will support one config entry containing one GitHub server,
 one authenticated identity, selected organizations, optional enterprise
@@ -11,6 +11,17 @@ Options now cover personal billing, selected billing organizations, an optional
 enterprise slug, a 30–1440 minute billing interval, read-only budgets, optional
 budget management, a reference runner, desired estimated minutes, and local
 warning/critical thresholds.
+
+Current options cover explicit repository selection, bounded automatic
+discovery, archived/fork filters, a 1–50 repository request ceiling, enabled
+repository/workflow/release/activity/deployment/traffic/security/Copilot
+categories, and a safe 5–360 minute update interval. The default collection cap
+is 10 repositories.
+
+Copilot billing categories require a personal access token (classic). GitHub's
+billing usage endpoints do not support fine-grained personal access tokens.
+Repository-only features may still use the least-privileged token model
+supported by their individual endpoints.
 
 Unavailable categories remain independently disabled with an explanation. The
 flow will not request write permissions until the user explicitly enables

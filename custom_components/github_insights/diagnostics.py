@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    CONF_ENABLED_CATEGORIES,
+    CONF_INCLUDE_ARCHIVED,
+    CONF_INCLUDE_FORKS,
+    CONF_MAX_REPOSITORIES,
     CONF_ORGANIZATIONS,
     CONF_REPOSITORIES,
     CONF_SERVER,
@@ -51,6 +56,12 @@ async def async_get_config_entry_diagnostics(
                     "repository_selection_count": len(
                         entry.options.get(CONF_REPOSITORIES, [])
                     ),
+                    "enabled_categories": sorted(
+                        entry.options.get(CONF_ENABLED_CATEGORIES, [])
+                    ),
+                    "include_archived": entry.options.get(CONF_INCLUDE_ARCHIVED, False),
+                    "include_forks": entry.options.get(CONF_INCLUDE_FORKS, True),
+                    "repository_limit": entry.options.get(CONF_MAX_REPOSITORIES, 10),
                 },
                 "version": entry.version,
                 "minor_version": entry.minor_version,
@@ -66,14 +77,17 @@ async def async_get_config_entry_diagnostics(
             "token_type": entry.runtime_data.client.token_type,
             "organization_count": len(snapshot.organizations),
             "repository_count": len(snapshot.repositories),
-            "capabilities": {
-                key: {
-                    "status": capability.status,
-                    "reason": capability.reason,
-                }
-                for key, capability in snapshot.capabilities.items()
-            },
-            "errors": dict(snapshot.errors),
+            "selected_repository_count": len(snapshot.repository_insights),
+            "copilot_scope_count": len(snapshot.copilot),
+            "capability_status_counts": _value_counts(
+                capability.status for capability in snapshot.capabilities.values()
+            ),
+            "capability_reason_counts": _value_counts(
+                capability.reason
+                for capability in snapshot.capabilities.values()
+                if capability.reason
+            ),
+            "error_reason_counts": _value_counts(snapshot.errors.values()),
             "token_scopes": snapshot.token_scopes,
             "fetched_at": snapshot.fetched_at,
             "rate_limit": (
@@ -117,3 +131,12 @@ async def async_get_config_entry_diagnostics(
             },
         },
     }
+
+
+def _value_counts(values: Iterable[object]) -> dict[str, int]:
+    """Return non-identifying counts for diagnostic capability values."""
+    counts: dict[str, int] = {}
+    for value in values:
+        key = str(value)
+        counts[key] = counts.get(key, 0) + 1
+    return counts

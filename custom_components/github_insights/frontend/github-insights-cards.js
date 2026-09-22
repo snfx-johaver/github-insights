@@ -6,7 +6,7 @@ const definitions = [
         name: "GitHub Insights overview",
         description: "Account, usage, repositories, workflows, security, and freshness.",
         icon: "mdi:github",
-        defaultMetrics: ["account", "actions_usage_percent", "actions_budget_percent", "copilot_usage_percent", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "last_successful_sync"],
+        defaultMetrics: ["account", "actions_usage_percent", "actions_budget_percent", "copilot_paid_usage", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "last_successful_sync"],
         defaultLayout: "responsive",
     },
     {
@@ -16,7 +16,7 @@ const definitions = [
         name: "GitHub Insights usage",
         description: "Actions, billing, budgets, AI usage, storage, and estimates.",
         icon: "mdi:chart-donut",
-        defaultMetrics: ["actions_included_usage", "actions_billable_usage", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_stop_usage", "actions_estimated_minutes_remaining", "actions_forecast", "artifact_storage", "package_storage", "cache_usage", "copilot_usage_percent", "copilot_paid_usage"],
+        defaultMetrics: ["actions_included_usage", "actions_billable_usage", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_stop_usage", "actions_estimated_minutes_remaining", "actions_forecast", "artifact_storage", "package_storage", "cache_usage", "copilot_paid_usage"],
         defaultLayout: "hero",
     },
     {
@@ -56,7 +56,7 @@ const definitions = [
         name: "GitHub Insights Copilot",
         description: "Authorized Copilot billing, adoption, and activity data.",
         icon: "mdi:robot-outline",
-        defaultMetrics: ["copilot_included_quantity", "copilot_paid_usage", "copilot_remaining_quantity", "copilot_usage_percent", "copilot_cost", "copilot_active_users", "last_successful_sync"],
+        defaultMetrics: ["copilot_paid_usage", "copilot_cost", "copilot_active_users", "last_successful_sync"],
         defaultLayout: "responsive",
     },
     {
@@ -106,7 +106,7 @@ const definitions = [
         name: "GitHub Insights dashboard",
         description: "Composite responsive GitHub dashboard.",
         icon: "mdi:view-dashboard-outline",
-        defaultMetrics: ["actions_usage_percent", "actions_budget_percent", "copilot_usage_percent", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "commits", "last_successful_sync"],
+        defaultMetrics: ["actions_usage_percent", "actions_budget_percent", "copilot_paid_usage", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "commits", "last_successful_sync"],
         defaultLayout: "responsive",
     },
 ];

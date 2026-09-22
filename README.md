@@ -4,10 +4,11 @@ GitHub usage, Actions billing, Copilot metrics, and repository insights for
 Home Assistant.
 
 > [!IMPORTANT]
-> Version `0.1.0-beta.1` includes the Phase 2 account integration, Phase 3
-> Actions billing and budgets backend, and the bundled Phase 6-8 card suite.
-> Repository/workflow detail, Copilot, activity, contribution, and security
-> backend entities remain later phases. No release has been published.
+> Version `0.1.0-beta.1` includes the Phase 2 core, Phase 3 Actions billing and
+> budgets, Phase 4 repository and workflow collection, Phase 5 official
+> Copilot/AI collection, and the complete Phase 6-8 bundled frontend card suite.
+> It remains intentionally unreleased while hosted and real-instance validation
+> continues.
 
 ## One integration and one installation
 
@@ -108,11 +109,21 @@ and explains unavailable capabilities. Read-only repository access is the
 baseline. Billing, security, traffic, Copilot, and budget-management data each
 require additional account roles, plans, policies, or token permissions.
 
-Implemented sensors cover the authenticated account, public/private repository
-counts when supplied by GitHub, followers/following, visible organizations,
-core REST rate-limit remaining/reset, and last successful synchronization.
-Repository discovery is bounded metadata for configuration; detailed repository
-entities remain Phase 4 work.
+Implemented sensors cover the authenticated account, rate limits, selected
+repository metadata, open issue and pull-request counts, latest commit/release/
+issue/pull request attributes, workflow health and bounded run/job runtime,
+90-day activity with coverage-gated streaks, deployments, traffic, security
+alerts, and official personal/organization AI-credit and premium-request
+billing where authorized. Detailed traffic and streak entities are disabled by
+default.
+
+Copilot billing endpoints require a personal access token (classic);
+fine-grained PATs are not supported for those endpoints. Organization Copilot
+adoption, coding-agent, and code-review reports are collected only from the
+official report API and HTTPS `copilot-reports.github.com` or
+`githubusercontent.com` signed downloads, with no
+authorization header sent to the download host and no signed URL retained.
+No GitHub pages or undocumented endpoints are scraped.
 
 Enhanced-billing usage endpoints require a **personal access token (classic)**.
 GitHub explicitly does not support fine-grained PATs for these endpoints. A

@@ -39,7 +39,11 @@ from .const import (
     CONF_BUDGET_CRITICAL_THRESHOLD,
     CONF_BUDGET_MANAGEMENT,
     CONF_BUDGET_WARNING_THRESHOLD,
+    CONF_ENABLED_CATEGORIES,
     CONF_ESTIMATED_MINUTES,
+    CONF_INCLUDE_ARCHIVED,
+    CONF_INCLUDE_FORKS,
+    CONF_MAX_REPOSITORIES,
     CONF_ORGANIZATIONS,
     CONF_PERSONAL_BILLING,
     CONF_REFERENCE_RUNNER,
@@ -52,15 +56,21 @@ from .const import (
     DEFAULT_BUDGET_CRITICAL_THRESHOLD,
     DEFAULT_BUDGET_MANAGEMENT,
     DEFAULT_BUDGET_WARNING_THRESHOLD,
+    DEFAULT_ENABLED_CATEGORIES,
     DEFAULT_ESTIMATED_MINUTES,
+    DEFAULT_INCLUDE_ARCHIVED,
+    DEFAULT_INCLUDE_FORKS,
+    DEFAULT_MAX_REPOSITORIES,
     DEFAULT_PERSONAL_BILLING,
     DEFAULT_REFERENCE_RUNNER,
     DEFAULT_SERVER,
     DEFAULT_UPDATE_INTERVAL_MINUTES,
     DOMAIN,
     MAX_BILLING_INTERVAL_MINUTES,
+    MAX_SELECTED_REPOSITORIES,
     MAX_UPDATE_INTERVAL_MINUTES,
     MIN_BILLING_INTERVAL_MINUTES,
+    MIN_SELECTED_REPOSITORIES,
     MIN_UPDATE_INTERVAL_MINUTES,
     REFERENCE_RUNNER_PRICES,
 )
@@ -94,7 +104,7 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a GitHub Insights config flow."""
 
     VERSION = 3
-    MINOR_VERSION = 1
+    MINOR_VERSION = 2
 
     def __init__(self) -> None:
         """Initialize the flow."""
@@ -166,6 +176,10 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_AUTO_DISCOVER: user_input[CONF_AUTO_DISCOVER],
                     CONF_ORGANIZATIONS: user_input[CONF_ORGANIZATIONS],
                     CONF_REPOSITORIES: user_input[CONF_REPOSITORIES],
+                    CONF_INCLUDE_ARCHIVED: user_input[CONF_INCLUDE_ARCHIVED],
+                    CONF_INCLUDE_FORKS: user_input[CONF_INCLUDE_FORKS],
+                    CONF_ENABLED_CATEGORIES: user_input[CONF_ENABLED_CATEGORIES],
+                    CONF_MAX_REPOSITORIES: user_input[CONF_MAX_REPOSITORIES],
                     CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL_MINUTES,
                     CONF_BILLING_INTERVAL: DEFAULT_BILLING_INTERVAL_MINUTES,
                     CONF_PERSONAL_BILLING: DEFAULT_PERSONAL_BILLING,
@@ -432,6 +446,46 @@ def _scope_schema(
                     options=repositories,
                     multiple=True,
                     sort=True,
+                )
+            ),
+            vol.Required(
+                CONF_INCLUDE_ARCHIVED,
+                default=values.get(CONF_INCLUDE_ARCHIVED, DEFAULT_INCLUDE_ARCHIVED),
+            ): bool,
+            vol.Required(
+                CONF_INCLUDE_FORKS,
+                default=values.get(CONF_INCLUDE_FORKS, DEFAULT_INCLUDE_FORKS),
+            ): bool,
+            vol.Required(
+                CONF_ENABLED_CATEGORIES,
+                default=values.get(
+                    CONF_ENABLED_CATEGORIES, list(DEFAULT_ENABLED_CATEGORIES)
+                ),
+            ): SelectSelector(
+                SelectSelectorConfig(
+                    options=[
+                        "repositories",
+                        "workflows",
+                        "releases",
+                        "activity",
+                        "deployments",
+                        "traffic",
+                        "security",
+                        "copilot",
+                    ],
+                    multiple=True,
+                    sort=True,
+                )
+            ),
+            vol.Required(
+                CONF_MAX_REPOSITORIES,
+                default=values.get(CONF_MAX_REPOSITORIES, DEFAULT_MAX_REPOSITORIES),
+            ): NumberSelector(
+                NumberSelectorConfig(
+                    min=MIN_SELECTED_REPOSITORIES,
+                    max=MAX_SELECTED_REPOSITORIES,
+                    step=1,
+                    mode=NumberSelectorMode.BOX,
                 )
             ),
         }
