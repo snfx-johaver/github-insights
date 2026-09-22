@@ -1,7 +1,9 @@
 # GitHub Insights 0.2.0-beta.1
 
-This opt-in prerelease contains the complete GitHub Insights integration and
-all eleven Lovelace cards in one HACS integration artifact.
+This beta candidate brings the complete GitHub Insights integration and all
+eleven Lovelace cards together in one HACS integration artifact. It has not
+been released or tagged yet; these notes describe the candidate that will be
+published only after the remaining release gates pass.
 
 ## Highlights
 
@@ -16,7 +18,9 @@ all eleven Lovelace cards in one HACS integration artifact.
   repository, Actions, Copilot, activity, contributions, security, compact,
   and dashboard cards.
 
-## Install
+## Install after publication
+
+Once the prerelease and its `github_insights.zip` asset exist:
 
 1. Add `https://github.com/snfx-johaver/github-insights` to HACS as a custom
    **Integration** repository.
@@ -50,5 +54,5 @@ backed-up `custom_components/github_insights` directory and
 `dashboards/github_insights.yaml`. Do not restore or modify unrelated Home
 Assistant files or `.storage`.
 
-This beta is for custom-repository validation only. It is not yet submitted to
-or available from the standard HACS catalog.
+This beta is for custom-repository validation only. No release or tag exists
+yet, and it is not submitted to or available from the standard HACS catalog.
