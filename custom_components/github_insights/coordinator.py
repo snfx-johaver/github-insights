@@ -59,6 +59,7 @@ from .models import (
     GitHubSecurityAlerts,
     GitHubSnapshot,
 )
+from .options import integer_option
 from .repairs import (
     async_update_billing_issues,
     async_update_capability_issues,
@@ -95,8 +96,8 @@ class GitHubInsightsCoordinator(DataUpdateCoordinator[GitHubSnapshot]):
         """Initialize the coordinator."""
         self.client = client
         self.billing_client = billing_client
-        interval = entry.options.get(
-            CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES
+        interval = integer_option(
+            entry.options, CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES
         )
         super().__init__(
             hass,
@@ -130,8 +131,10 @@ class GitHubInsightsCoordinator(DataUpdateCoordinator[GitHubSnapshot]):
                             DEFAULT_ENABLED_CATEGORIES,
                         )
                     ),
-                    repository_limit=self.config_entry.options.get(
-                        CONF_MAX_REPOSITORIES, DEFAULT_MAX_REPOSITORIES
+                    repository_limit=integer_option(
+                        self.config_entry.options,
+                        CONF_MAX_REPOSITORIES,
+                        DEFAULT_MAX_REPOSITORIES,
                     ),
                 ),
                 copilot_organizations=tuple(
@@ -171,8 +174,8 @@ class GitHubInsightsBillingCoordinator(DataUpdateCoordinator[BillingSnapshot]):
         """Initialize the billing coordinator."""
         self.client = client
         self._last_mutation: BillingMutation | None = None
-        interval = entry.options.get(
-            CONF_BILLING_INTERVAL, DEFAULT_BILLING_INTERVAL_MINUTES
+        interval = integer_option(
+            entry.options, CONF_BILLING_INTERVAL, DEFAULT_BILLING_INTERVAL_MINUTES
         )
         super().__init__(
             hass,
@@ -236,13 +239,15 @@ class GitHubInsightsBillingCoordinator(DataUpdateCoordinator[BillingSnapshot]):
         async_update_billing_issues(
             self.hass, self.config_entry.entry_id, snapshot.errors
         )
-        allowance = self.config_entry.options.get(
-            CONF_ACTIONS_INCLUDED_MINUTES, DEFAULT_ACTIONS_INCLUDED_MINUTES
+        allowance = integer_option(
+            self.config_entry.options,
+            CONF_ACTIONS_INCLUDED_MINUTES,
+            DEFAULT_ACTIONS_INCLUDED_MINUTES,
         )
         async_update_configured_allowance_issue(
             self.hass,
             self.config_entry.entry_id,
-            allowance if isinstance(allowance, int) else 0,
+            allowance,
             {
                 reason
                 for scope_data in snapshot.scopes.values()

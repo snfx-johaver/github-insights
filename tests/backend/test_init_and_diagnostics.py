@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from typing import Any, cast
 from unittest.mock import AsyncMock, patch
@@ -21,13 +21,16 @@ from custom_components.github_insights.const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
     CONF_ACTIONS_INCLUDED_MINUTES,
+    CONF_BILLING_INTERVAL,
     CONF_BILLING_ORGANIZATIONS,
     CONF_BILLING_TOKEN,
     CONF_ENABLED_CATEGORIES,
+    CONF_ESTIMATED_MINUTES,
     CONF_MAX_REPOSITORIES,
     CONF_PERSONAL_BILLING,
     CONF_SERVER,
     CONF_TOKEN,
+    CONF_UPDATE_INTERVAL,
     DEFAULT_SERVER,
     DOMAIN,
 )
@@ -175,6 +178,58 @@ async def test_missing_billing_token_is_nonfatal_and_unavailable(
     assert entry.runtime_data.coordinator.data.account.login == "octocat"
 
 
+async def test_setup_normalizes_float_shaped_number_selector_options(
+    hass: HomeAssistant,
+) -> None:
+    """Float-shaped selector values support setup and repository discovery."""
+    captured: dict[str, object] = {}
+
+    async def async_fetch_snapshot(
+        client: object,
+        *,
+        repository_options: object,
+        copilot_organizations: tuple[str, ...],
+        copilot_billing_client: object | None,
+    ) -> object:
+        captured["repository_options"] = repository_options
+        return snapshot()
+
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=3,
+        minor_version=5,
+        data={
+            CONF_SERVER: DEFAULT_SERVER,
+            CONF_TOKEN: "primary-token",
+            CONF_ACCOUNT_ID: 42,
+            CONF_ACCOUNT_LOGIN: "octocat",
+        },
+        options={
+            CONF_MAX_REPOSITORIES: 10.0,
+            CONF_UPDATE_INTERVAL: 15.0,
+            CONF_BILLING_INTERVAL: 60.0,
+            CONF_ESTIMATED_MINUTES: 1000.0,
+            CONF_ACTIONS_INCLUDED_MINUTES: 3000.0,
+        },
+    )
+    entry.add_to_hass(hass)
+
+    with patch(
+        "custom_components.github_insights.api.GitHubClient.async_fetch_snapshot",
+        new=async_fetch_snapshot,
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    repository_options = cast(Any, captured["repository_options"])
+    assert repository_options.repository_limit == 10
+    assert isinstance(repository_options.repository_limit, int)
+    assert entry.runtime_data.coordinator.update_interval == timedelta(minutes=15)
+    assert entry.runtime_data.billing_coordinator.update_interval == timedelta(
+        minutes=60
+    )
+
+
 async def test_configured_allowance_exists_without_billing_scopes(
     hass: HomeAssistant,
 ) -> None:
@@ -305,9 +360,44 @@ async def test_migrate_legacy_host_key(hass: HomeAssistant) -> None:
 
     assert await async_migrate_entry(hass, entry)
     assert entry.version == 3
-    assert entry.minor_version == 4
+    assert entry.minor_version == 5
     assert entry.data[CONF_SERVER] == "https://github.example.com"
     assert entry.data[CONF_ACCOUNT_LOGIN] == "octocat"
     assert "repositories" in entry.options[CONF_ENABLED_CATEGORIES]
     assert entry.options[CONF_MAX_REPOSITORIES] == 10
     assert entry.options[CONF_ACTIONS_INCLUDED_MINUTES] == 0
+
+
+async def test_migrate_float_shaped_number_selector_options(
+    hass: HomeAssistant,
+) -> None:
+    """Version 3.4 entries normalize every integer-valued numeric option."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=3,
+        minor_version=4,
+        data={
+            CONF_SERVER: DEFAULT_SERVER,
+            CONF_TOKEN: "token",
+            CONF_ACCOUNT_LOGIN: "octocat",
+        },
+        options={
+            CONF_MAX_REPOSITORIES: 10.0,
+            CONF_UPDATE_INTERVAL: 15.0,
+            CONF_BILLING_INTERVAL: 60.0,
+            CONF_ESTIMATED_MINUTES: 1000.0,
+            CONF_ACTIONS_INCLUDED_MINUTES: 3000.0,
+        },
+    )
+    entry.add_to_hass(hass)
+
+    assert await async_migrate_entry(hass, entry)
+    assert entry.minor_version == 5
+    for key in (
+        CONF_MAX_REPOSITORIES,
+        CONF_UPDATE_INTERVAL,
+        CONF_BILLING_INTERVAL,
+        CONF_ESTIMATED_MINUTES,
+        CONF_ACTIONS_INCLUDED_MINUTES,
+    ):
+        assert isinstance(entry.options[key], int)

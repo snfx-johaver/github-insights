@@ -9,7 +9,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.github_insights.config_flow import ValidatedSetup
+from custom_components.github_insights.config_flow import (
+    ACTIONS_ALLOWANCE_URL,
+    BILLING_USAGE_URL,
+    CLASSIC_PAT_URL,
+    COPILOT_ORGANIZATION_URL,
+    COPILOT_SETTINGS_URL,
+    ENTERPRISE_SLUG_URL,
+    FINE_GRAINED_PAT_URL,
+    ValidatedSetup,
+)
 from custom_components.github_insights.const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
@@ -23,6 +32,7 @@ from custom_components.github_insights.const import (
     CONF_BUDGET_MANAGEMENT,
     CONF_BUDGET_WARNING_THRESHOLD,
     CONF_ESTIMATED_MINUTES,
+    CONF_MAX_REPOSITORIES,
     CONF_ORGANIZATIONS,
     CONF_PERSONAL_BILLING,
     CONF_REFERENCE_RUNNER,
@@ -44,6 +54,12 @@ async def test_user_flow(hass: HomeAssistant) -> None:
     )
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "user"
+    assert result["description_placeholders"] == {
+        "fine_grained_pat_url": FINE_GRAINED_PAT_URL,
+        "classic_pat_url": CLASSIC_PAT_URL,
+    }
+    assert "secret-token" not in str(result["description_placeholders"])
+    assert "classic-billing-token" not in str(result["description_placeholders"])
 
     validated = ValidatedSetup(DEFAULT_SERVER, "secret-token", snapshot())
     with patch(
@@ -67,6 +83,7 @@ async def test_user_flow(hass: HomeAssistant) -> None:
             CONF_AUTO_DISCOVER: True,
             CONF_ORGANIZATIONS: ["example-org"],
             CONF_REPOSITORIES: ["octocat/example"],
+            CONF_MAX_REPOSITORIES: 10.0,
         },
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
@@ -74,6 +91,8 @@ async def test_user_flow(hass: HomeAssistant) -> None:
     assert result["data"][CONF_ACCOUNT_ID] == 42
     assert result["data"][CONF_TOKEN] == "secret-token"
     assert result["options"][CONF_BILLING_TOKEN] == "classic-billing-token"
+    assert result["options"][CONF_MAX_REPOSITORIES] == 10
+    assert isinstance(result["options"][CONF_MAX_REPOSITORIES], int)
 
 
 async def test_single_entry_only(hass: HomeAssistant) -> None:
@@ -153,6 +172,15 @@ async def test_options_flow(hass: HomeAssistant) -> None:
 
     result = await hass.config_entries.options.async_init(entry.entry_id)
     assert result["type"] is FlowResultType.FORM
+    assert result["description_placeholders"] == {
+        "classic_pat_url": CLASSIC_PAT_URL,
+        "billing_usage_url": BILLING_USAGE_URL,
+        "enterprise_slug_url": ENTERPRISE_SLUG_URL,
+        "actions_allowance_url": ACTIONS_ALLOWANCE_URL,
+        "copilot_settings_url": COPILOT_SETTINGS_URL,
+        "copilot_organization_url": COPILOT_ORGANIZATION_URL,
+    }
+    assert "classic-billing-token" not in str(result["description_placeholders"])
 
     result = await hass.config_entries.options.async_configure(
         result["flow_id"],
@@ -160,24 +188,33 @@ async def test_options_flow(hass: HomeAssistant) -> None:
             CONF_AUTO_DISCOVER: False,
             CONF_ORGANIZATIONS: [],
             CONF_REPOSITORIES: [],
-            CONF_UPDATE_INTERVAL: 30,
-            CONF_BILLING_INTERVAL: 60,
+            CONF_UPDATE_INTERVAL: 30.0,
+            CONF_BILLING_INTERVAL: 60.0,
             CONF_BILLING_TOKEN: "classic-billing-token",
             CONF_PERSONAL_BILLING: True,
             CONF_BILLING_ORGANIZATIONS: [],
             CONF_BILLING_ENTERPRISE: "",
             CONF_BUDGET_MANAGEMENT: False,
             CONF_REFERENCE_RUNNER: "linux_standard",
-            CONF_ESTIMATED_MINUTES: 1000,
-            CONF_ACTIONS_INCLUDED_MINUTES: 3000,
-            CONF_BUDGET_WARNING_THRESHOLD: 75,
-            CONF_BUDGET_CRITICAL_THRESHOLD: 90,
+            CONF_ESTIMATED_MINUTES: 1000.0,
+            CONF_ACTIONS_INCLUDED_MINUTES: 3000.0,
+            CONF_BUDGET_WARNING_THRESHOLD: 75.0,
+            CONF_BUDGET_CRITICAL_THRESHOLD: 90.0,
         },
     )
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_UPDATE_INTERVAL] == 30
     assert result["data"][CONF_ACTIONS_INCLUDED_MINUTES] == 3000
     assert result["data"][CONF_BILLING_TOKEN] == "classic-billing-token"
+    for key in (
+        CONF_UPDATE_INTERVAL,
+        CONF_BILLING_INTERVAL,
+        CONF_ESTIMATED_MINUTES,
+        CONF_ACTIONS_INCLUDED_MINUTES,
+        CONF_BUDGET_WARNING_THRESHOLD,
+        CONF_BUDGET_CRITICAL_THRESHOLD,
+    ):
+        assert isinstance(result["data"][key], int)
 
 
 async def test_options_flow_preserves_updates_and_clears_billing_token(

@@ -38,6 +38,7 @@ from .coordinator import (
     GitHubInsightsCoordinator,
     GitHubInsightsRuntimeData,
 )
+from .options import normalize_integer_options
 from .services import async_register_services, async_unregister_services
 
 FRONTEND_URL = "/github_insights/frontend"
@@ -138,31 +139,33 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if CONF_ACCOUNT_LOGIN not in data and entry.title:
             data[CONF_ACCOUNT_LOGIN] = entry.title
 
-    if entry.version < 3 or entry.minor_version < 4:
+    if entry.version < 3 or entry.minor_version < 5:
         hass.config_entries.async_update_entry(
             entry,
             data=data,
-            options={
-                **entry.options,
-                CONF_ENABLED_CATEGORIES: entry.options.get(
-                    CONF_ENABLED_CATEGORIES, list(DEFAULT_ENABLED_CATEGORIES)
-                ),
-                CONF_INCLUDE_ARCHIVED: entry.options.get(
-                    CONF_INCLUDE_ARCHIVED, DEFAULT_INCLUDE_ARCHIVED
-                ),
-                CONF_INCLUDE_FORKS: entry.options.get(
-                    CONF_INCLUDE_FORKS, DEFAULT_INCLUDE_FORKS
-                ),
-                CONF_MAX_REPOSITORIES: entry.options.get(
-                    CONF_MAX_REPOSITORIES, DEFAULT_MAX_REPOSITORIES
-                ),
-                CONF_ACTIONS_INCLUDED_MINUTES: entry.options.get(
-                    CONF_ACTIONS_INCLUDED_MINUTES,
-                    DEFAULT_ACTIONS_INCLUDED_MINUTES,
-                ),
-            },
+            options=normalize_integer_options(
+                {
+                    **entry.options,
+                    CONF_ENABLED_CATEGORIES: entry.options.get(
+                        CONF_ENABLED_CATEGORIES, list(DEFAULT_ENABLED_CATEGORIES)
+                    ),
+                    CONF_INCLUDE_ARCHIVED: entry.options.get(
+                        CONF_INCLUDE_ARCHIVED, DEFAULT_INCLUDE_ARCHIVED
+                    ),
+                    CONF_INCLUDE_FORKS: entry.options.get(
+                        CONF_INCLUDE_FORKS, DEFAULT_INCLUDE_FORKS
+                    ),
+                    CONF_MAX_REPOSITORIES: entry.options.get(
+                        CONF_MAX_REPOSITORIES, DEFAULT_MAX_REPOSITORIES
+                    ),
+                    CONF_ACTIONS_INCLUDED_MINUTES: entry.options.get(
+                        CONF_ACTIONS_INCLUDED_MINUTES,
+                        DEFAULT_ACTIONS_INCLUDED_MINUTES,
+                    ),
+                }
+            ),
             version=3,
-            minor_version=4,
+            minor_version=5,
         )
 
     return True

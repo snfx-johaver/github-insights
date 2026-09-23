@@ -96,7 +96,7 @@ def _select_repositories(
         for repo in repositories
         if (options.include_archived or not repo.archived)
         and (options.include_forks or not repo.fork)
-    )[: max(1, min(options.repository_limit, MAX_SELECTED_REPOSITORIES))]
+    )[: max(1, min(int(options.repository_limit), MAX_SELECTED_REPOSITORIES))]
 
 
 async def _async_collect_repository(

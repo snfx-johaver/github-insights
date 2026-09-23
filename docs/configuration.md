@@ -31,6 +31,26 @@ Unavailable categories remain independently disabled with an explanation. The
 flow will not request write permissions until the user explicitly enables
 budget management.
 
+The config and options forms link directly to the official sources for values
+that users must obtain:
+
+- create a [fine-grained PAT](https://github.com/settings/personal-access-tokens/new)
+  for primary account, repository, workflow, security, and Copilot activity;
+- create a [classic PAT](https://github.com/settings/tokens/new) only for the
+  optional billing/usage credential;
+- review [billing usage and organization access](https://docs.github.com/en/billing/tutorials/gather-insights);
+- identify an enterprise slug using GitHub's
+  [enterprise slug documentation](https://docs.github.com/en/enterprise-cloud@latest/admin/managing-your-enterprise-account/changing-the-url-for-your-enterprise);
+- check [product usage included with each plan](https://docs.github.com/en/billing/reference/product-usage-included)
+  before explicitly entering an Actions included-minutes allowance; and
+- review [personal Copilot settings](https://github.com/settings/copilot) and
+  [organization Copilot policies](https://docs.github.com/en/copilot/how-tos/administer-copilot/manage-for-organization/manage-policies).
+
+The enterprise slug is the `<slug>` URL segment in
+`https://github.com/enterprises/<slug>`. Personal users normally leave this
+option blank. Billing organizations should include only organizations where
+the token owner has the required owner or billing-manager access.
+
 ## Lovelace resource
 
 The integration serves its installed bundle through Home Assistant's supported
