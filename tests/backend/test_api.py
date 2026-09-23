@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import cast
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from aiohttp import ClientSession
@@ -15,8 +16,11 @@ from custom_components.github_insights.api import (
     GitHubRateLimitError,
     normalize_server,
 )
+from custom_components.github_insights.repository_data import (
+    RepositoryCollectionOptions,
+)
 
-from .helpers import FakeResponse, FakeSession
+from .helpers import FakeResponse, FakeSession, snapshot
 
 
 def test_normalize_github_dotcom() -> None:
@@ -164,6 +168,205 @@ async def test_secondary_rate_limit_without_header_gets_safe_backoff() -> None:
 
     assert caught.value.retry_after is not None
     assert caught.value.retry_after >= 2
+
+
+async def test_post_auth_rate_limit_returns_partial_snapshot_and_stops_fanout() -> None:
+    """Repository throttling yields safe partial data and stops later requests."""
+    base = snapshot()
+    client = GitHubClient(
+        cast(ClientSession, FakeSession()),
+        "github_pat_primary_fake",
+        "https://github.com",
+    )
+    get_rate_limit = AsyncMock()
+    collect_copilot = AsyncMock()
+
+    with (
+        patch.object(client, "async_get_account", AsyncMock(return_value=base.account)),
+        patch.object(
+            client,
+            "async_get_organizations",
+            AsyncMock(return_value=base.organizations),
+        ),
+        patch.object(
+            client,
+            "async_get_repositories",
+            AsyncMock(return_value=base.repositories),
+        ),
+        patch.object(client, "async_get_rate_limit", get_rate_limit),
+        patch(
+            "custom_components.github_insights.repository_data."
+            "async_collect_repository_insights",
+            new=AsyncMock(
+                side_effect=GitHubRateLimitError("rate_limited", retry_after=30)
+            ),
+        ),
+        patch(
+            "custom_components.github_insights.copilot_data."
+            "async_collect_copilot_billing",
+            new=collect_copilot,
+        ),
+    ):
+        partial = await client.async_fetch_snapshot(
+            repository_options=RepositoryCollectionOptions(
+                selected=(),
+                auto_discover=True,
+                include_archived=True,
+                include_forks=True,
+                enabled_categories=frozenset({"workflows", "copilot"}),
+            ),
+            copilot_organizations=("example-org",),
+        )
+
+    assert partial.account == base.account
+    assert partial.repositories == base.repositories
+    assert partial.repository_insights == ()
+    assert partial.retry_after == 30
+    assert partial.errors["repository_insights"] == "rate_limited"
+    assert partial.errors["workflows"] == "rate_limited"
+    assert partial.errors["copilot"] == "rate_limited"
+    assert partial.errors["rate_limit"] == "rate_limited"
+    get_rate_limit.assert_not_awaited()
+    collect_copilot.assert_not_awaited()
+    assert "github_pat_primary_fake" not in str(partial.errors)
+    assert "github_pat_primary_fake" not in str(partial.capabilities)
+
+
+async def test_organization_rate_limit_skips_all_later_capabilities() -> None:
+    """Organization throttling prevents repository and rate-limit fan-out."""
+    base = snapshot()
+    client = GitHubClient(
+        cast(ClientSession, FakeSession()),
+        "github_pat_primary_fake",
+        "https://github.com",
+    )
+    get_repositories = AsyncMock()
+    get_rate_limit = AsyncMock()
+    with (
+        patch.object(client, "async_get_account", AsyncMock(return_value=base.account)),
+        patch.object(
+            client,
+            "async_get_organizations",
+            AsyncMock(side_effect=GitHubRateLimitError("rate_limited", retry_after=25)),
+        ),
+        patch.object(client, "async_get_repositories", get_repositories),
+        patch.object(client, "async_get_rate_limit", get_rate_limit),
+    ):
+        partial = await client.async_fetch_snapshot()
+
+    assert partial.retry_after == 25
+    assert partial.errors == {
+        "organizations": "rate_limited",
+        "repositories": "rate_limited",
+        "rate_limit": "rate_limited",
+    }
+    get_repositories.assert_not_awaited()
+    get_rate_limit.assert_not_awaited()
+
+
+async def test_copilot_rate_limit_isolated_from_first_refresh() -> None:
+    """Copilot throttling yields partial data and skips the later sensor request."""
+    base = snapshot()
+    client = GitHubClient(
+        cast(ClientSession, FakeSession()),
+        "github_pat_primary_fake",
+        "https://github.com",
+    )
+    get_rate_limit = AsyncMock()
+    with (
+        patch.object(client, "async_get_account", AsyncMock(return_value=base.account)),
+        patch.object(
+            client,
+            "async_get_organizations",
+            AsyncMock(return_value=base.organizations),
+        ),
+        patch.object(
+            client,
+            "async_get_repositories",
+            AsyncMock(return_value=base.repositories),
+        ),
+        patch.object(client, "async_get_rate_limit", get_rate_limit),
+        patch(
+            "custom_components.github_insights.repository_data."
+            "async_collect_repository_insights",
+            new=AsyncMock(return_value=()),
+        ),
+        patch(
+            "custom_components.github_insights.copilot_data."
+            "async_collect_copilot_billing",
+            new=AsyncMock(
+                side_effect=GitHubRateLimitError("rate_limited", retry_after=35)
+            ),
+        ),
+    ):
+        partial = await client.async_fetch_snapshot(
+            repository_options=RepositoryCollectionOptions(
+                selected=(),
+                auto_discover=True,
+                include_archived=True,
+                include_forks=True,
+                enabled_categories=frozenset({"copilot"}),
+            ),
+            copilot_organizations=("example-org",),
+        )
+
+    assert partial.retry_after == 35
+    assert partial.errors["copilot"] == "rate_limited"
+    assert partial.errors["rate_limit"] == "rate_limited"
+    get_rate_limit.assert_not_awaited()
+
+
+async def test_rate_limit_sensor_throttling_is_capability_failure() -> None:
+    """The final rate-limit endpoint cannot invalidate successful data."""
+    base = snapshot()
+    client = GitHubClient(
+        cast(ClientSession, FakeSession()),
+        "github_pat_primary_fake",
+        "https://github.com",
+    )
+    with (
+        patch.object(client, "async_get_account", AsyncMock(return_value=base.account)),
+        patch.object(
+            client,
+            "async_get_organizations",
+            AsyncMock(return_value=base.organizations),
+        ),
+        patch.object(
+            client,
+            "async_get_repositories",
+            AsyncMock(return_value=base.repositories),
+        ),
+        patch.object(
+            client,
+            "async_get_rate_limit",
+            AsyncMock(side_effect=GitHubRateLimitError("rate_limited", retry_after=40)),
+        ),
+    ):
+        partial = await client.async_fetch_snapshot()
+
+    assert partial.organizations == base.organizations
+    assert partial.repositories == base.repositories
+    assert partial.rate_limit is None
+    assert partial.retry_after == 40
+    assert partial.errors["rate_limit"] == "rate_limited"
+
+
+async def test_initial_account_rate_limit_remains_retriable() -> None:
+    """The required account request still propagates rate-limit backoff."""
+    client = GitHubClient(
+        cast(ClientSession, FakeSession()),
+        "github_pat_primary_fake",
+        "https://github.com",
+    )
+    with patch.object(
+        client,
+        "async_get_account",
+        AsyncMock(side_effect=GitHubRateLimitError("rate_limited", retry_after=20)),
+    ):
+        with pytest.raises(GitHubRateLimitError) as caught:
+            await client.async_fetch_snapshot()
+
+    assert caught.value.retry_after == 20
 
 
 async def test_ghes_uses_compatible_api_version() -> None:

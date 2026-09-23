@@ -98,6 +98,7 @@ async def async_get_config_entry_diagnostics(
             "error_reason_counts": _value_counts(snapshot.errors.values()),
             "token_scopes": snapshot.token_scopes,
             "fetched_at": snapshot.fetched_at,
+            "retry_after": snapshot.retry_after,
             "rate_limit": (
                 {
                     "limit": snapshot.rate_limit.limit,

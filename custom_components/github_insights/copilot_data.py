@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from typing import Any
@@ -76,14 +75,12 @@ async def async_collect_copilot_billing(
         )
     else:
         results = tuple(
-            await asyncio.gather(
-                *(
-                    _async_collect_scope(
-                        billing_client, scope_type, scope_name, scope_id
-                    )
-                    for scope_type, scope_name, scope_id in scopes
+            [
+                await _async_collect_scope(
+                    billing_client, scope_type, scope_name, scope_id
                 )
-            )
+                for scope_type, scope_name, scope_id in scopes
+            ]
         )
     usages = tuple(result[0] for result in results if result[0] is not None)
     capabilities: dict[str, GitHubCapability] = {}

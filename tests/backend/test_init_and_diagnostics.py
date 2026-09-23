@@ -17,6 +17,7 @@ from custom_components.github_insights import (
     async_migrate_entry,
     async_setup,
 )
+from custom_components.github_insights.api import GitHubRateLimitError
 from custom_components.github_insights.const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
@@ -176,6 +177,75 @@ async def test_missing_billing_token_is_nonfatal_and_unavailable(
     assert scope.usage is None
     assert scope.usage_capability.reason == "billing_token_not_configured"
     assert entry.runtime_data.coordinator.data.account.login == "octocat"
+
+
+async def test_setup_survives_repository_insight_rate_limit(
+    hass: HomeAssistant,
+) -> None:
+    """A post-auth rate limit keeps the entry loaded with partial entities."""
+    base = snapshot()
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        unique_id="https://github.com:42",
+        data={
+            CONF_SERVER: DEFAULT_SERVER,
+            CONF_TOKEN: "github_pat_primary_fake",
+            CONF_ACCOUNT_ID: 42,
+            CONF_ACCOUNT_LOGIN: "octocat",
+        },
+    )
+    entry.add_to_hass(hass)
+    get_rate_limit = AsyncMock()
+
+    with (
+        patch(
+            "custom_components.github_insights.api.GitHubClient.async_get_account",
+            new=AsyncMock(return_value=base.account),
+        ),
+        patch(
+            "custom_components.github_insights.api."
+            "GitHubClient.async_get_organizations",
+            new=AsyncMock(return_value=base.organizations),
+        ),
+        patch(
+            "custom_components.github_insights.api.GitHubClient.async_get_repositories",
+            new=AsyncMock(return_value=base.repositories),
+        ),
+        patch(
+            "custom_components.github_insights.api.GitHubClient.async_get_rate_limit",
+            new=get_rate_limit,
+        ),
+        patch(
+            "custom_components.github_insights.repository_data."
+            "async_collect_repository_insights",
+            new=AsyncMock(
+                side_effect=GitHubRateLimitError("rate_limited", retry_after=45)
+            ),
+        ),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        await hass.async_block_till_done()
+
+    coordinator = entry.runtime_data.coordinator
+    assert coordinator.last_update_success is True
+    assert coordinator.data.account == base.account
+    assert coordinator.data.repositories == base.repositories
+    assert coordinator.data.repository_insights == ()
+    assert coordinator.data.retry_after == 45
+    assert coordinator.data.errors["repository_insights"] == "rate_limited"
+    assert coordinator.data.errors["rate_limit"] == "rate_limited"
+    get_rate_limit.assert_not_awaited()
+
+    assert hass.states.get("sensor.github_insights_octocat_account") is not None
+    rate_limit_state = hass.states.get(
+        "sensor.github_insights_octocat_api_rate_limit_remaining"
+    )
+    assert rate_limit_state is not None
+    assert rate_limit_state.state == "unavailable"
+
+    diagnostics = await async_get_config_entry_diagnostics(hass, entry)
+    assert diagnostics["runtime"]["retry_after"] == 45
+    assert "github_pat_primary_fake" not in str(diagnostics)
 
 
 async def test_setup_normalizes_float_shaped_number_selector_options(

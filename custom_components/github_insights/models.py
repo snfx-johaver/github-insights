@@ -574,6 +574,7 @@ class GitHubSnapshot:
     capabilities: Mapping[str, GitHubCapability]
     fetched_at: datetime
     errors: Mapping[str, str] = field(default_factory=dict)
+    retry_after: int | None = None
 
     @classmethod
     def create(
@@ -589,6 +590,7 @@ class GitHubSnapshot:
         capabilities: Mapping[str, GitHubCapability],
         fetched_at: datetime,
         errors: Mapping[str, str] | None = None,
+        retry_after: int | None = None,
     ) -> GitHubSnapshot:
         """Create an immutable snapshot."""
         return cls(
@@ -602,6 +604,7 @@ class GitHubSnapshot:
             capabilities=MappingProxyType(dict(capabilities)),
             fetched_at=fetched_at,
             errors=MappingProxyType(dict(errors or {})),
+            retry_after=retry_after,
         )
 
 
