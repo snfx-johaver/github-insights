@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+from pathlib import Path
 from unittest.mock import patch
 
 from homeassistant.config_entries import SOURCE_REAUTH, SOURCE_USER
@@ -46,6 +48,8 @@ from custom_components.github_insights.const import (
 )
 
 from .helpers import snapshot
+
+INTEGRATION_ROOT = Path(__file__).parents[2] / "custom_components" / "github_insights"
 
 
 async def test_user_flow(hass: HomeAssistant) -> None:
@@ -217,6 +221,40 @@ async def test_options_flow(hass: HomeAssistant) -> None:
         CONF_BUDGET_CRITICAL_THRESHOLD,
     ):
         assert isinstance(result["data"][key], int)
+
+
+def test_billing_field_descriptions_are_self_contained() -> None:
+    """Long options forms keep credential and enterprise help at each field."""
+    placeholders = {
+        "classic_pat_url": CLASSIC_PAT_URL,
+        "enterprise_slug_url": ENTERPRISE_SLUG_URL,
+        "enterprise_url_example": ENTERPRISE_URL_EXAMPLE,
+    }
+    rendered_by_file: dict[str, dict[str, str]] = {}
+
+    for filename in ("strings.json", "translations/en.json"):
+        data = json.loads((INTEGRATION_ROOT / filename).read_text(encoding="utf-8"))
+        descriptions = data["options"]["step"]["init"]["data_description"]
+        rendered_by_file[filename] = {
+            key: descriptions[key].format(**placeholders)
+            for key in (CONF_BILLING_TOKEN, CONF_BILLING_ENTERPRISE)
+        }
+
+    assert rendered_by_file["strings.json"] == rendered_by_file["translations/en.json"]
+    billing_token = rendered_by_file["strings.json"][CONF_BILLING_TOKEN]
+    assert CLASSIC_PAT_URL in billing_token
+    assert "personal access token (classic)" in billing_token
+    assert "separate from the primary fine-grained token" in billing_token
+    assert "Paste the classic token here" in billing_token
+    assert "used only for billing and usage endpoints" in billing_token
+
+    enterprise = rendered_by_file["strings.json"][CONF_BILLING_ENTERPRISE]
+    assert "Most personal users leave this blank" in enterprise
+    assert "Only GitHub Enterprise Cloud customers" in enterprise
+    assert "URL segment after `github.com/enterprises/`" in enterprise
+    assert "`acme`" in enterprise
+    assert ENTERPRISE_URL_EXAMPLE in enterprise
+    assert ENTERPRISE_SLUG_URL in enterprise
 
 
 async def test_options_flow_preserves_updates_and_clears_billing_token(

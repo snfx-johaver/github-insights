@@ -88,7 +88,7 @@ ENTERPRISE_SLUG_URL = (
     "https://docs.github.com/en/enterprise-cloud@latest/admin/"
     "managing-your-enterprise-account/changing-the-url-for-your-enterprise"
 )
-ENTERPRISE_URL_EXAMPLE = "https://github.com/enterprises/<slug>"
+ENTERPRISE_URL_EXAMPLE = "https://github.com/enterprises/acme"
 ACTIONS_ALLOWANCE_URL = (
     "https://docs.github.com/en/billing/reference/product-usage-included"
 )
