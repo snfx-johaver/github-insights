@@ -37,6 +37,7 @@ from .const import (
     CONF_BILLING_ENTERPRISE,
     CONF_BILLING_INTERVAL,
     CONF_BILLING_ORGANIZATIONS,
+    CONF_BILLING_TOKEN,
     CONF_BUDGET_CRITICAL_THRESHOLD,
     CONF_BUDGET_MANAGEMENT,
     CONF_BUDGET_WARNING_THRESHOLD,
@@ -106,11 +107,12 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a GitHub Insights config flow."""
 
     VERSION = 3
-    MINOR_VERSION = 3
+    MINOR_VERSION = 4
 
     def __init__(self) -> None:
         """Initialize the flow."""
         self._validated: ValidatedSetup | None = None
+        self._billing_token = ""
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -121,6 +123,7 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         errors: dict[str, str] = {}
         if user_input is not None:
+            self._billing_token = str(user_input.get(CONF_BILLING_TOKEN, "")).strip()
             try:
                 self._validated = await async_validate_input(
                     self.hass,
@@ -146,6 +149,9 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         TextSelectorConfig(type=TextSelectorType.URL)
                     ),
                     vol.Required(CONF_TOKEN): TextSelector(
+                        TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                    ),
+                    vol.Optional(CONF_BILLING_TOKEN): TextSelector(
                         TextSelectorConfig(type=TextSelectorType.PASSWORD)
                     ),
                 }
@@ -184,6 +190,11 @@ class GitHubInsightsConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_MAX_REPOSITORIES: user_input[CONF_MAX_REPOSITORIES],
                     CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL_MINUTES,
                     CONF_BILLING_INTERVAL: DEFAULT_BILLING_INTERVAL_MINUTES,
+                    **(
+                        {CONF_BILLING_TOKEN: self._billing_token}
+                        if self._billing_token
+                        else {}
+                    ),
                     CONF_PERSONAL_BILLING: DEFAULT_PERSONAL_BILLING,
                     CONF_BILLING_ORGANIZATIONS: user_input[CONF_ORGANIZATIONS],
                     CONF_BILLING_ENTERPRISE: "",
@@ -306,7 +317,9 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
                 errors[CONF_ACTIONS_INCLUDED_MINUTES] = "invalid_actions_allowance"
             else:
                 user_input[CONF_ACTIONS_INCLUDED_MINUTES] = int(allowance)
-                return self.async_create_entry(data=user_input)
+                return self.async_create_entry(
+                    data=_updated_options(self._entry.options, user_input)
+                )
 
         runtime = getattr(self._entry, "runtime_data", None)
         snapshot = runtime.coordinator.data if runtime is not None else None
@@ -320,12 +333,20 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
             if snapshot
             else list(self._entry.options.get(CONF_REPOSITORIES, []))
         )
+        billing_token_field = (
+            vol.Optional(CONF_BILLING_TOKEN, default=_BILLING_TOKEN_MASK)
+            if self._entry.options.get(CONF_BILLING_TOKEN)
+            else vol.Optional(CONF_BILLING_TOKEN, default="")
+        )
         schema = _scope_schema(
             organizations,
             repositories,
             defaults=self._entry.options,
         ).extend(
             {
+                billing_token_field: TextSelector(
+                    TextSelectorConfig(type=TextSelectorType.PASSWORD)
+                ),
                 vol.Required(
                     CONF_UPDATE_INTERVAL,
                     default=self._entry.options.get(
@@ -442,6 +463,29 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
             }
         )
         return self.async_show_form(step_id="init", data_schema=schema, errors=errors)
+
+
+_BILLING_TOKEN_MASK = "********"
+
+
+def _updated_options(
+    existing: Mapping[str, Any],
+    submitted: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Update options without rendering or accidentally replacing a saved token."""
+    updated = dict(submitted)
+    token_value = updated.pop(CONF_BILLING_TOKEN, vol.UNDEFINED)
+    current_token = existing.get(CONF_BILLING_TOKEN)
+    if token_value is vol.UNDEFINED or (
+        token_value == _BILLING_TOKEN_MASK and current_token
+    ):
+        if current_token:
+            updated[CONF_BILLING_TOKEN] = current_token
+    else:
+        normalized = str(token_value).strip()
+        if normalized:
+            updated[CONF_BILLING_TOKEN] = normalized
+    return updated
 
 
 def _scope_schema(

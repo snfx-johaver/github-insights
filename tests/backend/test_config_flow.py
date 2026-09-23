@@ -18,6 +18,7 @@ from custom_components.github_insights.const import (
     CONF_BILLING_ENTERPRISE,
     CONF_BILLING_INTERVAL,
     CONF_BILLING_ORGANIZATIONS,
+    CONF_BILLING_TOKEN,
     CONF_BUDGET_CRITICAL_THRESHOLD,
     CONF_BUDGET_MANAGEMENT,
     CONF_BUDGET_WARNING_THRESHOLD,
@@ -51,7 +52,11 @@ async def test_user_flow(hass: HomeAssistant) -> None:
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            {CONF_SERVER: DEFAULT_SERVER, CONF_TOKEN: "secret-token"},
+            {
+                CONF_SERVER: DEFAULT_SERVER,
+                CONF_TOKEN: "secret-token",
+                CONF_BILLING_TOKEN: "classic-billing-token",
+            },
         )
 
     assert result["type"] is FlowResultType.FORM
@@ -68,6 +73,7 @@ async def test_user_flow(hass: HomeAssistant) -> None:
     assert result["title"] == "octocat"
     assert result["data"][CONF_ACCOUNT_ID] == 42
     assert result["data"][CONF_TOKEN] == "secret-token"
+    assert result["options"][CONF_BILLING_TOKEN] == "classic-billing-token"
 
 
 async def test_single_entry_only(hass: HomeAssistant) -> None:
@@ -156,6 +162,7 @@ async def test_options_flow(hass: HomeAssistant) -> None:
             CONF_REPOSITORIES: [],
             CONF_UPDATE_INTERVAL: 30,
             CONF_BILLING_INTERVAL: 60,
+            CONF_BILLING_TOKEN: "classic-billing-token",
             CONF_PERSONAL_BILLING: True,
             CONF_BILLING_ORGANIZATIONS: [],
             CONF_BILLING_ENTERPRISE: "",
@@ -170,6 +177,70 @@ async def test_options_flow(hass: HomeAssistant) -> None:
     assert result["type"] is FlowResultType.CREATE_ENTRY
     assert result["data"][CONF_UPDATE_INTERVAL] == 30
     assert result["data"][CONF_ACTIONS_INCLUDED_MINUTES] == 3000
+    assert result["data"][CONF_BILLING_TOKEN] == "classic-billing-token"
+
+
+async def test_options_flow_preserves_updates_and_clears_billing_token(
+    hass: HomeAssistant,
+) -> None:
+    """The optional credential is masked, replaceable, and explicitly clearable."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            CONF_SERVER: DEFAULT_SERVER,
+            CONF_TOKEN: "primary-token",
+            CONF_ACCOUNT_ID: 42,
+            CONF_ACCOUNT_LOGIN: "octocat",
+        },
+        options={
+            CONF_AUTO_DISCOVER: True,
+            CONF_BILLING_TOKEN: "saved-classic-token",
+        },
+    )
+    entry.add_to_hass(hass)
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["type"] is FlowResultType.FORM
+    assert result["data_schema"] is not None
+    values = {
+        key.schema: key.default()
+        for key in result["data_schema"].schema
+        if hasattr(key, "default")
+    }
+    assert values[CONF_BILLING_TOKEN] == "********"
+
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], values
+    )
+    assert result["type"] is FlowResultType.CREATE_ENTRY
+    assert result["data"][CONF_BILLING_TOKEN] == "saved-classic-token"
+    assert "********" not in str(result["data"])
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["data_schema"] is not None
+    values = {
+        key.schema: key.default()
+        for key in result["data_schema"].schema
+        if hasattr(key, "default")
+    }
+    values[CONF_BILLING_TOKEN] = "replacement-classic-token"
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], values
+    )
+    assert result["data"][CONF_BILLING_TOKEN] == "replacement-classic-token"
+
+    result = await hass.config_entries.options.async_init(entry.entry_id)
+    assert result["data_schema"] is not None
+    values = {
+        key.schema: key.default()
+        for key in result["data_schema"].schema
+        if hasattr(key, "default")
+    }
+    values[CONF_BILLING_TOKEN] = ""
+    result = await hass.config_entries.options.async_configure(
+        result["flow_id"], values
+    )
+    assert CONF_BILLING_TOKEN not in result["data"]
 
 
 async def test_options_reject_fractional_actions_allowance(

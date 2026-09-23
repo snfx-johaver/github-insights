@@ -544,6 +544,7 @@ class GitHubClient:
         *,
         repository_options: object | None = None,
         copilot_organizations: tuple[str, ...] = (),
+        copilot_billing_client: GitHubClient | None = None,
     ) -> GitHubSnapshot:
         """Fetch account data and tolerate capability-specific failures."""
         account = await self.async_get_account()
@@ -635,6 +636,7 @@ class GitHubClient:
                     for organization in organizations
                     if organization.login in set(copilot_organizations)
                 ),
+                billing_client=copilot_billing_client,
             )
             capabilities.update(copilot_capabilities)
             errors.update(copilot_errors)

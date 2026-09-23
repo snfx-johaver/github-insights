@@ -12,6 +12,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 
+from .api import GitHubClient
 from .const import (
     CONF_BUDGET_MANAGEMENT,
     DOMAIN,
@@ -121,7 +122,7 @@ async def async_register_services(hass: HomeAssistant) -> None:
     async def async_create(call: ServiceCall) -> None:
         entry = _active_entry(hass)
         scope = _scope(call)
-        _require_budget_capability(entry, scope)
+        client = _require_budget_capability(entry, scope)
         payload = {
             CONF_BUDGET_AMOUNT: call.data[CONF_BUDGET_AMOUNT],
             CONF_PREVENT_FURTHER_USAGE: call.data[CONF_PREVENT_FURTHER_USAGE],
@@ -136,13 +137,13 @@ async def async_register_services(hass: HomeAssistant) -> None:
         }
         expected = _create_confirmation(scope, payload)
         _require_confirmation(call, expected)
-        budget = await entry.runtime_data.client.async_create_budget(scope, payload)
+        budget = await client.async_create_budget(scope, payload)
         await _refresh_after_mutation(entry, SERVICE_CREATE_BUDGET, scope, budget.id)
 
     async def async_update(call: ServiceCall) -> None:
         entry = _active_entry(hass)
         scope = _scope(call)
-        _require_budget_capability(entry, scope)
+        client = _require_budget_capability(entry, scope)
         budget_id = str(call.data[CONF_BUDGET_ID])
         payload = {
             key: call.data[key]
@@ -164,25 +165,25 @@ async def async_register_services(hass: HomeAssistant) -> None:
             }
         expected = _update_confirmation(scope, budget_id, payload)
         _require_confirmation(call, expected)
-        await entry.runtime_data.client.async_update_budget(scope, budget_id, payload)
+        await client.async_update_budget(scope, budget_id, payload)
         await _refresh_after_mutation(entry, SERVICE_UPDATE_BUDGET, scope, budget_id)
 
     async def async_delete(call: ServiceCall) -> None:
         entry = _active_entry(hass)
         scope = _scope(call)
-        _require_budget_capability(entry, scope)
+        client = _require_budget_capability(entry, scope)
         budget_id = str(call.data[CONF_BUDGET_ID])
         _require_confirmation(
             call,
             f"DELETE BUDGET {budget_id} FROM {scope.scope_type.value} {scope.name}",
         )
-        await entry.runtime_data.client.async_delete_budget(scope, budget_id)
+        await client.async_delete_budget(scope, budget_id)
         await _refresh_after_mutation(entry, SERVICE_DELETE_BUDGET, scope, budget_id)
 
     async def async_set_stop_usage(call: ServiceCall) -> None:
         entry = _active_entry(hass)
         scope = _scope(call)
-        _require_budget_capability(entry, scope)
+        client = _require_budget_capability(entry, scope)
         budget_id = str(call.data[CONF_BUDGET_ID])
         enabled = bool(call.data[CONF_PREVENT_FURTHER_USAGE])
         verb = "ENABLE" if enabled else "DISABLE"
@@ -191,7 +192,7 @@ async def async_register_services(hass: HomeAssistant) -> None:
             f"{verb} STOP USAGE FOR BUDGET {budget_id} ON "
             f"{scope.scope_type.value} {scope.name}",
         )
-        await entry.runtime_data.client.async_update_budget(
+        await client.async_update_budget(
             scope,
             budget_id,
             {CONF_PREVENT_FURTHER_USAGE: enabled},
@@ -255,7 +256,7 @@ def _require_confirmation(call: ServiceCall, expected: str) -> None:
 
 def _require_budget_capability(
     entry: GitHubInsightsConfigEntry, scope: BillingScope
-) -> None:
+) -> GitHubClient:
     scope_data = entry.runtime_data.billing_coordinator.data.scopes.get(scope.key)
     if scope_data is None:
         raise HomeAssistantError(
@@ -264,6 +265,12 @@ def _require_budget_capability(
     if scope_data.budget_capability.status is not CapabilityStatus.AVAILABLE:
         reason = scope_data.budget_capability.reason or "missing_budget_permission"
         raise HomeAssistantError(f"Budget management is unavailable: {reason}")
+    client = entry.runtime_data.billing_client
+    if client is None:
+        raise HomeAssistantError(
+            "Budget management is unavailable: billing_token_not_configured"
+        )
+    return client
 
 
 def _create_confirmation(scope: BillingScope, payload: dict[str, Any]) -> str:

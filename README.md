@@ -70,7 +70,7 @@ live Home Assistant instance:
 | HACS | Integration repository using a single zip release |
 | GitHub.com | Primary target |
 | GitHub Enterprise Server | Capability-detected; billing/Copilot parity is not assumed |
-| Billing authentication | Personal access token (classic) required by GitHub; fine-grained PATs continue to work for supported non-billing data |
+| Billing authentication | Optional secondary personal access token (classic), isolated to billing/usage endpoints; the primary token remains on all normal API calls |
 | Browser | Current Home Assistant-supported browsers |
 
 ## HACS custom-repository installation
@@ -122,11 +122,14 @@ source maps, and development dependencies are not shipped.
 
 ## Setup and permissions
 
-The config flow requests a GitHub server and token, validates the
+The config flow requests a GitHub server and primary token, validates the
 authenticated identity, discovers accessible organizations and repositories,
-and explains unavailable capabilities. Read-only repository access is the
-baseline. Billing, security, traffic, Copilot, and budget-management data each
-require additional account roles, plans, policies, or token permissions.
+and accepts an optional **Billing / Usage API token** (classic PAT) in the same
+config entry. The primary token remains the only credential used for normal
+account, repository, workflow, rate-limit, security, and Copilot activity calls.
+Read-only repository access is the baseline. Billing, security, traffic,
+Copilot, and budget-management data each require additional account roles,
+plans, policies, or token permissions.
 
 Implemented sensors cover the authenticated account, rate limits, selected
 repository metadata, open issue and pull-request counts, latest commit/release/
@@ -136,18 +139,21 @@ alerts, and official personal/organization AI-credit and premium-request
 billing where authorized. Detailed traffic and streak entities are disabled by
 default.
 
-Copilot billing endpoints require a personal access token (classic);
-fine-grained PATs are not supported for those endpoints. Organization Copilot
-adoption, coding-agent, and code-review reports are collected only from the
-official report API and HTTPS `copilot-reports.github.com` or
+Copilot AI-credit and premium-request billing endpoints use the optional
+billing token because fine-grained PATs are not supported for those endpoints.
+Organization Copilot adoption, coding-agent, and code-review reports continue
+to use the primary token and are collected only from the official report API
+and HTTPS `copilot-reports.github.com` or
 `githubusercontent.com` signed downloads, with no
 authorization header sent to the download host and no signed URL retained.
 No GitHub pages or undocumented endpoints are scraped.
 
 Enhanced-billing usage endpoints require a **personal access token (classic)**.
-GitHub explicitly does not support fine-grained PATs for these endpoints. A
-fine-grained PAT remains valid for supported account/repository features; only
-billing is marked unavailable.
+GitHub explicitly does not support fine-grained PATs for these endpoints. Add
+that credential as the optional **Billing / Usage API token**; it is never used
+for normal GitHub API requests. Without it, setup and non-billing data continue
+normally while billing and Actions-minute derivations are unavailable with an
+explicit reason.
 
 Budget management is always disabled by default. The local management switch
 only enables access to mutation services; it never changes a GitHub budget.

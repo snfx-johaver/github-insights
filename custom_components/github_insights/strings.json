@@ -46,14 +46,16 @@
       },
       "user": {
         "data": {
+          "billing_token": "Billing / Usage API token",
           "server": "GitHub server",
           "token": "Access token"
         },
         "data_description": {
+          "billing_token": "Optional personal access token (classic), used only for billing and usage endpoints",
           "server": "Use GitHub.com or the HTTPS origin of GitHub Enterprise Server",
           "token": "Stored only in the Home Assistant config entry"
         },
-        "description": "Start in read-only mode. Enhanced billing usage requires a personal access token (classic); GitHub does not support fine-grained PATs for these endpoints. Additional write access is used only after budget management is enabled."
+        "description": "The primary access token is used for account, repository, workflow, security, rate-limit, and Copilot activity APIs. The optional classic token is isolated to billing and usage APIs."
       }
     }
   },
@@ -71,6 +73,7 @@
           "billing_enterprise": "Enterprise slug",
           "billing_interval": "Billing update interval",
           "billing_organizations": "Billing organizations",
+          "billing_token": "Billing / Usage API token",
           "budget_critical_threshold": "Budget critical threshold",
           "budget_management": "Enable confirmed budget management",
           "budget_warning_threshold": "Budget warning threshold",
@@ -84,12 +87,13 @@
           "billing_enterprise": "Optional GitHub Enterprise Cloud slug. Enhanced billing is not available on GitHub Enterprise Server.",
           "billing_interval": "Minutes between billing refreshes. GitHub billing data can lag.",
           "billing_organizations": "Organizations whose enhanced-billing data should be requested",
+          "billing_token": "Optional personal access token (classic), used only for billing and usage endpoints. When configured, leave the masked value unchanged to keep it; clear the field to remove it.",
           "budget_management": "Disabled by default. Every financial mutation also requires an exact action-specific confirmation through a GitHub Insights service.",
           "estimated_minutes": "Local estimate input only; it never changes GitHub usage or budgets.",
           "actions_included_minutes": "Optional local allowance used to derive configured minutes used, remaining, and percent from GitHub-reported minute quantities. Use 0 to leave unset.",
-          "personal_billing": "Requires a personal access token (classic). Fine-grained PATs are not supported by GitHub billing usage endpoints.",
+          "personal_billing": "Requires the optional Billing / Usage API token. Fine-grained PATs are not supported by GitHub billing usage endpoints.",
           "reference_runner": "Price reference used only for clearly labeled estimates.",
-          "enabled_categories": "Copilot billing requires a classic personal access token and an authorized billing role",
+          "enabled_categories": "Copilot activity uses the primary token; AI-credit and premium-request billing require the optional classic billing token and an authorized billing role",
           "max_repositories": "Maximum repositories collected per refresh, from 1 to 50",
           "update_interval": "Minutes between account and repository discovery refreshes"
         }

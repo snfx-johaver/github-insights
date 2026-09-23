@@ -16,6 +16,7 @@ from .const import (
     CONF_ACCOUNT_ID,
     CONF_ACCOUNT_LOGIN,
     CONF_ACTIONS_INCLUDED_MINUTES,
+    CONF_BILLING_TOKEN,
     CONF_ENABLED_CATEGORIES,
     CONF_INCLUDE_ARCHIVED,
     CONF_INCLUDE_FORKS,
@@ -71,8 +72,18 @@ async def async_setup_entry(
         entry.data[CONF_TOKEN],
         entry.data[CONF_SERVER],
     )
-    coordinator = GitHubInsightsCoordinator(hass, entry, client)
-    billing_coordinator = GitHubInsightsBillingCoordinator(hass, entry, client)
+    billing_token = str(entry.options.get(CONF_BILLING_TOKEN, "")).strip()
+    billing_client = (
+        GitHubClient(
+            async_get_clientsession(hass),
+            billing_token,
+            entry.data[CONF_SERVER],
+        )
+        if billing_token
+        else None
+    )
+    coordinator = GitHubInsightsCoordinator(hass, entry, client, billing_client)
+    billing_coordinator = GitHubInsightsBillingCoordinator(hass, entry, billing_client)
     await coordinator.async_config_entry_first_refresh()
     await billing_coordinator.async_config_entry_first_refresh()
 
@@ -89,6 +100,7 @@ async def async_setup_entry(
 
     entry.runtime_data = GitHubInsightsRuntimeData(
         client=client,
+        billing_client=billing_client,
         coordinator=coordinator,
         billing_coordinator=billing_coordinator,
     )
@@ -126,7 +138,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if CONF_ACCOUNT_LOGIN not in data and entry.title:
             data[CONF_ACCOUNT_LOGIN] = entry.title
 
-    if entry.version < 3 or entry.minor_version < 3:
+    if entry.version < 3 or entry.minor_version < 4:
         hass.config_entries.async_update_entry(
             entry,
             data=data,
@@ -150,7 +162,7 @@ async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 ),
             },
             version=3,
-            minor_version=3,
+            minor_version=4,
         )
 
     return True
