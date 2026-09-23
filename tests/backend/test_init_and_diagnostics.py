@@ -190,7 +190,6 @@ async def test_configured_allowance_exists_without_billing_scopes(
         },
         options={
             CONF_ACTIONS_INCLUDED_MINUTES: 3000,
-            CONF_BILLING_TOKEN: "secondary-classic-token",
             CONF_PERSONAL_BILLING: False,
             CONF_BILLING_ORGANIZATIONS: [],
         },
@@ -239,6 +238,7 @@ async def test_diagnostics_redact_token(hass: HomeAssistant) -> None:
         },
         options={
             CONF_ACTIONS_INCLUDED_MINUTES: 3000,
+            CONF_BILLING_TOKEN: "secondary-classic-token",
             "organizations": ["private-org"],
             "repositories": ["private-org/private-repo"],
         },
