@@ -129,6 +129,9 @@ documented price snapshot.
 - REST `Link` headers and GraphQL cursors are followed with hard page/item caps.
 - Primary and secondary rate-limit signals are honored; `Retry-After` and reset
   times take precedence over exponential backoff with jitter.
+- After account authentication succeeds, a rate-limited optional capability
+  returns a partial snapshot with retry metadata instead of failing setup.
+  Pending repository requests are cancelled and later capability fan-out stops.
 - Coordinators use bounded concurrency and category-specific refreshes.
 - Manual refresh is throttled.
 - Authentication failures start reauthentication.

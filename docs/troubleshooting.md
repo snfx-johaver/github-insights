@@ -25,12 +25,15 @@ local-network details.
 GitHub billing usage endpoints require a personal access token (classic).
 Fine-grained PATs, including tokens with the `github_pat_` prefix, are not
 supported by those endpoints. GitHub Insights keeps all other authorized data
-working and reports billing as `classic_pat_required`.
+working and reports billing as `billing_token_not_configured` when the optional
+secondary credential is absent.
 
 Create a classic PAT with only the account/organization access required for the
 selected billing scope, authorize SAML SSO if the organization requires it, and
-use the integration reauthentication flow. Do not broaden repository access
-solely for billing.
+enter it as **Billing / Usage API token** in the integration options. Do not
+replace or broaden the primary repository token solely for billing. Clearing
+the masked billing-token field removes the secondary credential without
+affecting normal API access.
 
 An HTTP 403 from billing is treated as a capability failure, not as global
 credential failure. A 404 can mean enhanced billing or budgets are not enabled

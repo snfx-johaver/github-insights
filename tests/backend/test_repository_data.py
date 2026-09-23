@@ -79,6 +79,26 @@ def test_repository_selection_is_bounded_and_filtered() -> None:
     assert [item.id for item in selected] == [1]
 
 
+def test_repository_selection_accepts_float_shaped_selector_limit() -> None:
+    """Home Assistant NumberSelector output cannot break tuple slicing."""
+    repositories = tuple(
+        _repository(index, f"octocat/repository-{index}") for index in range(1, 12)
+    )
+    selected = _select_repositories(
+        repositories,
+        RepositoryCollectionOptions(
+            selected=(),
+            auto_discover=True,
+            include_archived=True,
+            include_forks=True,
+            enabled_categories=frozenset(),
+            repository_limit=cast(Any, 10.0),
+        ),
+    )
+
+    assert len(selected) == 10
+
+
 def test_streaks_require_complete_coverage() -> None:
     """Truncated activity never produces a supposedly reliable streak."""
     commit = {

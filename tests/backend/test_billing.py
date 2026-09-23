@@ -95,6 +95,67 @@ BUDGET = {
 }
 
 
+async def test_primary_and_billing_requests_use_only_their_own_tokens() -> None:
+    """Credential routing is isolated before requests leave the client."""
+
+    class HeaderCheckingSession(FakeSession):
+        def __init__(self, expected_token: str, *responses: FakeResponse) -> None:
+            super().__init__(*responses)
+            self.expected_token = expected_token
+
+        def request(self, method: str, url: str, **kwargs: Any) -> FakeResponse:
+            headers = dict(kwargs["headers"])
+            assert headers["Authorization"] == f"Bearer {self.expected_token}"
+            headers["Authorization"] = "******"
+            return super().request(method, url, **{**kwargs, "headers": headers})
+
+    primary_session = HeaderCheckingSession(
+        "github_pat_primary_fake",
+        FakeResponse(
+            200,
+            {
+                "resources": {
+                    "core": {
+                        "limit": 5000,
+                        "remaining": 4999,
+                        "used": 1,
+                        "reset": 1,
+                    }
+                }
+            },
+        ),
+    )
+    billing_session = HeaderCheckingSession(
+        "ghp_billing_fake",
+        FakeResponse(200, DETAIL_USAGE),
+        FakeResponse(200, SUMMARY_USAGE),
+    )
+    primary_client = GitHubClient(
+        cast(ClientSession, primary_session),
+        "github_pat_primary_fake",
+        "https://github.com",
+    )
+    billing_client = GitHubClient(
+        cast(ClientSession, billing_session),
+        "ghp_billing_fake",
+        "https://github.com",
+    )
+
+    await primary_client.async_get_rate_limit()
+    await billing_client.async_get_billing_usage(
+        BillingScope(BillingScopeType.USER, "octocat"),
+        year=2026,
+        month=9,
+    )
+
+    assert primary_session.requests[0]["url"].endswith("/rate_limit")
+    assert all(
+        "/settings/billing/" in request["url"] for request in billing_session.requests
+    )
+    assert "github_pat_primary_fake" not in str(primary_session.requests)
+    assert "ghp_billing_fake" not in str(billing_session.requests)
+
+
 @pytest.mark.parametrize(
     ("scope", "expected_path"),
     [

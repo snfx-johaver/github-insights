@@ -5,14 +5,15 @@ and optional enhanced-billing scopes in one integration. No release or tag has
 been published yet.
 
 The first release will support one config entry containing one GitHub server,
-one authenticated identity, selected organizations, optional enterprise
-reporting, and selected/auto-discovered repositories.
+one authenticated identity, an optional secondary Billing / Usage API token,
+selected organizations, optional enterprise reporting, and
+selected/auto-discovered repositories.
 
-Options now cover personal billing, selected billing organizations, an optional
-enterprise slug, a 30–1440 minute billing interval, read-only budgets, optional
-budget management, an optional configured Actions included-minutes allowance,
-a reference runner, desired estimated minutes, and local warning/critical
-thresholds.
+Options now cover the optional classic billing token, personal billing,
+selected billing organizations, an optional enterprise slug, a 30–1440 minute
+billing interval, read-only budgets, optional budget management, an optional
+configured Actions included-minutes allowance, a reference runner, desired
+estimated minutes, and local warning/critical thresholds.
 
 Current options cover explicit repository selection, bounded automatic
 discovery, archived/fork filters, a 1–50 repository request ceiling, enabled
@@ -20,14 +21,35 @@ repository/workflow/release/activity/deployment/traffic/security/Copilot
 categories, and a safe 5–360 minute update interval. The default collection cap
 is 10 repositories.
 
-Copilot billing categories require a personal access token (classic). GitHub's
-billing usage endpoints do not support fine-grained personal access tokens.
-Repository-only features may still use the least-privileged token model
-supported by their individual endpoints.
+Copilot AI-credit/premium-request and other billing categories require the
+optional personal access token (classic). GitHub's billing usage endpoints do
+not support fine-grained personal access tokens. Copilot activity and
+repository-only features continue using the primary token and its
+least-privileged permission model.
 
 Unavailable categories remain independently disabled with an explanation. The
 flow will not request write permissions until the user explicitly enables
 budget management.
+
+The config and options forms link directly to the official sources for values
+that users must obtain:
+
+- create a [fine-grained PAT](https://github.com/settings/personal-access-tokens/new)
+  for primary account, repository, workflow, security, and Copilot activity;
+- create a [classic PAT](https://github.com/settings/tokens/new) only for the
+  optional billing/usage credential;
+- review [billing usage and organization access](https://docs.github.com/en/billing/tutorials/gather-insights);
+- identify an enterprise slug using GitHub's
+  [enterprise slug documentation](https://docs.github.com/en/enterprise-cloud@latest/admin/managing-your-enterprise-account/changing-the-url-for-your-enterprise);
+- check [product usage included with each plan](https://docs.github.com/en/billing/reference/product-usage-included)
+  before explicitly entering an Actions included-minutes allowance; and
+- review [personal Copilot settings](https://github.com/settings/copilot) and
+  [organization Copilot policies](https://docs.github.com/en/copilot/how-tos/administer-copilot/manage-for-organization/manage-policies).
+
+The enterprise slug is the `<slug>` URL segment in
+`https://github.com/enterprises/<slug>`. Personal users normally leave this
+option blank. Billing organizations should include only organizations where
+the token owner has the required owner or billing-manager access.
 
 ## Lovelace resource
 
@@ -106,10 +128,18 @@ estimate and from GitHub-enforced monetary budgets.
 ## Authentication for billing
 
 GitHub's official billing usage endpoints require a personal access token
-(classic) and do not support fine-grained PATs. Tokens beginning with
-`github_pat_` are detected locally and billing usage is marked unavailable
-without making a doomed billing request. Account and repository capabilities
-continue operating.
+(classic) and do not support fine-grained PATs. Store that credential in the
+optional **Billing / Usage API token** option. It is used only for billing and
+usage endpoints, including Actions usage, AI-credit/premium-request usage, and
+budget reads or confirmed mutations. The primary credential remains isolated
+to normal GitHub APIs and Copilot activity reports.
+
+When no billing token is configured, setup remains successful and account,
+repository, workflow, security, rate-limit, and Copilot activity capabilities
+continue operating. Billing and derived Actions-minute entities are unavailable
+with `billing_token_not_configured`. The masked options value preserves an
+existing token; replacing it updates the secondary credential and clearing it
+removes billing access without exposing the saved value.
 
 Organization usage requires an organization owner/admin or billing role.
 Enterprise usage requires an eligible enterprise billing role. GitHub
