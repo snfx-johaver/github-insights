@@ -62,7 +62,7 @@
   "options": {
     "step": {
       "init": {
-        "description": "Need a value? [Create a classic billing token]({classic_pat_url}) or review [billing usage and organization access]({billing_usage_url}). The enterprise slug is the `&lt;slug&gt;` URL segment in `https://github.com/enterprises/&lt;slug&gt;`; [learn about enterprise slugs]({enterprise_slug_url}). Personal users normally leave it blank. Enter Actions included minutes only from your known plan/account allowance; [check GitHub's included usage table]({actions_allowance_url}). Copilot activity uses the primary token; review [personal Copilot settings]({copilot_settings_url}) and [organization Copilot policies]({copilot_organization_url}).",
+        "description": "Need a value? [Create a classic billing token]({classic_pat_url}) or review [billing usage and organization access]({billing_usage_url}). The enterprise slug is the `&lt;slug&gt;` URL segment in `{enterprise_url_example}`; [learn about enterprise slugs]({enterprise_slug_url}). Personal users normally leave it blank. Enter Actions included minutes only from your known plan/account allowance; [check GitHub's included usage table]({actions_allowance_url}). Copilot activity uses the primary token; review [personal Copilot settings]({copilot_settings_url}) and [organization Copilot policies]({copilot_organization_url}).",
         "data": {
           "auto_discover": "Automatically discover repositories",
           "enabled_categories": "Enabled data categories",
@@ -85,7 +85,7 @@
           "update_interval": "Update interval"
         },
         "data_description": {
-          "billing_enterprise": "Optional GitHub Enterprise Cloud slug from `https://github.com/enterprises/&lt;slug&gt;`. Personal users normally leave this blank. Enhanced billing is not available on GitHub Enterprise Server.",
+          "billing_enterprise": "Optional GitHub Enterprise Cloud slug described in the guidance above. Personal users normally leave this blank. Enhanced billing is not available on GitHub Enterprise Server.",
           "billing_interval": "Minutes between billing refreshes. GitHub billing data can lag.",
           "billing_organizations": "Organizations whose enhanced-billing data should be requested. Select only organizations where you have an owner or billing-manager role.",
           "billing_token": "Optional personal access token (classic), used only for billing and usage endpoints. When configured, leave the masked value unchanged to keep it; clear the field to remove it.",

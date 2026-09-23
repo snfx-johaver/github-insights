@@ -88,6 +88,7 @@ ENTERPRISE_SLUG_URL = (
     "https://docs.github.com/en/enterprise-cloud@latest/admin/"
     "managing-your-enterprise-account/changing-the-url-for-your-enterprise"
 )
+ENTERPRISE_URL_EXAMPLE = "https://github.com/enterprises/<slug>"
 ACTIONS_ALLOWANCE_URL = (
     "https://docs.github.com/en/billing/reference/product-usage-included"
 )
@@ -497,6 +498,7 @@ class GitHubInsightsOptionsFlow(config_entries.OptionsFlow):
                 "classic_pat_url": CLASSIC_PAT_URL,
                 "billing_usage_url": BILLING_USAGE_URL,
                 "enterprise_slug_url": ENTERPRISE_SLUG_URL,
+                "enterprise_url_example": ENTERPRISE_URL_EXAMPLE,
                 "actions_allowance_url": ACTIONS_ALLOWANCE_URL,
                 "copilot_settings_url": COPILOT_SETTINGS_URL,
                 "copilot_organization_url": COPILOT_ORGANIZATION_URL,

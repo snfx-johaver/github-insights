@@ -16,6 +16,7 @@ from custom_components.github_insights.config_flow import (
     COPILOT_ORGANIZATION_URL,
     COPILOT_SETTINGS_URL,
     ENTERPRISE_SLUG_URL,
+    ENTERPRISE_URL_EXAMPLE,
     FINE_GRAINED_PAT_URL,
     ValidatedSetup,
 )
@@ -176,6 +177,7 @@ async def test_options_flow(hass: HomeAssistant) -> None:
         "classic_pat_url": CLASSIC_PAT_URL,
         "billing_usage_url": BILLING_USAGE_URL,
         "enterprise_slug_url": ENTERPRISE_SLUG_URL,
+        "enterprise_url_example": ENTERPRISE_URL_EXAMPLE,
         "actions_allowance_url": ACTIONS_ALLOWANCE_URL,
         "copilot_settings_url": COPILOT_SETTINGS_URL,
         "copilot_organization_url": COPILOT_ORGANIZATION_URL,
