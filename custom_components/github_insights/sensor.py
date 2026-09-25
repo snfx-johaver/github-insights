@@ -893,7 +893,7 @@ class GitHubInsightsBillingSensor(GitHubInsightsBillingEntity, SensorEntity):
                 if len(units) == 1:
                     return next(iter(units))
             return None
-        return self._attr_native_unit_of_measurement
+        return getattr(self, "_attr_native_unit_of_measurement", None)
 
 
 def _actions_budgets(data: BillingScopeData) -> tuple[BillingBudget, ...]:
