@@ -2,10 +2,10 @@
 
 ## Status and invariant
 
-Version `0.2.0-beta.1` implements the Phase 2 account integration, Phase 4
-repository/workflow capabilities, Phase 5 Copilot/AI capabilities, and the
-Phase 6-8 bundled frontend architecture described here. Unsupported or
-unauthorized backend categories are never simulated by the cards.
+Version `0.2.0-beta.1` combines the account integration,
+repository/workflow capabilities, Copilot/AI capabilities, and bundled
+frontend architecture described here. Unsupported or unauthorized backend
+categories are never simulated by the cards.
 
 The non-negotiable packaging invariant is **one integration, one HACS
 repository, one HACS installation**. Backend and all cards share:
@@ -129,6 +129,9 @@ documented price snapshot.
 - REST `Link` headers and GraphQL cursors are followed with hard page/item caps.
 - Primary and secondary rate-limit signals are honored; `Retry-After` and reset
   times take precedence over exponential backoff with jitter.
+- After account authentication succeeds, a rate-limited optional capability
+  returns a partial snapshot with retry metadata instead of failing setup.
+  Pending repository requests are cancelled and later capability fan-out stops.
 - Coordinators use bounded concurrency and category-specific refreshes.
 - Manual refresh is throttled.
 - Authentication failures start reauthentication.
@@ -150,9 +153,9 @@ Read-only mode is complete and default. Budget writes require:
 GitHub remains the enforcement system. The integration never simulates limits
 by cancelling workflow runs and never automatically raises a budget.
 
-Phase 3 implements this boundary with four Home Assistant services. Direct
-entity controls only change local estimate or safety options; they never perform
-a financial mutation. Service calls require exact confirmation text and use the
+Four Home Assistant services implement this boundary. Direct entity controls
+only change local estimate or safety options; they never perform a financial
+mutation. Service calls require exact confirmation text and use the
 documented organization or enterprise CRUD route once, followed by an
 authoritative read-back. Personal budget writes are not exposed.
 
@@ -202,6 +205,6 @@ HACS commonly distributes integrations and dashboard plugins as different
 repository categories. This project deliberately does not take that conventional
 split because the binding product requirement is one installation. The supported
 design packages the frontend as runtime data inside the single integration and
-serves/registers it through a supported Home Assistant mechanism selected in
-Phase 6. If no supportable mechanism can be validated, release is blocked rather
-than falling back to a separately installed plugin.
+serves it through Home Assistant's supported static-path API. If that mechanism
+cannot be validated, release is blocked rather than falling back to a
+separately installed plugin.
