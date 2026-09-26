@@ -1,24 +1,30 @@
-export type CardKind =
+export type CardKind = "insights" | "repository";
+
+export type CardLayout =
+  | "responsive"
+  | "compact"
+  | "expanded"
+  | "detail";
+
+export type InsightsPreset =
   | "overview"
   | "usage"
-  | "repositories"
-  | "repository"
   | "actions"
   | "copilot"
   | "activity"
   | "contributions"
   | "security"
-  | "compact"
-  | "dashboard";
+  | "dashboard"
+  | "compact";
 
-export type CardLayout =
-  | "responsive"
-  | "compact"
-  | "hero"
-  | "gauges"
-  | "stacked"
-  | "list"
-  | "grid";
+export type InsightsSection =
+  | "overview"
+  | "usage"
+  | "actions"
+  | "copilot"
+  | "activity"
+  | "contributions"
+  | "security";
 
 export interface CardAction {
   action?: "more-info" | "navigate" | "url" | "call-service" | "none";
@@ -31,6 +37,7 @@ export interface CardAction {
 
 export interface GitHubInsightsCardConfig {
   type: string;
+  preset?: InsightsPreset;
   title?: string;
   account?: string;
   entity?: string;
@@ -40,6 +47,7 @@ export interface GitHubInsightsCardConfig {
   search?: string;
   group_by?: "none" | "organization" | "visibility" | "workflow_status";
   favorites?: string[];
+  repository_overrides?: Record<string, RepositoryDisplayOverride>;
   include?: {
     names?: string[];
     visibility?: string[];
@@ -54,15 +62,18 @@ export interface GitHubInsightsCardConfig {
     direction?: "ascending" | "descending";
     nulls?: "first" | "last";
   }>;
-  sections?: string[];
+  sections?: InsightsSection[];
   metrics?: string[];
   layout?: CardLayout;
-  view?: "compact" | "expanded" | "list" | "grid";
+  view?: "compact" | "expanded" | "detail";
   period?: string;
   show_forecast?: boolean;
   show_archived?: boolean;
   show_forks?: boolean;
   show_estimated_minutes?: boolean;
+  show_metric_badges?: boolean;
+  show_debug?: boolean;
+  metric_badges?: MetricBadgeConfig[];
   reference_runner?: string;
   primary_metric?: string;
   secondary_metric?: string;
@@ -71,6 +82,20 @@ export interface GitHubInsightsCardConfig {
   tap_action?: CardAction;
   hold_action?: CardAction;
   double_tap_action?: CardAction;
+}
+
+export interface MetricBadgeConfig {
+  attribute: string;
+  icon?: string;
+  label?: string;
+}
+
+export interface RepositoryDisplayOverride {
+  title?: string;
+  view?: "compact" | "expanded" | "detail";
+  metrics?: string[];
+  metric_badges?: MetricBadgeConfig[];
+  favorite?: boolean;
 }
 
 export interface DiscoveredEntity {
@@ -89,5 +114,6 @@ export interface CardDefinition {
   description: string;
   icon: string;
   defaultMetrics: string[];
+  defaultSections: InsightsSection[];
   defaultLayout: CardLayout;
 }

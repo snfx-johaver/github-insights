@@ -5,12 +5,17 @@ import type {
   EntityRegistryEntry,
   HomeAssistant,
 } from "../models/home-assistant";
+import { METRICS } from "../models/metrics";
 
 const DOMAIN = "github_insights";
 
 function keyFromEntry(entry: EntityRegistryEntry): string {
   if (entry.translation_key) return entry.translation_key;
   const unique = entry.unique_id ?? "";
+  const knownKey = Object.keys(METRICS)
+    .sort((a, b) => b.length - a.length)
+    .find((key) => unique === key || unique.endsWith(`_${key}`));
+  if (knownKey) return knownKey;
   const separator = unique.indexOf("_");
   return separator >= 0 ? unique.slice(separator + 1) : unique;
 }
