@@ -1,116 +1,181 @@
 const definitions = [
     {
-        kind: "overview",
-        tag: "github-insights-overview",
-        editorTag: "github-insights-overview-editor",
-        name: "GitHub Insights overview",
-        description: "Account, usage, repositories, workflows, security, and freshness.",
+        kind: "insights",
+        tag: "github-insights-card",
+        editorTag: "github-insights-card-editor",
+        name: "GitHub Insights",
+        description: "Configurable account, usage, Actions, Copilot, activity, contributions, and security insights.",
         icon: "mdi:github",
-        defaultMetrics: ["account", "actions_usage_percent", "actions_budget_percent", "copilot_paid_usage", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "last_successful_sync"],
-        defaultLayout: "responsive",
-    },
-    {
-        kind: "usage",
-        tag: "github-insights-usage",
-        editorTag: "github-insights-usage-editor",
-        name: "GitHub Insights usage",
-        description: "Actions, billing, budgets, AI usage, storage, and estimates.",
-        icon: "mdi:chart-donut",
-        defaultMetrics: ["actions_discounted_usage", "actions_billable_usage", "actions_gross_cost", "actions_discount", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_blocked", "actions_estimated_minutes_remaining", "billing_period", "copilot_paid_usage"],
-        defaultLayout: "hero",
-    },
-    {
-        kind: "repositories",
-        tag: "github-insights-repositories",
-        editorTag: "github-insights-repositories-editor",
-        name: "GitHub Insights repositories",
-        description: "Automatically discovered repository operations view.",
-        icon: "mdi:source-repository-multiple",
-        defaultMetrics: ["stars", "forks", "open_issues", "open_pull_requests", "workflow_health", "actions_usage_percent"],
-        defaultLayout: "grid",
+        defaultMetrics: [
+            "account",
+            "actions_configured_included_minutes",
+            "actions_configured_minutes_used_percent",
+            "actions_configured_minutes_remaining",
+            "actions_gross_cost",
+            "actions_discount",
+            "actions_cost",
+            "actions_budget_percent",
+            "copilot_paid_usage",
+            "public_repositories",
+            "open_pull_requests",
+            "workflow_health",
+            "dependabot_alerts",
+            "commits",
+            "contributions",
+            "last_successful_sync",
+        ],
+        defaultSections: [
+            "overview",
+            "usage",
+            "actions",
+            "copilot",
+            "activity",
+            "contributions",
+            "security",
+        ],
+        defaultLayout: "expanded",
     },
     {
         kind: "repository",
-        tag: "github-insights-repository",
-        editorTag: "github-insights-repository-editor",
+        tag: "github-insights-repository-card",
+        editorTag: "github-insights-repository-card-editor",
         name: "GitHub Insights repository",
-        description: "Detailed metrics and status for one repository.",
-        icon: "mdi:source-repository",
-        defaultMetrics: ["stars", "forks", "open_issues", "open_pull_requests", "latest_commit", "latest_release", "workflow_health", "actions_usage_percent", "traffic_views", "dependabot_alerts"],
-        defaultLayout: "responsive",
-    },
-    {
-        kind: "actions",
-        tag: "github-insights-actions",
-        editorTag: "github-insights-actions-editor",
-        name: "GitHub Insights Actions",
-        description: "Runtime, included and paid usage, runs, costs, and enforcement.",
-        icon: "mdi:play-circle-outline",
-        defaultMetrics: ["workflow_health", "actions_discounted_usage", "actions_billable_usage", "actions_cost", "actions_budget", "actions_budget_remaining", "actions_budget_percent", "actions_blocked", "actions_estimated_minutes_remaining", "billing_period"],
-        defaultLayout: "responsive",
-    },
-    {
-        kind: "copilot",
-        tag: "github-insights-copilot",
-        editorTag: "github-insights-copilot-editor",
-        name: "GitHub Insights Copilot",
-        description: "Authorized Copilot billing, adoption, and activity data.",
-        icon: "mdi:robot-outline",
-        defaultMetrics: ["copilot_paid_usage", "copilot_cost", "copilot_active_users", "last_successful_sync"],
-        defaultLayout: "responsive",
-    },
-    {
-        kind: "activity",
-        tag: "github-insights-activity",
-        editorTag: "github-insights-activity-editor",
-        name: "GitHub Insights activity",
-        description: "Development activity and simple trends.",
-        icon: "mdi:pulse",
-        defaultMetrics: ["commits", "pull_requests_opened", "pull_requests_merged", "issues_opened", "reviews", "releases"],
-        defaultLayout: "responsive",
-    },
-    {
-        kind: "contributions",
-        tag: "github-insights-contributions",
-        editorTag: "github-insights-contributions-editor",
-        name: "GitHub Insights contributions",
-        description: "Contribution heatmap and reliable streak metrics.",
-        icon: "mdi:chart-timeline-variant-shimmer",
-        defaultMetrics: ["contributions", "current_streak", "longest_streak"],
-        defaultLayout: "responsive",
-    },
-    {
-        kind: "security",
-        tag: "github-insights-security",
-        editorTag: "github-insights-security-editor",
-        name: "GitHub Insights security",
-        description: "Authorized Dependabot, code, and secret scanning alerts.",
-        icon: "mdi:shield-check-outline",
-        defaultMetrics: ["dependabot_alerts", "code_scanning_alerts", "secret_scanning_alerts", "last_successful_sync"],
-        defaultLayout: "responsive",
-    },
-    {
-        kind: "compact",
-        tag: "github-insights-compact",
-        editorTag: "github-insights-compact-editor",
-        name: "GitHub Insights compact",
-        description: "One primary and secondary metric for dense dashboards.",
-        icon: "mdi:github",
-        defaultMetrics: ["actions_usage_percent", "actions_budget_remaining"],
-        defaultLayout: "compact",
-    },
-    {
-        kind: "dashboard",
-        tag: "github-insights-dashboard",
-        editorTag: "github-insights-dashboard-editor",
-        name: "GitHub Insights dashboard",
-        description: "Composite responsive GitHub dashboard.",
-        icon: "mdi:view-dashboard-outline",
-        defaultMetrics: ["actions_usage_percent", "actions_budget_percent", "copilot_paid_usage", "public_repositories", "open_pull_requests", "workflow_health", "dependabot_alerts", "commits", "last_successful_sync"],
+        description: "Configurable collection or detail view for discovered repositories.",
+        icon: "mdi:source-repository-multiple",
+        defaultMetrics: [
+            "stars",
+            "forks",
+            "open_issues",
+            "open_pull_requests",
+            "workflow_health",
+            "actions_usage_percent",
+        ],
+        defaultSections: [],
         defaultLayout: "responsive",
     },
 ];
 const CARD_DEFINITIONS = definitions;
+const INSIGHTS_SECTIONS = [
+    "overview",
+    "usage",
+    "actions",
+    "copilot",
+    "activity",
+    "contributions",
+    "security",
+];
+const PRESET_CONFIGS = {
+    overview: {
+        metrics: [
+            "account",
+            "actions_configured_minutes_used_percent",
+            "actions_configured_minutes_remaining",
+            "actions_cost",
+            "copilot_paid_usage",
+            "public_repositories",
+            "open_pull_requests",
+            "workflow_health",
+            "dependabot_alerts",
+            "last_successful_sync",
+        ],
+        sections: ["overview", "usage", "actions", "copilot", "security"],
+        layout: "responsive",
+    },
+    usage: {
+        metrics: [
+            "actions_configured_included_minutes",
+            "actions_configured_minutes_used",
+            "actions_configured_minutes_remaining",
+            "actions_configured_minutes_used_percent",
+            "actions_gross_cost",
+            "actions_discount",
+            "actions_cost",
+            "actions_discounted_usage",
+            "actions_billable_usage",
+            "actions_budget",
+            "actions_budget_remaining",
+            "actions_budget_percent",
+            "actions_blocked",
+            "actions_estimated_minutes_remaining",
+            "billing_period",
+            "copilot_paid_usage",
+        ],
+        sections: ["usage", "actions", "copilot"],
+        layout: "expanded",
+    },
+    actions: {
+        metrics: [
+            "actions_configured_included_minutes",
+            "actions_configured_minutes_used",
+            "actions_configured_minutes_remaining",
+            "actions_configured_minutes_used_percent",
+            "actions_gross_cost",
+            "actions_discount",
+            "actions_cost",
+            "workflow_health",
+            "actions_discounted_usage",
+            "actions_billable_usage",
+            "actions_budget",
+            "actions_budget_remaining",
+            "actions_budget_percent",
+            "actions_blocked",
+            "actions_estimated_minutes_remaining",
+            "billing_period",
+        ],
+        sections: ["usage", "actions"],
+        layout: "responsive",
+    },
+    copilot: {
+        metrics: [
+            "copilot_paid_usage",
+            "copilot_cost",
+            "copilot_active_users",
+            "last_successful_sync",
+        ],
+        sections: ["copilot", "overview"],
+        layout: "responsive",
+    },
+    activity: {
+        metrics: [
+            "commits",
+            "pull_requests_opened",
+            "pull_requests_merged",
+            "issues_opened",
+            "reviews",
+            "releases",
+        ],
+        sections: ["activity"],
+        layout: "responsive",
+    },
+    contributions: {
+        metrics: ["contributions", "current_streak", "longest_streak"],
+        sections: ["contributions"],
+        layout: "responsive",
+    },
+    security: {
+        metrics: [
+            "dependabot_alerts",
+            "code_scanning_alerts",
+            "secret_scanning_alerts",
+            "last_successful_sync",
+        ],
+        sections: ["security", "overview"],
+        layout: "responsive",
+    },
+    dashboard: {
+        metrics: definitions[0].defaultMetrics,
+        sections: definitions[0].defaultSections,
+        layout: "expanded",
+    },
+    compact: {
+        metrics: [
+            "actions_configured_minutes_used_percent",
+            "actions_budget_remaining",
+        ],
+        sections: ["usage", "actions"],
+        layout: "compact",
+    },
+};
 
 /**
  * @license
@@ -138,7 +203,16 @@ const t=globalThis,i$1=t=>t,s$1=t.trustedTypes,e=s$1?s$1.createPolicy("lit-html"
  * SPDX-License-Identifier: BSD-3-Clause
  */const s=globalThis;class i extends y$1{constructor(){super(...arguments),this.renderOptions={host:this},this._$Do=void 0;}createRenderRoot(){const t=super.createRenderRoot();return this.renderOptions.renderBefore??=t.firstChild,t}update(t){const r=this.render();this.hasUpdated||(this.renderOptions.isConnected=this.isConnected),super.update(t),this._$Do=D(r,this.renderRoot,this.renderOptions);}connectedCallback(){super.connectedCallback(),this._$Do?.setConnected(true);}disconnectedCallback(){super.disconnectedCallback(),this._$Do?.setConnected(false);}render(){return E}}i._$litElement$=true,i["finalized"]=true,s.litElementHydrateSupport?.({LitElement:i});const o=s.litElementPolyfillSupport;o?.({LitElement:i});(s.litElementVersions??=[]).push("4.2.2");
 
-const metric = (key, label, icon, format, group, estimated = false) => ({ key, label, icon, format, group, estimated });
+const metric = (key, label, icon, format, group, estimated = false, sourceLabel, prominent = false) => ({
+    key,
+    label,
+    icon,
+    format,
+    group,
+    estimated,
+    sourceLabel,
+    prominent,
+});
 const METRICS = Object.fromEntries([
     metric("account", "Account", "mdi:github", "text", "account"),
     metric("public_repositories", "Public repositories", "mdi:source-repository", "number", "repositories"),
@@ -158,9 +232,13 @@ const METRICS = Object.fromEntries([
     metric("actions_billable_usage", "Paid usage", "mdi:cash-plus", "number", "actions"),
     metric("actions_minutes_remaining", "Actions remaining", "mdi:timer-sand", "number", "actions"),
     metric("actions_usage_percent", "Actions usage", "mdi:gauge", "percent", "actions"),
-    metric("actions_cost", "Current cost", "mdi:cash", "currency", "billing"),
-    metric("actions_gross_cost", "Gross cost", "mdi:cash-multiple", "currency", "billing"),
-    metric("actions_discount", "Discount", "mdi:sale", "currency", "billing"),
+    metric("actions_configured_included_minutes", "Configured allowance", "mdi:timer-check-outline", "number", "actions", false, "Configured GitHub Actions allowance", true),
+    metric("actions_configured_minutes_used", "Allowance used", "mdi:timer-play-outline", "number", "actions", false, "Configured allowance calculation", true),
+    metric("actions_configured_minutes_remaining", "Allowance remaining", "mdi:timer-sand", "number", "actions", false, "Configured allowance calculation", true),
+    metric("actions_configured_minutes_used_percent", "Allowance used", "mdi:gauge", "percent", "actions", false, "Configured allowance calculation", true),
+    metric("actions_cost", "Net cost", "mdi:cash", "currency", "billing", false, "Authoritative GitHub billing", true),
+    metric("actions_gross_cost", "Gross cost", "mdi:cash-multiple", "currency", "billing", false, "Authoritative GitHub billing", true),
+    metric("actions_discount", "Discount", "mdi:sale", "currency", "billing", false, "Authoritative GitHub billing", true),
     metric("actions_budget", "GitHub-enforced budget", "mdi:shield-lock", "currency", "billing"),
     metric("actions_budget_remaining", "Budget remaining", "mdi:piggy-bank-outline", "currency", "billing"),
     metric("actions_budget_percent", "Budget utilization", "mdi:chart-donut", "percent", "billing"),
@@ -213,6 +291,11 @@ function keyFromEntry(entry) {
     if (entry.translation_key)
         return entry.translation_key;
     const unique = entry.unique_id ?? "";
+    const knownKey = Object.keys(METRICS)
+        .sort((a, b) => b.length - a.length)
+        .find((key) => unique === key || unique.endsWith(`_${key}`));
+    if (knownKey)
+        return knownKey;
     const separator = unique.indexOf("_");
     return separator >= 0 ? unique.slice(separator + 1) : unique;
 }
@@ -326,6 +409,16 @@ const cardStyles = i$3 `
     line-height: 1.35;
   }
 
+  h3 {
+    margin: 16px 0 8px;
+    font-size: 0.9rem;
+    text-transform: capitalize;
+  }
+
+  .metric-section:first-of-type h3 {
+    margin-top: 0;
+  }
+
   .subtitle,
   .label,
   .meta,
@@ -369,9 +462,22 @@ const cardStyles = i$3 `
     border: 1px solid color-mix(in srgb, var(--divider-color) 68%, transparent);
   }
 
+  .metric.prominent {
+    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--divider-color));
+    background: color-mix(in srgb, var(--primary-color) 15%, var(--card-background-color));
+  }
+
   .metric-heading {
     gap: 7px;
     min-height: 24px;
+  }
+
+  .metric-link,
+  .repository a {
+    color: var(--primary-text-color);
+    font-weight: 650;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
   }
 
   ha-icon {
@@ -448,17 +554,104 @@ const cardStyles = i$3 `
   .repositories {
     display: grid;
     gap: 8px;
+    margin-top: 12px;
   }
 
   .repository {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    display: block;
     gap: 8px;
   }
 
-  .repository strong {
+  .repository-heading {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .repository-heading strong,
+  .repository-heading a {
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .favorite {
+    width: 1em;
+    color: var(--warning-color, #f5b301);
+  }
+
+  .repository-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .repository.compact .repository-metrics {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 2px;
+    scrollbar-width: thin;
+  }
+
+  .repository.compact .metric {
+    flex: 1 0 120px;
+    padding: 9px;
+  }
+
+  .repository.compact .metric .meta,
+  .repository.compact .metric svg {
+    display: none;
+  }
+
+  .repository.detail .repository-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-top: 8px;
+  }
+
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    color: var(--secondary-text-color);
+    background: color-mix(in srgb, var(--divider-color) 50%, transparent);
+  }
+
+  .badge ha-icon {
+    --mdc-icon-size: 14px;
+  }
+
+  .badge-label {
+    font-weight: 650;
+  }
+
+  .diagnostics {
+    margin-top: 12px;
+    border-top: 1px solid var(--divider-color);
+    padding-top: 12px;
+  }
+
+  .diagnostics pre {
+    max-height: 260px;
+    overflow: auto;
+    padding: 10px;
+    border-radius: 8px;
+    color: var(--primary-text-color);
+    background: color-mix(in srgb, var(--divider-color) 35%, transparent);
+    font: 0.75rem/1.45 ui-monospace, SFMono-Regular, Consolas, monospace;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
   }
 
   .heatmap {
@@ -495,7 +688,9 @@ const cardStyles = i$3 `
   }
 
   button:focus-visible,
-  a:focus-visible {
+  a:focus-visible,
+  ha-card:focus-visible,
+  pre:focus-visible {
     outline: 2px solid var(--primary-color);
     outline-offset: 2px;
   }
@@ -518,7 +713,8 @@ const cardStyles = i$3 `
     }
 
     .grid,
-    :host([layout="compact"]) .grid {
+    :host([layout="compact"]) .grid,
+    .repository-metrics {
       grid-template-columns: 1fr 1fr;
     }
   }
@@ -549,8 +745,14 @@ function normalizeConfig(value, definition) {
     if (value.type && value.type !== `custom:${definition.tag}`) {
         throw new Error(`Expected type custom:${definition.tag}.`);
     }
+    const preset = definition.kind === "insights"
+        ? PRESET_CONFIGS[value.preset ?? "dashboard"]
+        : undefined;
     return {
         type: `custom:${definition.tag}`,
+        preset: definition.kind === "insights"
+            ? value.preset ?? "dashboard"
+            : undefined,
         title: value.title,
         account: value.account,
         entity: value.entity,
@@ -560,6 +762,20 @@ function normalizeConfig(value, definition) {
         search: value.search,
         group_by: value.group_by ?? "none",
         favorites: [...(value.favorites ?? [])],
+        repository_overrides: Object.fromEntries(Object.entries(value.repository_overrides ?? {}).map(([repository, override]) => [
+            repository,
+            {
+                title: override.title,
+                view: override.view,
+                favorite: override.favorite,
+                metrics: override.metrics ? [...override.metrics] : undefined,
+                metric_badges: override.metric_badges?.map((badge) => ({
+                    attribute: badge.attribute,
+                    icon: badge.icon,
+                    label: badge.label,
+                })),
+            },
+        ])),
         include: {
             names: [...(value.include?.names ?? [])],
             visibility: [...(value.include?.visibility ?? [])],
@@ -567,20 +783,36 @@ function normalizeConfig(value, definition) {
         exclude: {
             names: [...(value.exclude?.names ?? [])],
             archived: value.exclude?.archived ?? !value.show_archived,
-            forked: value.exclude?.forked ?? false,
+            forked: value.exclude?.forked ?? value.show_forks === false,
         },
         sort: (value.sort ?? [
+            { field: "workflow_health", direction: "ascending", nulls: "last" },
+            { field: "last_push", direction: "descending", nulls: "last" },
             { field: "name", direction: "ascending", nulls: "last" },
         ]).map((sort) => ({ ...sort })),
-        sections: [...(value.sections ?? [])],
-        metrics: [...(value.metrics ?? definition.defaultMetrics)],
-        layout: value.layout ?? definition.defaultLayout,
+        sections: [
+            ...(value.sections ?? preset?.sections ?? definition.defaultSections),
+        ],
+        metrics: [
+            ...(value.metrics ??
+                (value.primary_metric || value.secondary_metric
+                    ? [value.primary_metric, value.secondary_metric].filter((metric) => Boolean(metric))
+                    : preset?.metrics ?? definition.defaultMetrics)),
+        ],
+        layout: value.layout ?? preset?.layout ?? definition.defaultLayout,
         view: value.view ?? "compact",
         period: value.period ?? "current_billing_cycle",
         show_forecast: value.show_forecast ?? true,
         show_archived: value.show_archived ?? false,
         show_forks: value.show_forks ?? true,
         show_estimated_minutes: value.show_estimated_minutes ?? true,
+        show_metric_badges: value.show_metric_badges ?? true,
+        show_debug: value.show_debug ?? false,
+        metric_badges: (value.metric_badges ?? []).map((badge) => ({
+            attribute: badge.attribute,
+            icon: badge.icon,
+            label: badge.label,
+        })),
         reference_runner: value.reference_runner ?? "linux_standard",
         primary_metric: value.primary_metric ?? definition.defaultMetrics[0],
         secondary_metric: value.secondary_metric ?? definition.defaultMetrics[1],
@@ -664,6 +896,24 @@ function safeHttpUrl(value) {
         return undefined;
     }
 }
+function safeHttpsUrl(value) {
+    const url = safeHttpUrl(value);
+    return url?.startsWith("https:") ? url : undefined;
+}
+function safeText(value, maximumLength = 160) {
+    if (typeof value !== "string" &&
+        typeof value !== "number" &&
+        typeof value !== "boolean") {
+        return undefined;
+    }
+    const text = Array.from(String(value), (character) => {
+        const code = character.charCodeAt(0);
+        return code <= 31 || code === 127 ? " " : character;
+    })
+        .join("")
+        .trim();
+    return text ? text.slice(0, maximumLength) : undefined;
+}
 function severityClass(value, severity) {
     if (value === undefined)
         return "neutral";
@@ -674,11 +924,116 @@ function severityClass(value, severity) {
     return "healthy";
 }
 
+const UNAVAILABLE_STATES = new Set(["unknown", "unavailable", "none", "null", ""]);
+function comparable(value) {
+    if (typeof value === "number")
+        return Number.isFinite(value) ? value : undefined;
+    if (typeof value !== "string" || !value.trim())
+        return undefined;
+    if (UNAVAILABLE_STATES.has(value.trim().toLocaleLowerCase()))
+        return undefined;
+    const numeric = Number(value);
+    if (Number.isFinite(numeric))
+        return numeric;
+    const timestamp = Date.parse(value);
+    return Number.isNaN(timestamp) ? value.toLocaleLowerCase() : timestamp;
+}
+function compareValues(left, right, direction, nulls) {
+    const a = comparable(left);
+    const b = comparable(right);
+    if (a === undefined || b === undefined) {
+        if (a === b)
+            return 0;
+        return (a === undefined ? 1 : -1) * (nulls === "last" ? 1 : -1);
+    }
+    const result = typeof a === "number" && typeof b === "number"
+        ? a - b
+        : String(a).localeCompare(String(b));
+    return direction === "descending" ? -result : result;
+}
+function sortValue(repository, field) {
+    if (field === "name")
+        return repository.name;
+    if (field === "favorite")
+        return repository.favorite ? 1 : 0;
+    const entity = repository.entities.get(field);
+    return entity?.state ?? entity?.attributes[field];
+}
+function repositoryAttribute(entities, attribute) {
+    for (const entity of entities.values()) {
+        if (attribute in entity.attributes)
+            return entity.attributes[attribute];
+    }
+    return undefined;
+}
+function buildRepositories(discovered, hass, config) {
+    const selected = config.repositories === "auto" ? undefined : new Set(config.repositories ?? []);
+    const included = new Set(config.include?.names ?? []);
+    const includedVisibility = new Set(config.include?.visibility ?? []);
+    const excluded = new Set(config.exclude?.names ?? []);
+    const favorites = new Set(config.favorites ?? []);
+    const search = config.search?.trim().toLocaleLowerCase();
+    const grouped = new Map();
+    for (const reference of discovered) {
+        if (!reference.repository)
+            continue;
+        if (selected && !selected.has(reference.repository))
+            continue;
+        const entity = hass?.states[reference.entityId];
+        if (!entity)
+            continue;
+        const entities = grouped.get(reference.repository) ?? new Map();
+        entities.set(reference.key, entity);
+        grouped.set(reference.repository, entities);
+    }
+    const repositories = [...grouped.entries()]
+        .filter(([name]) => !search || name.toLocaleLowerCase().includes(search))
+        .filter(([name]) => included.size === 0 || included.has(name))
+        .filter(([name]) => !excluded.has(name))
+        .filter(([, entities]) => {
+        const visibility = repositoryAttribute(entities, "visibility");
+        return (includedVisibility.size === 0 ||
+            (typeof visibility === "string" && includedVisibility.has(visibility)));
+    })
+        .filter(([, entities]) => {
+        const archived = repositoryAttribute(entities, "archived") === true;
+        return !(config.exclude?.archived ?? !config.show_archived) || !archived;
+    })
+        .filter(([, entities]) => {
+        const fork = repositoryAttribute(entities, "fork") === true;
+        return !(config.exclude?.forked ?? config.show_forks === false) || !fork;
+    })
+        .map(([name, entities]) => {
+        const override = config.repository_overrides?.[name];
+        return {
+            name,
+            title: override?.title ?? name,
+            favorite: override?.favorite ?? favorites.has(name),
+            entities,
+            override,
+        };
+    });
+    const sorts = config.sort ?? [];
+    return repositories.sort((a, b) => {
+        const favoriteDifference = Number(b.favorite) - Number(a.favorite);
+        if (favoriteDifference)
+            return favoriteDifference;
+        for (const sort of sorts) {
+            const difference = compareValues(sortValue(a, sort.field), sortValue(b, sort.field), sort.direction ?? "ascending", sort.nulls ?? "last");
+            if (difference)
+                return difference;
+        }
+        return a.name.localeCompare(b.name);
+    });
+}
+
 class GitHubInsightsCard extends i {
     constructor() {
         super(...arguments);
         this.discovered = [];
         this.discoveryComplete = false;
+        this.debugExpanded = false;
+        this.copyStatus = "";
         this.discoveryGeneration = 0;
         this.lastTap = 0;
     }
@@ -689,6 +1044,8 @@ class GitHubInsightsCard extends i {
         discovered: { attribute: false, state: true },
         discoveryError: { attribute: false, state: true },
         discoveryComplete: { attribute: false, state: true },
+        debugExpanded: { attribute: false, state: true },
+        copyStatus: { attribute: false, state: true },
     }; }
     setConfig(config) {
         this.config = normalizeConfig(config, this.definition);
@@ -768,30 +1125,75 @@ class GitHubInsightsCard extends i {
       </svg>
     `;
     }
-    metricTemplate(key) {
+    metricLink(key, entity) {
+        const attributes = entity?.attributes ?? {};
+        const candidates = key.includes("workflow") || key.startsWith("actions_")
+            ? [attributes.actions_url, attributes.workflow_url, attributes.html_url]
+            : key.includes("issue")
+                ? [attributes.issues_url, attributes.html_url]
+                : key.includes("pull")
+                    ? [attributes.pulls_url, attributes.html_url]
+                    : key.includes("alert") || key.includes("scanning")
+                        ? [attributes.security_url, attributes.html_url]
+                        : [attributes.html_url, attributes.url];
+        return candidates.map(safeHttpsUrl).find(Boolean);
+    }
+    badgeTemplate(entity, badges) {
+        if (this.config?.show_metric_badges === false || badges.length === 0)
+            return A;
+        const rendered = badges.flatMap((badge) => {
+            const value = safeText(entity?.attributes[badge.attribute], 60);
+            if (!value)
+                return [];
+            const name = badge.label ?? badge.attribute.replaceAll("_", " ");
+            return [b `
+        <span class="badge" aria-label=${`${name}: ${value}`}>
+          ${badge.icon
+                    ? b `<ha-icon .icon=${badge.icon} aria-hidden="true"></ha-icon><span class="sr-only">${name}:</span>`
+                    : b `<span class="badge-label">${name}:</span>`}
+          ${value}
+        </span>
+      `];
+        });
+        return rendered.length ? b `<div class="badges">${rendered}</div>` : A;
+    }
+    metricTemplate(key, suppliedEntity, badges = this.config?.metric_badges ?? [], repositoryScoped = false) {
         const definition = metricDefinition(key);
-        const entity = this.resolveEntity(key);
+        const entity = repositoryScoped ? suppliedEntity : suppliedEntity ?? this.resolveEntity(key);
         const available = entityAvailable(entity);
         const value = numericState(entity);
         const severity = definition.format === "percent"
             ? severityClass(value, this.config?.severity)
             : "neutral";
         const estimated = definition.estimated ? "Estimated · " : "";
-        const source = String(entity?.attributes.source ?? "");
+        const source = safeText(entity?.attributes.source, 100) ?? definition.sourceLabel ?? "";
         const unavailableReason = String(entity?.attributes.availability_reason ?? "Metric is not exposed for the current permissions or capability.");
         return b `
       <article
-        class="metric ${severity} ${available ? "" : "unavailable"}"
+        class="metric ${severity} ${available ? "" : "unavailable"} ${definition.prominent ? "prominent" : ""}"
         aria-label="${definition.label}: ${formatMetric(this.hass, entity, definition)}"
       >
         <div class="metric-heading">
           <ha-icon .icon=${definition.icon} aria-hidden="true"></ha-icon>
-          <span class="label">${definition.label}</span>
+          ${this.metricLink(key, entity)
+            ? b `<a
+                class="metric-link"
+                href=${this.metricLink(key, entity)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label=${`${definition.label} on GitHub (opens in a new tab)`}
+                @pointerdown=${(event) => event.stopPropagation()}
+                @pointerup=${(event) => event.stopPropagation()}
+              >${definition.label}</a>`
+            : b `<span class="label">${definition.label}</span>`}
         </div>
         <strong class="value">${formatMetric(this.hass, entity, definition)}</strong>
         ${available
-            ? b `<span class="meta">${estimated}${source}</span>`
+            ? estimated || source
+                ? b `<span class="meta">${estimated}${source ? `Source: ${source}` : ""}</span>`
+                : A
             : b `<span class="meta">${unavailableReason}</span>`}
+        ${this.badgeTemplate(entity, badges)}
         ${definition.format === "percent" && value !== undefined
             ? b `<div
               class="bar"
@@ -800,51 +1202,172 @@ class GitHubInsightsCard extends i {
               aria-valuemin="0"
               aria-valuemax="100"
               aria-valuenow=${Math.max(0, Math.min(100, value))}
+              aria-valuetext=${`${formatMetric(this.hass, entity, definition)} used`}
             ><span style=${`--progress:${Math.max(0, Math.min(100, value))}%`}></span></div>`
             : A}
         ${this.sparklineTemplate(entity, definition.label)}
       </article>
     `;
     }
+    repositoryUrl(repository) {
+        for (const entity of repository.entities.values()) {
+            const url = safeHttpsUrl(entity.attributes.repository_url);
+            if (url)
+                return url;
+        }
+        return undefined;
+    }
     repositoryTemplate() {
-        const selected = this.config?.repositories === "auto"
-            ? undefined
-            : new Set(this.config?.repositories ?? []);
-        const discoveredRepositories = this.discovered
-            .filter((entity) => entity.repository)
-            .filter((entity) => !selected || selected.has(entity.repository ?? ""))
-            .map((entity) => entity.repository)
-            .filter((value, index, all) => all.indexOf(value) === index);
-        const search = this.config?.search?.trim().toLocaleLowerCase();
-        const included = new Set(this.config?.include?.names ?? []);
-        const excluded = new Set(this.config?.exclude?.names ?? []);
-        const favorites = new Set(this.config?.favorites ?? []);
-        const repositories = discoveredRepositories
-            .filter((repository) => !search || repository.toLocaleLowerCase().includes(search))
-            .filter((repository) => included.size === 0 || included.has(repository))
-            .filter((repository) => !excluded.has(repository))
-            .sort((a, b) => {
-            const favoriteDifference = Number(favorites.has(b)) - Number(favorites.has(a));
-            return favoriteDifference || a.localeCompare(b);
-        });
+        if (!this.config)
+            return A;
+        let repositories = buildRepositories(this.discovered, this.hass, this.config);
+        if (this.config.repository) {
+            repositories = repositories.filter((repository) => repository.name === this.config?.repository);
+        }
         if (repositories.length === 0)
             return A;
         return b `
       <section class="repositories" aria-label="Discovered repositories">
-        ${repositories.map((repository) => b `
-            <article class="repository">
-              <strong>${favorites.has(repository) ? "★ " : ""}${repository}</strong>
-              <span class="meta">${this.config?.group_by === "organization"
-            ? repository.split("/", 1)[0]
-            : "GitHub repository"}</span>
+        ${repositories.map((repository) => {
+            const view = repository.override?.view ??
+                (this.config?.layout === "detail"
+                    ? "detail"
+                    : this.config?.layout === "expanded"
+                        ? "expanded"
+                        : this.config?.layout === "compact"
+                            ? "compact"
+                            : this.config?.view ?? "compact");
+            const metrics = repository.override?.metrics ?? this.config?.metrics ?? this.definition.defaultMetrics;
+            const configuredBadges = repository.override?.metric_badges ?? this.config?.metric_badges;
+            const badges = configuredBadges?.length
+                ? configuredBadges
+                : [
+                    { attribute: "visibility", icon: "mdi:eye-outline" },
+                    { attribute: "default_branch", label: "Branch" },
+                ];
+            const url = this.repositoryUrl(repository);
+            return b `
+            <article class="repository ${view}">
+              <div class="repository-heading">
+                <span class="favorite" aria-label=${repository.favorite ? "Favorite repository" : "Repository"}>
+                  ${repository.favorite ? "★" : ""}
+                </span>
+                ${url
+                ? b `<a
+                      href=${url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label=${`${repository.title} on GitHub (opens in a new tab)`}
+                      @pointerdown=${(event) => event.stopPropagation()}
+                      @pointerup=${(event) => event.stopPropagation()}
+                    >${repository.title}</a>`
+                : b `<strong>${repository.title}</strong>`}
+                <span class="meta">${this.config?.group_by === "organization"
+                ? repository.name.split("/", 1)[0]
+                : view === "detail"
+                    ? "Detailed repository view"
+                    : view === "expanded"
+                        ? "Expanded repository details"
+                        : "GitHub repository"}</span>
+              </div>
+              <div class="repository-metrics" aria-label=${`${repository.title} metrics`}>
+                ${metrics.map((key) => this.metricTemplate(key, repository.entities.get(key), badges, true))}
+              </div>
             </article>
-          `)}
+          `;
+        })}
+      </section>
+    `;
+    }
+    diagnosticsPayload() {
+        if (!this.config)
+            return "{}";
+        const config = {
+            type: this.config.type,
+            layout: this.config.layout,
+            view: this.config.view,
+            metrics: this.config.metrics,
+            sort: this.config.sort,
+            repository_selection_count: Array.isArray(this.config.repositories)
+                ? this.config.repositories.length
+                : this.config.repositories,
+            favorite_count: this.config.favorites?.length ?? 0,
+            include_name_count: this.config.include?.names?.length ?? 0,
+            include_visibility: this.config.include?.visibility,
+            exclude_name_count: this.config.exclude?.names?.length ?? 0,
+            exclude_archived: this.config.exclude?.archived,
+            exclude_forked: this.config.exclude?.forked,
+            repository_override_count: Object.keys(this.config.repository_overrides ?? {}).length,
+            show_metric_badges: this.config.show_metric_badges,
+            metric_badges: this.config.metric_badges,
+        };
+        const repositoryAliases = new Map();
+        const entityAliases = new Map();
+        const alias = (values, value, prefix) => {
+            const current = values.get(value);
+            if (current)
+                return current;
+            const created = `${prefix}_${values.size + 1}`;
+            values.set(value, created);
+            return created;
+        };
+        const entities = this.discovered
+            .map(({ key, entityId, repository }) => ({
+            key,
+            entity: alias(entityAliases, entityId, "entity"),
+            repository: repository
+                ? alias(repositoryAliases, repository, "repository")
+                : undefined,
+        }))
+            .sort((a, b) => `${a.repository ?? ""}:${a.key}:${a.entity}`.localeCompare(`${b.repository ?? ""}:${b.key}:${b.entity}`));
+        return JSON.stringify({ config, entities }, null, 2);
+    }
+    diagnosticsTemplate() {
+        if (!this.config?.show_debug)
+            return A;
+        const panelId = `${this.definition.tag}-diagnostics`;
+        return b `
+      <section class="diagnostics">
+        <button
+          type="button"
+          aria-expanded=${String(this.debugExpanded)}
+          aria-controls=${panelId}
+          @click=${(event) => {
+            event.stopPropagation();
+            this.debugExpanded = !this.debugExpanded;
+        }}
+        >
+          ${this.debugExpanded ? "Hide" : "Show"} diagnostics
+        </button>
+        ${this.debugExpanded
+            ? b `<div id=${panelId}>
+              <p class="meta">Sanitized resolved configuration and discovered entity mapping.</p>
+              <pre tabindex="0">${this.diagnosticsPayload()}</pre>
+              <button
+                type="button"
+                aria-label="Copy sanitized diagnostics to clipboard"
+                @click=${async (event) => {
+                event.stopPropagation();
+                try {
+                    await navigator.clipboard.writeText(this.diagnosticsPayload());
+                    this.copyStatus = "Diagnostics copied.";
+                }
+                catch {
+                    this.copyStatus = "Unable to copy diagnostics.";
+                }
+            }}
+              >Copy diagnostics</button>
+              <span class="sr-only" role="status" aria-live="polite">${this.copyStatus}</span>
+            </div>`
+            : A}
       </section>
     `;
     }
     heatmapTemplate() {
-        if (this.definition.kind !== "contributions")
+        if (this.definition.kind !== "insights" ||
+            !this.config?.sections?.includes("contributions")) {
             return A;
+        }
         const entity = this.resolveEntity("contributions");
         const raw = entity?.attributes.calendar;
         const values = Array.isArray(raw)
@@ -894,6 +1417,41 @@ class GitHubInsightsCard extends i {
         }
         return A;
     }
+    sectionForMetric(key) {
+        if (["contributions", "current_streak", "longest_streak"].includes(key)) {
+            return "contributions";
+        }
+        const group = metricDefinition(key).group;
+        if (group === "billing")
+            return "usage";
+        if (group === "actions")
+            return "actions";
+        if (group === "copilot")
+            return "copilot";
+        if (group === "activity")
+            return "activity";
+        if (group === "security")
+            return "security";
+        return "overview";
+    }
+    metricSectionsTemplate(metrics) {
+        const sections = this.config?.sections ?? this.definition.defaultSections;
+        return sections.map((section) => {
+            const sectionMetrics = metrics.filter((key) => this.sectionForMetric(key) === section);
+            if (sectionMetrics.length === 0)
+                return A;
+            return b `
+        <section class="metric-section" aria-labelledby=${`${this.definition.tag}-${section}`}>
+          <h3 id=${`${this.definition.tag}-${section}`}>
+            ${section.replace(/^\w/, (value) => value.toUpperCase())}
+          </h3>
+          <div class="grid">
+            ${sectionMetrics.map((key) => this.metricTemplate(key))}
+          </div>
+        </section>
+      `;
+        });
+    }
     actionFor(event) {
         if (event.type === "contextmenu")
             return this.config?.hold_action;
@@ -929,7 +1487,9 @@ class GitHubInsightsCard extends i {
             }));
         }
     }
-    handlePointerDown() {
+    handlePointerDown(event) {
+        if (event.composedPath()[0]?.closest?.("a,button"))
+            return;
         if (!this.config?.hold_action)
             return;
         this.holdTimer = window.setTimeout(() => {
@@ -938,6 +1498,8 @@ class GitHubInsightsCard extends i {
         }, 500);
     }
     handlePointerUp(event) {
+        if (event.composedPath()[0]?.closest?.("a,button"))
+            return;
         if (this.holdTimer === undefined && this.config?.hold_action)
             return;
         if (this.holdTimer !== undefined) {
@@ -954,16 +1516,26 @@ class GitHubInsightsCard extends i {
             void this.runAction(this.actionFor(event));
         }
     }
+    eventTargetsInteractive(event) {
+        return event
+            .composedPath()
+            .some((target) => target instanceof Element && target.matches("a,button"));
+    }
     render() {
         if (!this.config)
             return A;
-        const metrics = this.definition.kind === "compact"
-            ? [this.config.primary_metric, this.config.secondary_metric].filter((value) => Boolean(value))
-            : (this.config.metrics ?? this.definition.defaultMetrics).filter((key) => this.config?.show_estimated_minutes !== false ||
-                !metricDefinition(key).estimated);
-        const anyConfigured = metrics.some((key) => this.resolveEntity(key));
+        const metrics = (this.config.metrics ?? this.definition.defaultMetrics).filter((key) => this.config?.show_estimated_minutes !== false ||
+            !metricDefinition(key).estimated);
+        const visibleMetrics = this.definition.kind === "insights"
+            ? metrics.filter((key) => this.config?.sections?.includes(this.sectionForMetric(key)))
+            : metrics;
+        const anyConfigured = visibleMetrics.some((key) => this.resolveEntity(key));
+        const isRepositoryCard = this.definition.kind === "repository";
+        const hasRepositories = isRepositoryCard &&
+            buildRepositories(this.discovered, this.hass, this.config).some((repository) => !this.config?.repository ||
+                repository.name === this.config.repository);
         const account = this.resolveEntity("account");
-        const avatarUrl = safeHttpUrl(account?.attributes.avatar_url);
+        const avatarUrl = safeHttpsUrl(account?.attributes.avatar_url);
         const isLoading = Boolean(this.hass?.connection) &&
             !this.discoveryComplete &&
             !this.discoveryError;
@@ -975,12 +1547,14 @@ class GitHubInsightsCard extends i {
         @pointerdown=${this.handlePointerDown}
         @pointerup=${this.handlePointerUp}
         @keydown=${(event) => {
-            if (event.key === "Enter" || event.key === " ") {
+            if (event.target === event.currentTarget && (event.key === "Enter" || event.key === " ")) {
                 event.preventDefault();
                 void this.runAction(this.config?.tap_action);
             }
         }}
         @contextmenu=${(event) => {
+            if (this.eventTargetsInteractive(event))
+                return;
             event.preventDefault();
             void this.runAction(this.config?.hold_action);
         }}
@@ -1009,12 +1583,14 @@ class GitHubInsightsCard extends i {
           ${isLoading
             ? b `<div class="status" role="status">Discovering GitHub Insights entities…</div>`
             : A}
-          ${!isLoading && !anyConfigured && !this.discoveryError
+          ${!isLoading && !anyConfigured && !hasRepositories && !this.discoveryError
             ? b `<div class="status empty" role="status">
                 No supported metrics are available. Enable the relevant GitHub capability or select entities in the card editor.
               </div>`
-            : b `<div class="grid">${metrics.map((key) => this.metricTemplate(key))}</div>`}
-          ${this.repositoryTemplate()} ${this.heatmapTemplate()}
+            : isRepositoryCard
+                ? A
+                : this.metricSectionsTemplate(visibleMetrics)}
+          ${this.repositoryTemplate()} ${this.heatmapTemplate()} ${this.diagnosticsTemplate()}
         </section>
       </ha-card>
     `;
@@ -1036,9 +1612,14 @@ function createCardClass(definition) {
 }
 
 class GitHubInsightsEditor extends i {
+    constructor() {
+        super(...arguments);
+        this.overrideError = "";
+    }
     static { this.properties = {
         hass: { attribute: false },
         config: { attribute: false },
+        overrideError: { attribute: false, state: true },
     }; }
     static { this.styles = i$3 `
     :host {
@@ -1058,7 +1639,8 @@ class GitHubInsightsEditor extends i {
       padding: 12px;
     }
     input,
-    select {
+    select,
+    textarea {
       min-height: 42px;
       padding: 0 10px;
       color: var(--primary-text-color);
@@ -1066,14 +1648,51 @@ class GitHubInsightsEditor extends i {
       border: 1px solid var(--divider-color);
       border-radius: 8px;
     }
-    .metrics {
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    textarea {
+      min-height: 110px;
+      padding-block: 8px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+    }
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    button:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 2px;
+    }
+    .options {
+      display: grid;
+      gap: 6px;
+    }
+    .ordered {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 6px;
+      min-height: 38px;
     }
     .check {
       display: flex;
       align-items: center;
       gap: 8px;
       min-height: 36px;
+    }
+    button {
+      min-width: 36px;
+      min-height: 36px;
+      border: 1px solid var(--divider-color);
+      border-radius: 8px;
+      color: var(--primary-text-color);
+      background: var(--secondary-background-color);
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+    .error {
+      color: var(--error-color);
     }
   `; }
     setConfig(config) {
@@ -1089,128 +1708,314 @@ class GitHubInsightsEditor extends i {
             detail: { config: this.config },
         }));
     }
-    toggleMetric(key, checked) {
-        const metrics = new Set(this.config?.metrics ?? []);
-        if (checked)
-            metrics.add(key);
-        else
-            metrics.delete(key);
-        this.updateConfig({ metrics: [...metrics] });
+    moveItem(values, index, offset) {
+        const target = index + offset;
+        if (target < 0 || target >= values.length)
+            return values;
+        const reordered = [...values];
+        [reordered[index], reordered[target]] = [reordered[target], reordered[index]];
+        return reordered;
     }
-    render() {
-        if (!this.config)
+    toggleMetric(key, checked) {
+        const metrics = [...(this.config?.metrics ?? [])];
+        const index = metrics.indexOf(key);
+        if (checked && index === -1)
+            metrics.push(key);
+        if (!checked && index !== -1)
+            metrics.splice(index, 1);
+        this.updateConfig({ metrics });
+    }
+    toggleSection(section, checked) {
+        const sections = [...(this.config?.sections ?? [])];
+        const index = sections.indexOf(section);
+        if (checked && index === -1)
+            sections.push(section);
+        if (!checked && index !== -1)
+            sections.splice(index, 1);
+        this.updateConfig({ sections });
+    }
+    orderedToggle(label, checked, index, length, toggle, move) {
+        return b `
+      <div class="ordered">
+        <label class="check">
+          <input
+            type="checkbox"
+            .checked=${checked}
+            @change=${(event) => toggle(event.target.checked)}
+          />
+          ${label}
+        </label>
+        <button
+          type="button"
+          aria-label=${`Move ${label} up`}
+          ?disabled=${!checked || index <= 0}
+          @click=${() => move(-1)}
+        >↑</button>
+        <button
+          type="button"
+          aria-label=${`Move ${label} down`}
+          ?disabled=${!checked || index < 0 || index >= length - 1}
+          @click=${() => move(1)}
+        >↓</button>
+      </div>
+    `;
+    }
+    insightsOptions() {
+        if (!this.config || this.definition.kind !== "insights")
             return A;
+        const sections = this.config.sections ?? [];
+        const orderedSections = [
+            ...sections,
+            ...INSIGHTS_SECTIONS.filter((section) => !sections.includes(section)),
+        ];
         return b `
       <label>
-        Title
-        <input
-          aria-label="Card title"
-          .value=${this.config.title ?? ""}
-          @input=${(event) => this.updateConfig({ title: event.target.value || undefined })}
-        />
-      </label>
-      <label>
-        Layout
+        Preset
         <select
-          aria-label="Card layout"
-          .value=${this.config.layout ?? this.definition.defaultLayout}
-          @change=${(event) => this.updateConfig({
-            layout: event.target
-                .value,
-        })}
+          aria-label="Card preset"
+          .value=${this.config.preset ?? "dashboard"}
+          @change=${(event) => {
+            const preset = event.target
+                .value;
+            const defaults = PRESET_CONFIGS[preset];
+            this.updateConfig({
+                preset,
+                metrics: [...defaults.metrics],
+                sections: [...defaults.sections],
+                layout: defaults.layout,
+            });
+        }}
         >
-          ${["responsive", "compact", "hero", "gauges", "stacked", "list", "grid"].map((layout) => b `<option value=${layout}>${layout}</option>`)}
+          ${Object.keys(PRESET_CONFIGS).map((preset) => b `<option value=${preset}>${preset.replaceAll("_", " ")}</option>`)}
         </select>
       </label>
-      ${this.definition.kind === "repository"
+      <fieldset>
+        <legend>Sections and order</legend>
+        <div class="options">
+          ${orderedSections.map((section) => {
+            const index = sections.indexOf(section);
+            return this.orderedToggle(section, index !== -1, index, sections.length, (checked) => this.toggleSection(section, checked), (offset) => this.updateConfig({
+                sections: this.moveItem(sections, index, offset),
+            }));
+        })}
+        </div>
+      </fieldset>
+    `;
+    }
+    repositoryOptions() {
+        if (!this.config || this.definition.kind !== "repository")
+            return A;
+        const selectionMode = this.config.repository
+            ? "single"
+            : Array.isArray(this.config.repositories)
+                ? "multiple"
+                : "auto";
+        return b `
+      <label>
+        Repository selection
+        <select
+          aria-label="Repository selection"
+          .value=${selectionMode}
+          @change=${(event) => {
+            const mode = event.target.value;
+            this.updateConfig(mode === "single"
+                ? { repository: "", repositories: "auto" }
+                : mode === "multiple"
+                    ? { repository: undefined, repositories: [] }
+                    : { repository: undefined, repositories: "auto" });
+        }}
+        >
+          <option value="auto">Auto-discovered collection</option>
+          <option value="multiple">Selected repositories</option>
+          <option value="single">One repository</option>
+        </select>
+      </label>
+      ${selectionMode === "single"
             ? b `<label>
             Repository
             <input
               aria-label="Repository full name"
               placeholder="owner/repository"
               .value=${this.config.repository ?? ""}
-              @input=${(event) => this.updateConfig({ repository: event.target.value || undefined })}
+              @input=${(event) => this.updateConfig({
+                repository: event.target.value || undefined,
+            })}
             />
           </label>`
             : A}
-      ${this.definition.kind === "repositories"
-            ? b `
-            <label>
-              Search repositories
-              <input
-                aria-label="Search repositories"
-                .value=${this.config.search ?? ""}
-                @input=${(event) => this.updateConfig({
-                search: event.target.value || undefined,
+      ${selectionMode === "multiple"
+            ? b `<label>
+            Repositories
+            <input
+              aria-label="Selected repositories"
+              placeholder="owner/one, owner/two"
+              .value=${Array.isArray(this.config.repositories)
+                ? this.config.repositories.join(", ")
+                : ""}
+              @change=${(event) => this.updateConfig({
+                repositories: event.target.value
+                    .split(",")
+                    .map((value) => value.trim())
+                    .filter(Boolean),
             })}
-              />
-            </label>
-            <label>
-              Repository view
-              <select
-                aria-label="Repository view"
-                .value=${this.config.view ?? "compact"}
-                @change=${(event) => this.updateConfig({
-                view: event.target
-                    .value,
-            })}
-              >
-                ${["compact", "expanded", "list", "grid"].map((view) => b `<option value=${view}>${view}</option>`)}
-              </select>
-            </label>
-          `
+            />
+          </label>`
             : A}
-      ${this.definition.kind === "compact"
-            ? b `
-            ${this.metricSelect("Primary metric", "primary_metric")}
-            ${this.metricSelect("Secondary metric", "secondary_metric")}
-          `
-            : b `<fieldset class="metrics">
-            <legend>Metrics</legend>
-            ${Object.values(METRICS).map((metric) => b `
-                <label class="check">
-                  <input
-                    type="checkbox"
-                    .checked=${this.config?.metrics?.includes(metric.key) ?? false}
-                    @change=${(event) => this.toggleMetric(metric.key, event.target.checked)}
-                  />
-                  ${metric.label}${metric.estimated ? " (estimated)" : ""}
-                </label>
-              `)}
-          </fieldset>`}
+      <label>
+        Search repositories
+        <input
+          aria-label="Search repositories"
+          .value=${this.config.search ?? ""}
+          @input=${(event) => this.updateConfig({
+            search: event.target.value || undefined,
+        })}
+        />
+      </label>
+      <label>
+        Favorite repositories
+        <input
+          aria-label="Favorite repositories"
+          placeholder="owner/one, owner/two"
+          .value=${(this.config.favorites ?? []).join(", ")}
+          @change=${(event) => this.updateConfig({
+            favorites: event.target.value
+                .split(",")
+                .map((value) => value.trim())
+                .filter(Boolean),
+        })}
+        />
+      </label>
+      <label>
+        Primary repository sort
+        <select
+          aria-label="Primary repository sort"
+          .value=${this.config.sort?.[0]?.field ?? "workflow_health"}
+          @change=${(event) => {
+            const field = event.target.value;
+            this.updateConfig({
+                sort: [
+                    {
+                        field,
+                        direction: field === "last_push" || field === "stars"
+                            ? "descending"
+                            : "ascending",
+                        nulls: "last",
+                    },
+                    { field: "name", direction: "ascending", nulls: "last" },
+                ],
+            });
+        }}
+        >
+          ${["workflow_health", "last_push", "stars", "open_issues", "name"].map((field) => b `<option value=${field}>${field.replaceAll("_", " ")}</option>`)}
+        </select>
+      </label>
+      <label>
+        Repository overrides (JSON)
+        <textarea
+          aria-label="Repository overrides"
+          .value=${JSON.stringify(this.config.repository_overrides ?? {}, null, 2)}
+          @change=${(event) => {
+            try {
+                const value = JSON.parse(event.target.value || "{}");
+                this.overrideError = "";
+                this.updateConfig({ repository_overrides: value });
+            }
+            catch {
+                this.overrideError = "Repository overrides must be valid JSON.";
+            }
+        }}
+        ></textarea>
+        ${this.overrideError
+            ? b `<span class="error" role="alert">${this.overrideError}</span>`
+            : A}
+      </label>
+    `;
+    }
+    render() {
+        if (!this.config)
+            return A;
+        const metrics = this.config.metrics ?? [];
+        const layouts = this.definition.kind === "repository"
+            ? ["responsive", "compact", "expanded", "detail"]
+            : ["responsive", "compact", "expanded"];
+        const metricDefinitions = Object.values(METRICS);
+        const orderedMetrics = [
+            ...metrics
+                .map((key) => METRICS[key])
+                .filter((metric) => metric !== undefined),
+            ...metricDefinitions.filter((metric) => !metrics.includes(metric.key)),
+        ];
+        return b `
+      <label>
+        Title
+        <input
+          aria-label="Card title"
+          .value=${this.config.title ?? ""}
+          @input=${(event) => this.updateConfig({
+            title: event.target.value || undefined,
+        })}
+        />
+      </label>
+      ${this.insightsOptions()}
+      <label>
+        Presentation
+        <select
+          aria-label="Card presentation"
+          .value=${this.config.layout ?? this.definition.defaultLayout}
+          @change=${(event) => this.updateConfig({
+            layout: event.target
+                .value,
+        })}
+        >
+          ${layouts.map((layout) => b `<option value=${layout}>${layout}</option>`)}
+        </select>
+      </label>
+      ${this.repositoryOptions()}
+      <fieldset>
+        <legend>Metrics and order</legend>
+        <div class="options">
+          ${orderedMetrics.map((metric) => {
+            const index = metrics.indexOf(metric.key);
+            return this.orderedToggle(`${metric.label}${metric.estimated ? " (estimated)" : ""}`, index !== -1, index, metrics.length, (checked) => this.toggleMetric(metric.key, checked), (offset) => this.updateConfig({
+                metrics: this.moveItem(metrics, index, offset),
+            }));
+        })}
+        </div>
+      </fieldset>
       <fieldset>
         <legend>Display options</legend>
-        <label class="check">
+        ${this.checkbox("Show estimated equivalent minutes", this.config.show_estimated_minutes ?? true, (show_estimated_minutes) => this.updateConfig({ show_estimated_minutes }))}
+        ${this.checkbox("Show forecast when supplied by GitHub Insights", this.config.show_forecast ?? true, (show_forecast) => this.updateConfig({ show_forecast }))}
+        ${this.checkbox("Show metric attribute badges", this.config.show_metric_badges ?? true, (show_metric_badges) => this.updateConfig({ show_metric_badges }))}
+        <label>
+          Badge attributes
           <input
-            type="checkbox"
-            .checked=${this.config.show_estimated_minutes ?? true}
+            aria-label="Metric badge attributes"
+            placeholder="visibility, default_branch"
+            .value=${(this.config.metric_badges ?? [])
+            .map((badge) => badge.attribute)
+            .join(", ")}
             @change=${(event) => this.updateConfig({
-            show_estimated_minutes: event.target.checked,
+            metric_badges: event.target.value
+                .split(",")
+                .map((attribute) => attribute.trim())
+                .filter(Boolean)
+                .map((attribute) => ({ attribute })),
         })}
           />
-          Show estimated equivalent minutes
         </label>
-        <label class="check">
-          <input
-            type="checkbox"
-            .checked=${this.config.show_forecast ?? true}
-            @change=${(event) => this.updateConfig({ show_forecast: event.target.checked })}
-          />
-          Show forecast when supplied by GitHub Insights
-        </label>
+        ${this.checkbox("Show sanitized diagnostics panel", this.config.show_debug ?? false, (show_debug) => this.updateConfig({ show_debug }))}
       </fieldset>
     `;
     }
-    metricSelect(label, key) {
-        return b `<label>
+    checkbox(label, checked, update) {
+        return b `<label class="check">
+      <input
+        type="checkbox"
+        .checked=${checked}
+        @change=${(event) => update(event.target.checked)}
+      />
       ${label}
-      <select
-        aria-label=${label}
-        .value=${this.config?.[key] ?? ""}
-        @change=${(event) => this.updateConfig({ [key]: event.target.value })}
-      >
-        ${Object.values(METRICS).map((metric) => b `<option value=${metric.key}>${metric.label}</option>`)}
-      </select>
     </label>`;
     }
 }
@@ -1223,7 +2028,7 @@ function createEditorClass(definition) {
     };
 }
 
-const GITHUB_INSIGHTS_IMPLEMENTATION_PHASE = 8;
+const GITHUB_INSIGHTS_IMPLEMENTATION_PHASE = 9;
 for (const definition of CARD_DEFINITIONS) {
     if (!customElements.get(definition.editorTag)) {
         customElements.define(definition.editorTag, createEditorClass(definition));
@@ -1245,4 +2050,4 @@ for (const definition of CARD_DEFINITIONS) {
 }
 console.info(`%c GitHub Insights Cards %c ${CARD_DEFINITIONS.length} cards registered `, "color:white;background:#24292f;padding:3px 6px;border-radius:4px 0 0 4px", "color:#24292f;background:#58a6ff;padding:3px 6px;border-radius:0 4px 4px 0");
 
-export { CARD_DEFINITIONS, EntityDiscoveryService, GITHUB_INSIGHTS_IMPLEMENTATION_PHASE, METRICS, entitiesByKey, entityAvailable, formatMetric, metricDefinition, normalizeConfig, numericState, safeHttpUrl, severityClass, stubConfig };
+export { CARD_DEFINITIONS, EntityDiscoveryService, GITHUB_INSIGHTS_IMPLEMENTATION_PHASE, METRICS, buildRepositories, entitiesByKey, entityAvailable, formatMetric, metricDefinition, normalizeConfig, numericState, safeHttpUrl, safeHttpsUrl, safeText, severityClass, stubConfig };

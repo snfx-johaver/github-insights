@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 from typing import Any
@@ -46,6 +45,8 @@ async def async_collect_copilot_billing(
     client: GitHubClient,
     account: GitHubAccount,
     organizations: tuple[GitHubOrganization, ...],
+    *,
+    billing_client: GitHubClient | None = None,
 ) -> tuple[
     tuple[GitHubCopilotUsage, ...],
     dict[str, GitHubCapability],
@@ -67,12 +68,20 @@ async def async_collect_copilot_billing(
         ("organization", organization.login, organization.id)
         for organization in organizations
     )
-    results = await asyncio.gather(
-        *(
-            _async_collect_scope(client, scope_type, scope_name, scope_id)
-            for scope_type, scope_name, scope_id in scopes
+    if billing_client is None:
+        results = tuple(
+            _unavailable_billing_scope(scope_type, scope_id)
+            for scope_type, _, scope_id in scopes
         )
-    )
+    else:
+        results = tuple(
+            [
+                await _async_collect_scope(
+                    billing_client, scope_type, scope_name, scope_id
+                )
+                for scope_type, scope_name, scope_id in scopes
+            ]
+        )
     usages = tuple(result[0] for result in results if result[0] is not None)
     capabilities: dict[str, GitHubCapability] = {}
     errors: dict[str, str] = {}
@@ -115,6 +124,29 @@ async def async_collect_copilot_billing(
         )
         errors["copilot"] = "missing_billing_permission"
     return usages, capabilities, errors
+
+
+def _unavailable_billing_scope(
+    scope_type: str,
+    scope_id: int,
+) -> tuple[
+    GitHubCopilotUsage | None,
+    dict[str, GitHubCapability],
+    dict[str, str],
+]:
+    """Mark Copilot billing fields unavailable while leaving metrics independent."""
+    capabilities = {
+        f"copilot_{scope_type}_{scope_id}_{usage_type}": GitHubCapability(
+            CapabilityStatus.FORBIDDEN,
+            "billing_token_not_configured",
+        )
+        for usage_type in ("ai_credit", "premium_request")
+    }
+    return (
+        None,
+        capabilities,
+        {key: "billing_token_not_configured" for key in capabilities},
+    )
 
 
 async def _async_collect_metrics(

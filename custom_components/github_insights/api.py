@@ -544,6 +544,7 @@ class GitHubClient:
         *,
         repository_options: object | None = None,
         copilot_organizations: tuple[str, ...] = (),
+        copilot_billing_client: GitHubClient | None = None,
     ) -> GitHubSnapshot:
         """Fetch account data and tolerate capability-specific failures."""
         account = await self.async_get_account()
@@ -557,15 +558,25 @@ class GitHubClient:
         rate_limit: GitHubRateLimit | None = None
         repository_insights: tuple[GitHubRepositoryInsights, ...] = ()
         copilot: tuple[GitHubCopilotUsage, ...] = ()
+        retry_after: int | None = None
+        rate_limited = False
+        repository_collection_requested = False
         repository_categories: frozenset[str] = frozenset()
         if repository_options is not None:
             from .repository_data import RepositoryCollectionOptions
 
             if isinstance(repository_options, RepositoryCollectionOptions):
+                repository_collection_requested = True
                 repository_categories = repository_options.enabled_categories
 
         try:
             organizations = await self.async_get_organizations()
+        except GitHubRateLimitError as err:
+            retry_after = err.retry_after
+            rate_limited = True
+            _record_capability_failure(
+                capabilities, errors, "organizations", "rate_limited"
+            )
         except GitHubPermissionError:
             _record_capability_failure(
                 capabilities, errors, "organizations", "missing_permission"
@@ -580,80 +591,135 @@ class GitHubClient:
         else:
             capabilities["organizations"] = GitHubCapability(CapabilityStatus.AVAILABLE)
 
-        try:
-            repositories = await self.async_get_repositories()
-        except GitHubPermissionError:
+        if rate_limited:
             _record_capability_failure(
-                capabilities, errors, "repositories", "missing_permission"
+                capabilities, errors, "repositories", "rate_limited"
             )
-        except (GitHubConnectionError, GitHubAPIError):
-            _record_capability_failure(
-                capabilities,
-                errors,
-                "repositories",
-                "temporarily_unavailable",
-            )
-        else:
-            capabilities["repositories"] = GitHubCapability(CapabilityStatus.AVAILABLE)
-            if repository_options is not None:
-                from .repository_data import (
-                    async_collect_repository_insights,
+            if repository_collection_requested:
+                _record_repository_rate_limit(
+                    repository_categories, capabilities, errors
                 )
+        else:
+            try:
+                repositories = await self.async_get_repositories()
+            except GitHubRateLimitError as err:
+                retry_after = err.retry_after
+                rate_limited = True
+                _record_capability_failure(
+                    capabilities, errors, "repositories", "rate_limited"
+                )
+                if repository_collection_requested:
+                    _record_repository_rate_limit(
+                        repository_categories, capabilities, errors
+                    )
+            except GitHubPermissionError:
+                _record_capability_failure(
+                    capabilities, errors, "repositories", "missing_permission"
+                )
+            except (GitHubConnectionError, GitHubAPIError):
+                _record_capability_failure(
+                    capabilities,
+                    errors,
+                    "repositories",
+                    "temporarily_unavailable",
+                )
+            else:
+                capabilities["repositories"] = GitHubCapability(
+                    CapabilityStatus.AVAILABLE
+                )
+                if repository_options is not None:
+                    from .repository_data import (
+                        async_collect_repository_insights,
+                    )
 
-                if isinstance(repository_options, RepositoryCollectionOptions):
-                    try:
-                        repository_insights = await async_collect_repository_insights(
-                            self, repositories, repository_options
-                        )
-                    except (GitHubConnectionError, GitHubAPIError):
-                        _record_capability_failure(
-                            capabilities,
-                            errors,
-                            "repository_insights",
-                            "temporarily_unavailable",
-                        )
-                    else:
-                        _record_repository_capabilities(
-                            repository_insights,
-                            repository_options.enabled_categories,
-                            capabilities,
-                            errors,
-                        )
+                    if isinstance(repository_options, RepositoryCollectionOptions):
+                        try:
+                            repository_insights = (
+                                await async_collect_repository_insights(
+                                    self, repositories, repository_options
+                                )
+                            )
+                        except GitHubRateLimitError as err:
+                            retry_after = err.retry_after
+                            rate_limited = True
+                            _record_repository_rate_limit(
+                                repository_categories, capabilities, errors
+                            )
+                        except (GitHubConnectionError, GitHubAPIError):
+                            _record_capability_failure(
+                                capabilities,
+                                errors,
+                                "repository_insights",
+                                "temporarily_unavailable",
+                            )
+                        else:
+                            _record_repository_capabilities(
+                                repository_insights,
+                                repository_options.enabled_categories,
+                                capabilities,
+                                errors,
+                            )
 
         if "copilot" in repository_categories:
-            from .copilot_data import async_collect_copilot_billing
+            if rate_limited:
+                _record_capability_failure(
+                    capabilities, errors, "copilot", "rate_limited"
+                )
+            else:
+                from .copilot_data import async_collect_copilot_billing
 
-            (
-                copilot,
-                copilot_capabilities,
-                copilot_errors,
-            ) = await async_collect_copilot_billing(
-                self,
-                account,
-                tuple(
-                    organization
-                    for organization in organizations
-                    if organization.login in set(copilot_organizations)
-                ),
-            )
-            capabilities.update(copilot_capabilities)
-            errors.update(copilot_errors)
+                try:
+                    (
+                        copilot,
+                        copilot_capabilities,
+                        copilot_errors,
+                    ) = await async_collect_copilot_billing(
+                        self,
+                        account,
+                        tuple(
+                            organization
+                            for organization in organizations
+                            if organization.login in set(copilot_organizations)
+                        ),
+                        billing_client=copilot_billing_client,
+                    )
+                except GitHubRateLimitError as err:
+                    retry_after = err.retry_after
+                    rate_limited = True
+                    _record_capability_failure(
+                        capabilities, errors, "copilot", "rate_limited"
+                    )
+                else:
+                    capabilities.update(copilot_capabilities)
+                    errors.update(copilot_errors)
 
-        try:
-            rate_limit = await self.async_get_rate_limit()
-        except GitHubPermissionError:
+        if rate_limited:
             _record_capability_failure(
-                capabilities, errors, "rate_limit", "missing_permission"
-            )
-        except (GitHubConnectionError, GitHubAPIError):
-            _record_capability_failure(
-                capabilities,
-                errors,
-                "rate_limit",
-                "temporarily_unavailable",
+                capabilities, errors, "rate_limit", "rate_limited"
             )
         else:
-            capabilities["rate_limit"] = GitHubCapability(CapabilityStatus.AVAILABLE)
+            try:
+                rate_limit = await self.async_get_rate_limit()
+            except GitHubRateLimitError as err:
+                retry_after = err.retry_after
+                _record_capability_failure(
+                    capabilities, errors, "rate_limit", "rate_limited"
+                )
+            except GitHubPermissionError:
+                _record_capability_failure(
+                    capabilities, errors, "rate_limit", "missing_permission"
+                )
+            except (GitHubConnectionError, GitHubAPIError):
+                _record_capability_failure(
+                    capabilities,
+                    errors,
+                    "rate_limit",
+                    "temporarily_unavailable",
+                )
+            else:
+                capabilities["rate_limit"] = GitHubCapability(
+                    CapabilityStatus.AVAILABLE
+                )
 
         return GitHubSnapshot.create(
             account=account,
@@ -666,6 +732,7 @@ class GitHubClient:
             capabilities=capabilities,
             fetched_at=datetime.now(UTC),
             errors=errors,
+            retry_after=retry_after,
         )
 
     async def _request_all_pages(
@@ -1037,6 +1104,26 @@ def _record_repository_capabilities(
             )
             capabilities[category] = capability
             errors[category] = capability.reason or capability.status
+
+
+def _record_repository_rate_limit(
+    enabled_categories: frozenset[str],
+    capabilities: dict[str, GitHubCapability],
+    errors: dict[str, str],
+) -> None:
+    """Mark repository collection and enabled categories as rate limited."""
+    _record_capability_failure(
+        capabilities, errors, "repository_insights", "rate_limited"
+    )
+    for category in enabled_categories & {
+        "workflows",
+        "releases",
+        "activity",
+        "deployments",
+        "traffic",
+        "security",
+    }:
+        _record_capability_failure(capabilities, errors, category, "rate_limited")
 
 
 def _retry_after(response: ClientResponse) -> int | None:
