@@ -13,7 +13,7 @@ declare global {
   }
 }
 
-export const GITHUB_INSIGHTS_IMPLEMENTATION_PHASE = 8;
+export const GITHUB_INSIGHTS_IMPLEMENTATION_PHASE = 9;
 export { CARD_DEFINITIONS };
 export * from "./models/config";
 export * from "./models/home-assistant";
@@ -21,6 +21,7 @@ export * from "./models/metrics";
 export * from "./services/entity-discovery";
 export * from "./utilities/config";
 export * from "./utilities/format";
+export * from "./utilities/repositories";
 
 for (const definition of CARD_DEFINITIONS) {
   if (!customElements.get(definition.editorTag)) {
