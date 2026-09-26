@@ -72,8 +72,10 @@ small adapter/resource URL needs compatibility work.
 Create a dashboard under **Settings > Dashboards**, keep it managed by Home
 Assistant, then paste the exact contents of
 [`release-candidate-dashboard.yaml`](release-candidate-dashboard.yaml) into
-that dashboard's **Raw configuration editor**. A deployment tool may instead
-use Home Assistant's supported, authenticated Lovelace WebSocket API.
+that dashboard's **Raw configuration editor**. The default template uses the
+Mushroom and Auto Entities frontend cards and automatically hides entities
+whose state is `unavailable` or `unknown`. A deployment tool may instead use
+Home Assistant's supported, authenticated Lovelace WebSocket API.
 
 Do not add the template as a default file-backed dashboard. A declaration such
 as this is supported for users who deliberately prefer YAML management, but it

@@ -60,15 +60,9 @@ FORBIDDEN_CARD_TAGS = {
 BUNDLED_CARD_PATTERN = re.compile(r"type:\s*custom:github-insights-[\w-]+")
 BUNDLED_RESOURCE_URL = "/github_insights/frontend/github-insights-cards.js"
 DASHBOARD = ROOT / "docs" / "release-candidate-dashboard.yaml"
-DASHBOARD_SHA256 = "850676004b98279e07dfa3f2efc002a32084fb4dbee9fbf80e3bac419091c37d"
+DASHBOARD_SHA256 = "51c0c214533f189d38f2ba72494176bb36123a3877fec132c6dd31ce944523f3"
 RESOURCE_CONFIG = ROOT / "docs" / "release-candidate-lovelace-resources.yaml"
 RESOURCE_EVIDENCE = ROOT / "release-ready.json"
-DYNAMIC_DASHBOARD_FILTERS = {
-    f"{domain}.github_insights_*"
-    for domain in ("sensor", "binary_sensor", "number", "select", "switch", "button")
-}
-
-
 def load_json(path: Path) -> dict[str, object]:
     """Load a JSON object."""
     value = json.loads(path.read_text(encoding="utf-8"))
@@ -161,8 +155,17 @@ def main() -> None:
         )
     assert re.findall(r"^  - title: (.+)$", dashboard, re.MULTILINE) == [
         "Overview",
-        "All entities",
+        "Repositories",
+        "Activity",
+        "All available",
     ]
+    assert dashboard.count("type: custom:mushroom-title-card") == 5
+    assert dashboard.count("type: custom:mushroom-entity-card") == 2
+    assert dashboard.count("type: custom:auto-entities") == 5
+    assert dashboard.count("- state: unavailable") == 5
+    assert dashboard.count("- state: unknown") == 5
+    assert "type: custom:github-insights-card" not in dashboard
+    assert "type: custom:github-insights-repository-card" not in dashboard
     assert not re.search(
         r"^\s+-?\s*(?:entity|entity_id): "
         r"(?:sensor|binary_sensor|number|select|switch|button)"
@@ -170,10 +173,7 @@ def main() -> None:
         dashboard,
         re.MULTILINE,
     )
-    assert all(
-        f"entity_id: {entity_filter}" in dashboard
-        for entity_filter in DYNAMIC_DASHBOARD_FILTERS
-    )
+    assert dashboard.count("integration: github_insights") >= 20
     deployment_docs = (ROOT / "docs" / "deployment.md").read_text(encoding="utf-8")
     assert "storage dashboard" in deployment_docs
     assert "mode: yaml" in deployment_docs

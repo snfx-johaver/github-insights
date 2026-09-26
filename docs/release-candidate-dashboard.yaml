@@ -4,61 +4,192 @@ views:
     path: overview
     icon: mdi:github
     cards:
-      - type: custom:github-insights-card
+      - type: custom:mushroom-title-card
         title: GitHub Insights
-        preset: dashboard
-        layout: expanded
-        sections:
-          - overview
-          - usage
-          - actions
-          - copilot
-          - activity
-          - contributions
-          - security
-        show_forecast: true
-        show_estimated_minutes: true
+        subtitle: Available account, usage, and API data
 
-      - type: custom:github-insights-repository-card
-        title: Repository operations
-        repositories: auto
-        layout: compact
-        group_by: organization
-        sort:
-          - field: workflow_health
-            direction: ascending
-            nulls: last
-          - field: last_push
-            direction: descending
-            nulls: last
-          - field: name
-            direction: ascending
-            nulls: last
-        metrics:
-          - stars
-          - open_issues
-          - open_pull_requests
-          - workflow_health
-          - actions_usage_percent
-
-  - title: All entities
-    path: entities
-    icon: mdi:view-list
-    cards:
       - type: custom:auto-entities
         show_empty: false
         card:
-          type: entities
-          title: Sensors and controls
-          show_header_toggle: false
+          type: grid
+          columns: 3
+          square: false
+        card_param: cards
         filter:
           include:
-            - entity_id: sensor.github_insights_*
-            - entity_id: binary_sensor.github_insights_*
-            - entity_id: number.github_insights_*
-            - entity_id: select.github_insights_*
-            - entity_id: switch.github_insights_*
-            - entity_id: button.github_insights_*
+            - entity_id: sensor.github_insights_*_account
+              options: &metric_card
+                type: custom:mushroom-entity-card
+                fill_container: true
+                icon_color: blue
+            - entity_id: sensor.github_insights_*_public_repositories
+              options: *metric_card
+            - entity_id: sensor.github_insights_*_organizations
+              options: *metric_card
+            - entity_id: sensor.github_insights_*_followers
+              options: *metric_card
+            - entity_id: sensor.github_insights_*_api_rate_limit_remaining
+              options: *metric_card
+            - entity_id: sensor.github_insights_*_last_successful_sync
+              options: *metric_card
+          exclude:
+            - state: unavailable
+            - state: unknown
+        sort:
+          method: name
+          ignore_case: true
+
+      - type: custom:mushroom-title-card
+        title: Billing and Actions
+        subtitle: Only values currently supplied by GitHub are shown
+
+      - type: custom:auto-entities
+        show_empty: false
+        card:
+          type: grid
+          columns: 3
+          square: false
+        card_param: cards
+        filter:
+          include:
+            - integration: github_insights
+              entity_id: sensor.github_insights_billing_*_actions_*
+              options: *metric_card
+            - integration: github_insights
+              entity_id: sensor.*github_insights*_actions_*
+              options: *metric_card
+            - integration: github_insights
+              entity_id: number.*github_insights*_actions_*
+              options: *metric_card
+            - integration: github_insights
+              entity_id: select.*github_insights*_actions_*
+              options: *metric_card
+            - integration: github_insights
+              entity_id: switch.*github_insights*_budget_*
+              options: *metric_card
+            - integration: github_insights
+              entity_id: button.github_insights_*_actions_*
+              options: *metric_card
+          exclude:
+            - state: unavailable
+            - state: unknown
+        sort:
+          method: name
+          ignore_case: true
+
+  - title: Repositories
+    path: repositories
+    icon: mdi:source-repository-multiple
+    cards:
+      - type: custom:mushroom-title-card
+        title: Repositories
+        subtitle: Available repository metrics from the selected GitHub repositories
+
+      - type: custom:auto-entities
+        show_empty: false
+        card:
+          type: grid
+          columns: 3
+          square: false
+        card_param: cards
+        filter:
+          include:
+            - integration: github_insights
+              entity_id: sensor.*_workflow_health
+              options: &repository_card
+                type: custom:mushroom-entity-card
+                fill_container: true
+                icon_color: blue
+            - integration: github_insights
+              entity_id: sensor.*_stars
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_open_issues
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_open_pull_requests
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_latest_commit
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_latest_release
+              options: *repository_card
+          exclude:
+            - state: unavailable
+            - state: unknown
+        sort:
+          method: entity_id
+
+  - title: Activity
+    path: activity
+    icon: mdi:chart-timeline-variant
+    cards:
+      - type: custom:mushroom-title-card
+        title: Repository activity
+        subtitle: Available 90-day activity, contribution, and security data
+
+      - type: custom:auto-entities
+        show_empty: false
+        card:
+          type: grid
+          columns: 3
+          square: false
+        card_param: cards
+        filter:
+          include:
+            - integration: github_insights
+              entity_id: sensor.*_activity_90_days
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_commits_90_days
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_pull_requests_opened_90_days
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_pull_requests_merged_90_days
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_issues_opened_90_days
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_contributions_90_days
+              options: *repository_card
+            - integration: github_insights
+              entity_id: sensor.*_current_reliable_streak
+              options: *repository_card
+            - integration: github_insights
+              entity_id: binary_sensor.*_workflow_failure
+              options: *repository_card
+          exclude:
+            - state: unavailable
+            - state: unknown
+        sort:
+          method: entity_id
+
+  - title: All available
+    path: entities
+    icon: mdi:view-list
+    cards:
+      - type: custom:mushroom-title-card
+        title: All available GitHub Insights entities
+        subtitle: Unavailable and unknown entities are hidden automatically
+
+      - type: custom:auto-entities
+        show_empty: false
+        card:
+          type: grid
+          columns: 3
+          square: false
+        card_param: cards
+        filter:
+          include:
+            - integration: github_insights
+              options: *metric_card
+          exclude:
+            - state: unavailable
+            - state: unknown
         sort:
           method: name
           ignore_case: true

@@ -83,10 +83,11 @@ After a validated prerelease exists:
 3. Install **GitHub Insights**.
 4. Restart Home Assistant if HACS requires it.
 5. Add the GitHub Insights integration from **Settings > Devices & services**.
-6. Add the bundled JavaScript module under
+6. Install the **Mushroom** and **Auto Entities** frontend cards through HACS.
+7. Add the bundled JavaScript module under
    **Settings > Dashboards > Resources**:
    `/github_insights/frontend/github-insights-cards.js`.
-7. Under **Settings > Dashboards**, create a dashboard managed by Home
+8. Under **Settings > Dashboards**, create a dashboard managed by Home
    Assistant, open its **Raw configuration editor**, and paste the exact
    contents of
    [`docs/release-candidate-dashboard.yaml`](docs/release-candidate-dashboard.yaml).
@@ -288,14 +289,14 @@ reference_runner: linux_standard
 
 ## Dashboard companions
 
-GitHub Insights does not require another card package. The
-[release-candidate dashboard](docs/release-candidate-dashboard.yaml) is an
-exact import template for a user-created, UI-editable storage dashboard; it is
-not a file to install under `dashboards/`. The
-[dashboard examples](docs/dashboard-examples.md) also show polished optional
-layouts using separately installed Mushroom cards for headings/status,
-ApexCharts for history, and Auto Entities for registry views, with native Home
-Assistant fallbacks.
+The bundled GitHub Insights cards do not require another card package. The
+[release-candidate dashboard](docs/release-candidate-dashboard.yaml) is a
+Mushroom-styled import template for a user-created, UI-editable storage
+dashboard and requires separately installed Mushroom and Auto Entities cards.
+It hides unavailable and unknown entities automatically instead of filling the
+dashboard with unsupported metrics. It is not a file to install under
+`dashboards/`. The [dashboard examples](docs/dashboard-examples.md) also show
+layouts using ApexCharts for optional history views.
 
 ## Development
 
