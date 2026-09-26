@@ -442,6 +442,11 @@ export class GitHubInsightsEditor extends LitElement {
             this.updateConfig({ show_estimated_minutes }),
         )}
         ${this.checkbox(
+          "Show unavailable metrics",
+          this.config.show_unavailable ?? false,
+          (show_unavailable) => this.updateConfig({ show_unavailable }),
+        )}
+        ${this.checkbox(
           "Show forecast when supplied by GitHub Insights",
           this.config.show_forecast ?? true,
           (show_forecast) => this.updateConfig({ show_forecast }),

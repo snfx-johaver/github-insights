@@ -71,6 +71,7 @@ export interface GitHubInsightsCardConfig {
   show_archived?: boolean;
   show_forks?: boolean;
   show_estimated_minutes?: boolean;
+  show_unavailable?: boolean;
   show_metric_badges?: boolean;
   show_debug?: boolean;
   metric_badges?: MetricBadgeConfig[];

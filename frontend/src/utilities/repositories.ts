@@ -86,6 +86,11 @@ export function buildRepositories(
   }
 
   const repositories = [...grouped.entries()]
+    .filter(([, entities]) =>
+      [...entities.values()].some(
+        (entity) => typeof entity.attributes.repository_url === "string",
+      ),
+    )
     .filter(([name]) => !search || name.toLocaleLowerCase().includes(search))
     .filter(([name]) => included.size === 0 || included.has(name))
     .filter(([name]) => !excluded.has(name))
