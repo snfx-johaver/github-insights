@@ -135,7 +135,9 @@ user was unavailable to authenticate. The following remain incomplete:
 - config-entry migration;
 - device/entity count, availability, and capability-state validation;
 - live confirmation that a fine-grained PAT leaves nonbilling data operational
-  while billing usage reports the classic-PAT remediation;
+  while billing usage reports the optional classic-token remediation;
+- live billing endpoint verification after the user configures a classic
+  Billing / Usage API token;
 - `/github_insights/frontend/github-insights-cards.js` static loading;
 - supported Lovelace module registration while preserving the existing 24
   resources;
