@@ -3,9 +3,9 @@
 ## Current status
 
 The repository is public, the integration and bundled frontend are implemented,
-and `hide_default_branch` is enabled. Version `0.2.0-beta.1` is an opt-in
-prerelease candidate for custom-repository testing after validation. No HACS
-catalog claim is made.
+and `hide_default_branch` is enabled. Version `0.2.0-beta.1` is an unreleased
+beta candidate for opt-in custom-repository testing after validation. No tag,
+release asset, or HACS catalog availability is claimed.
 
 ## Repository requirements
 
@@ -43,10 +43,11 @@ version, checksum, and release serve both backend and cards.
 
 HACS normally treats integrations and dashboard plugins as different
 categories. GitHub Insights deliberately chooses the less conventional bundled
-integration path to satisfy the one-install requirement. The integration now serves the bundled directory through Home Assistant's
-supported static-path API. Lovelace resource registration is manual because no
-stable public integration API exists for mutating resources. A second
-Dashboard/plugin repository is not an allowed fallback.
+integration path to satisfy the one-install requirement. The integration serves
+the bundled directory through Home Assistant's supported static-path API.
+Lovelace resource registration is still required because no stable public
+integration API exists for mutating resources. A second Dashboard/plugin
+repository is not an allowed fallback.
 
 ## Custom repository process
 
@@ -59,7 +60,12 @@ After a validated prerelease asset is published:
 4. Restart if HACS/Home Assistant requires it.
 5. Configure the integration and register the bundled resource through the
    documented supported method.
-6. Record the exact custom-repository install and upgrade results in
+6. Create a Home Assistant-managed storage dashboard and import
+   `docs/release-candidate-dashboard.yaml` through its Raw configuration editor
+   or the supported authenticated Lovelace WebSocket API.
+7. Confirm the dashboard remains editable in the UI. Do not declare it with
+   `mode: yaml` or edit `.storage` for the default installation.
+8. Record the exact custom-repository install and upgrade results in
    `post-release-validation.json`. Never mark this gate complete before the
    immutable release asset exists.
 
@@ -86,9 +92,9 @@ External review can take months and cannot be bypassed.
 
 ## Branding
 
-Phase 0 includes deterministic placeholder `icon.png` and `dark_icon.png`
-assets for validation. Product-ready artwork and any required Home Assistant
-Brands submission must be completed before catalog submission.
+The repository includes deterministic placeholder `icon.png` and
+`dark_icon.png` assets for validation. Product-ready artwork and any required
+Home Assistant Brands submission must be completed before catalog submission.
 
 ## Rollback and recovery
 
@@ -106,6 +112,7 @@ changes and config-entry migrations. A failed install restores only the prior
 - [ ] Secret scans pass
 - [ ] Isolated install/upgrade/removal tests pass
 - [ ] Safe local validation passes
+- [ ] Exact dashboard template imports into an editable storage dashboard
 - [ ] README permissions and limitations match behavior
 - [ ] Version-matched pre-release evidence records only completed pre-tag gates
 - [ ] Full GitHub Release exists after the validation gates

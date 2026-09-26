@@ -63,13 +63,15 @@ guidance applies.
 ## Phase 6: frontend foundation
 
 Create the shared Lit system, metric registry, repository discovery adapter,
-selector/filter/group/sort pipeline, visual-editor components, overview, usage,
-and compact cards. Build directly to the bundled integration staging path.
+selector/filter/group/sort pipeline, and visual-editor components. Build
+directly to the bundled integration staging path.
 
 ## Phase 7: remaining cards
 
-Add repository, Actions, Copilot, activity, contributions, security, and
-dashboard cards using the shared components and model.
+Expose one account/insights card and one repository card. Keep overview, usage,
+Actions, Copilot, activity, contributions, security, compact, dashboard, and
+repository variants as internal presets and configuration rather than separate
+custom elements.
 
 ## Phase 8: product completion
 

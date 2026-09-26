@@ -14,6 +14,7 @@ from .api import (
     GitHubClient,
     GitHubConnectionError,
     GitHubPermissionError,
+    GitHubRateLimitError,
     _repository,
 )
 from .const import (
@@ -63,15 +64,21 @@ async def async_collect_repository_insights(
 ) -> tuple[GitHubRepositoryInsights, ...]:
     """Collect selected repository data with bounded concurrency."""
     selected = _select_repositories(discovered, options)
-    semaphore = asyncio.Semaphore(4)
+    semaphore = asyncio.Semaphore(2)
 
     async def collect(repository: GitHubRepository) -> GitHubRepositoryInsights:
         async with semaphore:
             return await _async_collect_repository(client, repository, options)
 
-    return tuple(
-        await asyncio.gather(*(collect(repository) for repository in selected))
-    )
+    tasks = tuple(asyncio.create_task(collect(repository)) for repository in selected)
+    try:
+        return tuple(await asyncio.gather(*tasks))
+    except GitHubRateLimitError:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        raise
 
 
 def _select_repositories(
@@ -96,7 +103,7 @@ def _select_repositories(
         for repo in repositories
         if (options.include_archived or not repo.archived)
         and (options.include_forks or not repo.fork)
-    )[: max(1, min(options.repository_limit, MAX_SELECTED_REPOSITORIES))]
+    )[: max(1, min(int(options.repository_limit), MAX_SELECTED_REPOSITORIES))]
 
 
 async def _async_collect_repository(
@@ -304,13 +311,14 @@ async def _async_traffic(
     capabilities: dict[str, GitHubCapability],
     errors: dict[str, str],
 ) -> GitHubTraffic | None:
+    tasks = (
+        asyncio.create_task(client.async_get_json(f"{path}/traffic/views")),
+        asyncio.create_task(client.async_get_json(f"{path}/traffic/clones")),
+        asyncio.create_task(client.async_get_json(f"{path}/traffic/popular/referrers")),
+        asyncio.create_task(client.async_get_json(f"{path}/traffic/popular/paths")),
+    )
     try:
-        views, clones, referrers, popular = await asyncio.gather(
-            client.async_get_json(f"{path}/traffic/views"),
-            client.async_get_json(f"{path}/traffic/clones"),
-            client.async_get_json(f"{path}/traffic/popular/referrers"),
-            client.async_get_json(f"{path}/traffic/popular/paths"),
-        )
+        views, clones, referrers, popular = await asyncio.gather(*tasks)
         capabilities["traffic"] = _available()
         return GitHubTraffic(
             views=_int(_object(views).get("count")),
@@ -331,6 +339,12 @@ async def _async_traffic(
                 for item in _objects(popular)
             ),
         )
+    except GitHubRateLimitError:
+        for task in tasks:
+            if not task.done():
+                task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        raise
     except _OPTIONAL_ERRORS as err:
         errors["traffic"] = _reason(err)
         capabilities["traffic"] = _capability(err)

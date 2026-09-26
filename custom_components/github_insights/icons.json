@@ -10,6 +10,18 @@
       "api_rate_limit_reset": {
         "default": "mdi:timer-refresh"
       },
+      "actions_configured_included_minutes": {
+        "default": "mdi:timer-sand"
+      },
+      "actions_configured_minutes_used": {
+        "default": "mdi:timer-check"
+      },
+      "actions_configured_minutes_remaining": {
+        "default": "mdi:timer-outline"
+      },
+      "actions_configured_minutes_used_percent": {
+        "default": "mdi:chart-donut"
+      },
       "followers": {
         "default": "mdi:account-group"
       },
