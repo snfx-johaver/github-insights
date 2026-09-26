@@ -70,3 +70,27 @@ def async_update_billing_issues(
         translation_key="billing_unavailable",
         translation_placeholders={"reason": ", ".join(reasons)},
     )
+
+
+def async_update_configured_allowance_issue(
+    hass: HomeAssistant,
+    entry_id: str,
+    allowance: int,
+    reasons: set[str],
+) -> None:
+    """Report when configured allowance derivations cannot use GitHub data."""
+    issue_id = f"{entry_id}_configured_actions_allowance_unavailable"
+    actionable_reasons = reasons - {"actions_usage_unavailable"}
+    if allowance <= 0 or not actionable_reasons:
+        ir.async_delete_issue(hass, DOMAIN, issue_id)
+        return
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        issue_id,
+        is_fixable=False,
+        is_persistent=True,
+        severity=ir.IssueSeverity.WARNING,
+        translation_key="configured_actions_allowance_unavailable",
+        translation_placeholders={"reason": ", ".join(sorted(actionable_reasons))},
+    )

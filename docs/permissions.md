@@ -37,22 +37,27 @@ model, but remain future work. Endpoint documentation and
 
 GitHub's billing usage tutorial explicitly requires a personal access token
 (classic) for the usage report endpoints and states that fine-grained PATs are
-not supported. GitHub Insights therefore does not recommend fine-grained PATs
-for AI-credit, premium-request, Actions billing, or other billing usage
-categories. Capability probes remain authoritative, and a rejected billing
-probe never disables repository-only read functionality.
+not supported. GitHub Insights therefore routes AI-credit, premium-request,
+Actions billing, budgets, and other billing usage categories only through the
+optional secondary classic PAT. The primary token remains exclusive to normal
+GitHub APIs and Copilot activity. Capability probes remain authoritative, and a
+rejected billing probe never disables repository-only read functionality.
 Budget documentation does not make the same PAT-type guarantee, so GitHub
 Insights feature-detects budget reads independently and does not claim
 fine-grained PAT support.
 
 ## Token handling
 
-- Store the token only in config-entry data.
-- Never place it in options, entity state/attributes, frontend config, URLs,
-  issue reports, logs, or diagnostics.
+- Store the primary token in config-entry data and the optional billing token in
+  that same config entry's options.
+- Never render either real token back into a form or place either token in
+  entity state/attributes, frontend config, URLs, issue reports, logs, or
+  diagnostics.
 - Redact `Authorization`, cookies, query credentials, signed URLs, and common
   token-shaped fields recursively.
-- Reauthentication replaces the token without changing stable entity IDs.
+- Reauthentication replaces only the primary token. The masked billing-token
+  option can be preserved, replaced, or cleared without changing stable entity
+  IDs.
 - Diagnostics report permission names and capability results, never credential
   values.
 - Secret-scanning requests use response filtering where supported, and the

@@ -8,7 +8,7 @@ import {
 } from "../src/services/entity-discovery";
 
 const config: GitHubInsightsCardConfig = {
-  type: "custom:github-insights-overview",
+  type: "custom:github-insights-card",
 };
 
 describe("entity discovery", () => {
@@ -101,6 +101,28 @@ describe("entity discovery", () => {
         deviceId: undefined,
         repository: undefined,
       },
+    ]);
+  });
+
+  it("discovers the longest known metric suffix from opaque unique IDs", async () => {
+    const sendMessagePromise = vi
+      .fn()
+      .mockResolvedValueOnce([
+        {
+          entity_id: "sensor.configured_minutes",
+          platform: "github_insights",
+          unique_id: "owner_with_underscores_actions_configured_minutes_used",
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    await expect(
+      EntityDiscoveryService.discover(
+        { states: {}, connection: { sendMessagePromise } },
+        config,
+      ),
+    ).resolves.toEqual([
+      expect.objectContaining({ key: "actions_configured_minutes_used" }),
     ]);
   });
 });
