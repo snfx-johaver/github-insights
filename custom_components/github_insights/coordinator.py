@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
+from types import MappingProxyType
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -20,6 +21,7 @@ from .api import (
 )
 from .const import (
     CONF_ACCOUNT_LOGIN,
+    CONF_ACTIONS_INCLUDED_MINUTES,
     CONF_AUTO_DISCOVER,
     CONF_BILLING_ENTERPRISE,
     CONF_BILLING_INTERVAL,
@@ -32,6 +34,7 @@ from .const import (
     CONF_PERSONAL_BILLING,
     CONF_REPOSITORIES,
     CONF_UPDATE_INTERVAL,
+    DEFAULT_ACTIONS_INCLUDED_MINUTES,
     DEFAULT_AUTO_DISCOVER,
     DEFAULT_BILLING_INTERVAL_MINUTES,
     DEFAULT_ENABLED_CATEGORIES,
@@ -49,12 +52,19 @@ from .models import (
     BillingScopeData,
     BillingScopeType,
     BillingSnapshot,
+    CapabilityStatus,
+    GitHubCapability,
     GitHubCopilotUsage,
     GitHubRepositoryInsights,
     GitHubSecurityAlerts,
     GitHubSnapshot,
 )
-from .repairs import async_update_billing_issues, async_update_capability_issues
+from .options import integer_option
+from .repairs import (
+    async_update_billing_issues,
+    async_update_capability_issues,
+    async_update_configured_allowance_issue,
+)
 from .repository_data import RepositoryCollectionOptions
 
 
@@ -63,6 +73,7 @@ class GitHubInsightsRuntimeData:
     """Runtime objects for one GitHub Insights config entry."""
 
     client: GitHubClient
+    billing_client: GitHubClient | None
     coordinator: GitHubInsightsCoordinator
     billing_coordinator: GitHubInsightsBillingCoordinator
 
@@ -80,11 +91,13 @@ class GitHubInsightsCoordinator(DataUpdateCoordinator[GitHubSnapshot]):
         hass: HomeAssistant,
         entry: GitHubInsightsConfigEntry,
         client: GitHubClient,
+        billing_client: GitHubClient | None,
     ) -> None:
         """Initialize the coordinator."""
         self.client = client
-        interval = entry.options.get(
-            CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES
+        self.billing_client = billing_client
+        interval = integer_option(
+            entry.options, CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_MINUTES
         )
         super().__init__(
             hass,
@@ -118,13 +131,16 @@ class GitHubInsightsCoordinator(DataUpdateCoordinator[GitHubSnapshot]):
                             DEFAULT_ENABLED_CATEGORIES,
                         )
                     ),
-                    repository_limit=self.config_entry.options.get(
-                        CONF_MAX_REPOSITORIES, DEFAULT_MAX_REPOSITORIES
+                    repository_limit=integer_option(
+                        self.config_entry.options,
+                        CONF_MAX_REPOSITORIES,
+                        DEFAULT_MAX_REPOSITORIES,
                     ),
                 ),
                 copilot_organizations=tuple(
                     self.config_entry.options.get(CONF_ORGANIZATIONS, ())
                 ),
+                copilot_billing_client=self.billing_client,
             )
         except GitHubAuthenticationError as err:
             raise ConfigEntryAuthFailed("GitHub credentials were rejected") from err
@@ -153,13 +169,13 @@ class GitHubInsightsBillingCoordinator(DataUpdateCoordinator[BillingSnapshot]):
         self,
         hass: HomeAssistant,
         entry: GitHubInsightsConfigEntry,
-        client: GitHubClient,
+        client: GitHubClient | None,
     ) -> None:
         """Initialize the billing coordinator."""
         self.client = client
         self._last_mutation: BillingMutation | None = None
-        interval = entry.options.get(
-            CONF_BILLING_INTERVAL, DEFAULT_BILLING_INTERVAL_MINUTES
+        interval = integer_option(
+            entry.options, CONF_BILLING_INTERVAL, DEFAULT_BILLING_INTERVAL_MINUTES
         )
         super().__init__(
             hass,
@@ -197,18 +213,25 @@ class GitHubInsightsBillingCoordinator(DataUpdateCoordinator[BillingSnapshot]):
 
     async def _async_update_data(self) -> BillingSnapshot:
         """Fetch isolated billing scope snapshots."""
-        try:
-            snapshot = await self.client.async_fetch_billing_snapshot(self.scopes)
-        except GitHubAuthenticationError as err:
-            raise ConfigEntryAuthFailed("GitHub credentials were rejected") from err
-        except GitHubRateLimitError as err:
-            raise UpdateFailed(
-                "GitHub billing rate limit reached", retry_after=err.retry_after
-            ) from err
-        except GitHubConnectionError as err:
-            raise UpdateFailed("Unable to connect to GitHub billing") from err
-        except GitHubInsightsError as err:
-            raise UpdateFailed(f"GitHub billing API error: {err}") from err
+        if self.client is None:
+            snapshot = _unavailable_billing_snapshot(
+                self.scopes, "billing_token_not_configured"
+            )
+        else:
+            try:
+                snapshot = await self.client.async_fetch_billing_snapshot(self.scopes)
+            except GitHubAuthenticationError:
+                snapshot = _unavailable_billing_snapshot(
+                    self.scopes, "billing_token_invalid"
+                )
+            except GitHubRateLimitError as err:
+                raise UpdateFailed(
+                    "GitHub billing rate limit reached", retry_after=err.retry_after
+                ) from err
+            except GitHubConnectionError as err:
+                raise UpdateFailed("Unable to connect to GitHub billing") from err
+            except GitHubInsightsError as err:
+                raise UpdateFailed(f"GitHub billing API error: {err}") from err
 
         snapshot = _merge_billing_last_known_good(self.data, snapshot)
         if self._last_mutation is not None:
@@ -216,11 +239,56 @@ class GitHubInsightsBillingCoordinator(DataUpdateCoordinator[BillingSnapshot]):
         async_update_billing_issues(
             self.hass, self.config_entry.entry_id, snapshot.errors
         )
+        allowance = integer_option(
+            self.config_entry.options,
+            CONF_ACTIONS_INCLUDED_MINUTES,
+            DEFAULT_ACTIONS_INCLUDED_MINUTES,
+        )
+        async_update_configured_allowance_issue(
+            self.hass,
+            self.config_entry.entry_id,
+            allowance,
+            {
+                reason
+                for scope_data in snapshot.scopes.values()
+                if scope_data.usage is not None
+                for _, _, reason in [scope_data.usage.configured_actions_minutes]
+                if reason is not None
+            },
+        )
         return snapshot
 
     def record_mutation(self, mutation: BillingMutation) -> None:
         """Retain sanitized mutation metadata for diagnostics."""
         self._last_mutation = mutation
+
+
+def _unavailable_billing_snapshot(
+    scopes: tuple[BillingScope, ...],
+    reason: str,
+) -> BillingSnapshot:
+    """Return truthful per-scope billing capabilities without making a request."""
+    capability = GitHubCapability(CapabilityStatus.FORBIDDEN, reason)
+    scope_data = {
+        scope.key: BillingScopeData(
+            scope=scope,
+            usage=None,
+            budgets=(),
+            usage_capability=capability,
+            budget_capability=capability,
+            errors=MappingProxyType({"usage": reason, "budgets": reason}),
+        )
+        for scope in scopes
+    }
+    return BillingSnapshot.create(
+        scopes=scope_data,
+        fetched_at=datetime.now(UTC),
+        errors={
+            f"{scope.key}:{category}": reason
+            for scope in scopes
+            for category in ("usage", "budgets")
+        },
+    )
 
 
 def _merge_last_known_good(

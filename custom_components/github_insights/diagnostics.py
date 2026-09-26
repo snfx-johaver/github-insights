@@ -9,6 +9,8 @@ from homeassistant.components.diagnostics import async_redact_data
 from homeassistant.core import HomeAssistant
 
 from .const import (
+    CONF_ACTIONS_INCLUDED_MINUTES,
+    CONF_BILLING_TOKEN,
     CONF_ENABLED_CATEGORIES,
     CONF_INCLUDE_ARCHIVED,
     CONF_INCLUDE_FORKS,
@@ -22,6 +24,7 @@ from .coordinator import GitHubInsightsConfigEntry
 
 TO_REDACT = {
     CONF_TOKEN,
+    CONF_BILLING_TOKEN,
     "authorization",
     "cookie",
     "download_links",
@@ -50,6 +53,7 @@ async def async_get_config_entry_diagnostics(
                     CONF_TOKEN: entry.data[CONF_TOKEN],
                 },
                 "options": {
+                    CONF_BILLING_TOKEN: entry.options.get(CONF_BILLING_TOKEN),
                     "organization_selection_count": len(
                         entry.options.get(CONF_ORGANIZATIONS, [])
                     ),
@@ -62,6 +66,9 @@ async def async_get_config_entry_diagnostics(
                     "include_archived": entry.options.get(CONF_INCLUDE_ARCHIVED, False),
                     "include_forks": entry.options.get(CONF_INCLUDE_FORKS, True),
                     "repository_limit": entry.options.get(CONF_MAX_REPOSITORIES, 10),
+                    "configured_actions_included_minutes": entry.options.get(
+                        CONF_ACTIONS_INCLUDED_MINUTES, 0
+                    ),
                 },
                 "version": entry.version,
                 "minor_version": entry.minor_version,
@@ -75,6 +82,7 @@ async def async_get_config_entry_diagnostics(
                 else "github_enterprise_server"
             ),
             "token_type": entry.runtime_data.client.token_type,
+            "billing_auth_method": _billing_auth_method(entry),
             "organization_count": len(snapshot.organizations),
             "repository_count": len(snapshot.repositories),
             "selected_repository_count": len(snapshot.repository_insights),
@@ -90,6 +98,7 @@ async def async_get_config_entry_diagnostics(
             "error_reason_counts": _value_counts(snapshot.errors.values()),
             "token_scopes": snapshot.token_scopes,
             "fetched_at": snapshot.fetched_at,
+            "retry_after": snapshot.retry_after,
             "rate_limit": (
                 {
                     "limit": snapshot.rate_limit.limit,
@@ -140,3 +149,12 @@ def _value_counts(values: Iterable[object]) -> dict[str, int]:
         key = str(value)
         counts[key] = counts.get(key, 0) + 1
     return counts
+
+
+def _billing_auth_method(entry: GitHubInsightsConfigEntry) -> str:
+    """Return a non-secret description of billing credential routing."""
+    if entry.runtime_data.billing_client is not None:
+        return "classic_billing_token"
+    if entry.runtime_data.client.token_type == "fine_grained_pat":
+        return "fine_grained"
+    return "not_configured"
