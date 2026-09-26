@@ -80,6 +80,17 @@ async function renderDiscoveredRepositories(
       };
     }),
   );
+  states["sensor.github_insights_account"] = entity(
+    "sensor.github_insights_account",
+    "octocat",
+    { html_url: "https://github.example/octocat" },
+  );
+  registry.push({
+    entity_id: "sensor.github_insights_account",
+    platform: "github_insights",
+    unique_id: "42_account",
+    device_id: "account",
+  });
   const card = document.createElement("github-insights-repository-card") as TestCard;
   card.hass = {
     states,
@@ -87,10 +98,13 @@ async function renderDiscoveredRepositories(
       sendMessagePromise: async <T,>(message: Record<string, unknown>) =>
         (message.type === "config/entity_registry/list"
           ? registry
-          : repositories.map((repository) => ({
-              id: repository.id,
-              name: repository.name,
-            }))) as T,
+          : [
+              ...repositories.map((repository) => ({
+                id: repository.id,
+                name: repository.name,
+              })),
+              { id: "account", name: "GitHub Insights (octocat)" },
+            ]) as T,
     },
   };
   card.setConfig({
@@ -145,10 +159,30 @@ describe("GitHub Insights cards", () => {
     );
   });
 
-  it("renders unavailable values and their reason", async () => {
+  it("hides unavailable values by default", async () => {
     const card = await renderCard(
       "github-insights-card",
       {
+        metrics: ["dependabot_alerts"],
+        entities: { dependabot_alerts: "sensor.dependabot" },
+      },
+      {
+        "sensor.dependabot": entity("sensor.dependabot", "unavailable", {
+          availability_reason: "Missing security_events permission",
+        }),
+      },
+    );
+    expect(card.shadowRoot?.textContent).not.toContain("Dependabot alerts");
+    expect(card.shadowRoot?.textContent).toContain(
+      "No supported metrics are available",
+    );
+  });
+
+  it("can show unavailable values and their reason", async () => {
+    const card = await renderCard(
+      "github-insights-card",
+      {
+        show_unavailable: true,
         metrics: ["dependabot_alerts"],
         entities: { dependabot_alerts: "sensor.dependabot" },
       },
@@ -270,16 +304,44 @@ describe("GitHub Insights cards", () => {
         },
       },
     });
+
     const repositories = queryAll<HTMLElement>(card.shadowRoot, ".repository");
     expect(repositories).toHaveLength(3);
     const alpha = repositories.find((row) => row.textContent?.includes("octo/alpha"));
     const beta = repositories.find((row) => row.textContent?.includes("Beta override"));
-    expect(repositories.slice(0, 2).every((row) => row.textContent?.includes("★"))).toBe(true);
+    expect(
+      repositories
+        .slice(0, 2)
+        .every(
+          (row) =>
+            (row.querySelector(".favorite") as HTMLElement & { icon?: string })
+              ?.icon === "mdi:star",
+        ),
+    ).toBe(true);
     expect(alpha?.classList).toContain("compact");
     expect(beta?.classList).toContain("expanded");
     expect(beta?.querySelectorAll(".metric")).toHaveLength(1);
     expect(card.shadowRoot?.textContent).toContain("public");
     expect(card.shadowRoot?.textContent).toContain("Branch:");
+  });
+
+  it("excludes non-repository devices and unavailable repository metrics", async () => {
+    const card = await renderDiscoveredRepositories({
+      metrics: ["stars", "open_pull_requests"],
+      show_archived: true,
+    });
+    const repositories = queryAll<HTMLElement>(card.shadowRoot, ".repository");
+
+    expect(repositories).toHaveLength(3);
+    expect(
+      repositories.every(
+        (repository) => repository.querySelectorAll(".metric").length === 1,
+      ),
+    ).toBe(true);
+    expect(card.shadowRoot?.textContent).not.toContain("Unavailable");
+    expect(card.shadowRoot?.textContent).not.toContain(
+      "GitHub Insights (octocat)",
+    );
   });
 
   it("uses deterministic multi-key sorting after favorites", async () => {

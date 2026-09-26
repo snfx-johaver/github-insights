@@ -557,6 +557,33 @@ def test_configured_actions_allowance_uses_discounted_minutes() -> None:
     assert "net or billed quantity" in used.extra_state_attributes["derivation"]
 
 
+def test_unitless_billing_sensors_do_not_require_a_unit_attribute() -> None:
+    """Unitless billing metrics register without an initialized unit attribute."""
+    snapshot = billing_snapshot()
+    scope_data = snapshot.scopes["organization:example-org"]
+    coordinator = cast(
+        Any,
+        SimpleNamespace(
+            data=snapshot,
+            config_entry=SimpleNamespace(
+                data={"account_id": 42},
+                options={CONF_ACTIONS_INCLUDED_MINUTES: 3000},
+            ),
+            last_update_success=True,
+        ),
+    )
+
+    billing_period = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "billing_period"
+    )
+    budget_count = GitHubInsightsBillingSensor(
+        coordinator, scope_data, "actions_budget_count"
+    )
+
+    assert billing_period.native_unit_of_measurement is None
+    assert budget_count.native_unit_of_measurement is None
+
+
 def test_configured_actions_allowance_falls_back_to_gross_minutes() -> None:
     """Detailed usage can derive configured consumption from gross minutes."""
     snapshot = billing_snapshot()

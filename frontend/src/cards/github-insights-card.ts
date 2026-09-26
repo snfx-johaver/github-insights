@@ -184,6 +184,7 @@ export class GitHubInsightsCard extends LitElement {
     const definition = metricDefinition(key);
     const entity = repositoryScoped ? suppliedEntity : suppliedEntity ?? this.resolveEntity(key);
     const available = entityAvailable(entity);
+    if (!available && this.config?.show_unavailable !== true) return nothing;
     const value = numericState(entity);
     const severity =
       definition.format === "percent"
@@ -254,6 +255,16 @@ export class GitHubInsightsCard extends LitElement {
         (repository) => repository.name === this.config?.repository,
       );
     }
+    repositories = repositories.filter((repository) => {
+      const metrics =
+        repository.override?.metrics ??
+        this.config?.metrics ??
+        this.definition.defaultMetrics;
+      return (
+        this.config?.show_unavailable === true ||
+        metrics.some((key) => entityAvailable(repository.entities.get(key)))
+      );
+    });
 
     if (repositories.length === 0) return nothing;
     return html`
@@ -271,6 +282,11 @@ export class GitHubInsightsCard extends LitElement {
                     : this.config?.view ?? "compact");
             const metrics =
               repository.override?.metrics ?? this.config?.metrics ?? this.definition.defaultMetrics;
+            const visibleMetrics = metrics.filter(
+              (key) =>
+                this.config?.show_unavailable === true ||
+                entityAvailable(repository.entities.get(key)),
+            );
             const configuredBadges =
               repository.override?.metric_badges ?? this.config?.metric_badges;
             const badges = configuredBadges?.length
@@ -283,9 +299,11 @@ export class GitHubInsightsCard extends LitElement {
             return html`
             <article class="repository ${view}">
               <div class="repository-heading">
-                <span class="favorite" aria-label=${repository.favorite ? "Favorite repository" : "Repository"}>
-                  ${repository.favorite ? "★" : ""}
-                </span>
+                <ha-icon
+                  class="favorite"
+                  .icon=${repository.favorite ? "mdi:star" : "mdi:source-repository"}
+                  aria-label=${repository.favorite ? "Favorite repository" : "Repository"}
+                ></ha-icon>
                 ${url
                   ? html`<a
                       href=${url}
@@ -305,7 +323,7 @@ export class GitHubInsightsCard extends LitElement {
                       : "GitHub repository"}</span>
               </div>
               <div class="repository-metrics" aria-label=${`${repository.title} metrics`}>
-                ${metrics.map((key) =>
+                ${visibleMetrics.map((key) =>
                   this.metricTemplate(key, repository.entities.get(key), badges, true),
                 )}
               </div>
@@ -481,7 +499,10 @@ export class GitHubInsightsCard extends LitElement {
     const sections = this.config?.sections ?? this.definition.defaultSections;
     return sections.map((section) => {
       const sectionMetrics = metrics.filter(
-        (key) => this.sectionForMetric(key) === section,
+        (key) =>
+          this.sectionForMetric(key) === section &&
+          (this.config?.show_unavailable === true ||
+            entityAvailable(this.resolveEntity(key))),
       );
       if (sectionMetrics.length === 0) return nothing;
       return html`
@@ -581,7 +602,12 @@ export class GitHubInsightsCard extends LitElement {
             this.config?.sections?.includes(this.sectionForMetric(key)),
           )
         : metrics;
-    const anyConfigured = visibleMetrics.some((key) => this.resolveEntity(key));
+    const anyConfigured = visibleMetrics.some(
+      (key) =>
+        this.config?.show_unavailable === true
+          ? Boolean(this.resolveEntity(key))
+          : entityAvailable(this.resolveEntity(key)),
+    );
     const isRepositoryCard = this.definition.kind === "repository";
     const hasRepositories =
       isRepositoryCard &&

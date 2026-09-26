@@ -4,22 +4,25 @@ export const cardStyles = css`
   :host {
     display: block;
     color: var(--primary-text-color);
-    --gi-gap: 12px;
-    --gi-soft: color-mix(in srgb, var(--primary-color) 11%, transparent);
+    --gi-gap: 10px;
+    --gi-soft: color-mix(in srgb, var(--primary-color) 10%, var(--card-background-color));
     --gi-warning: var(--warning-color, #f59e0b);
     --gi-critical: var(--error-color, #db4437);
     --gi-success: var(--success-color, #43a047);
+    --gi-radius: var(--ha-card-border-radius, 12px);
+    --gi-shadow: var(--ha-card-box-shadow, 0 2px 6px rgba(0, 0, 0, 0.12));
   }
 
   ha-card {
-    overflow: hidden;
-    border-radius: var(--ha-card-border-radius, 16px);
-    box-shadow: var(--ha-card-box-shadow);
-    background: var(--card-background-color);
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
   }
 
   .card {
-    padding: 16px;
+    padding: 4px;
   }
 
   .header,
@@ -34,7 +37,11 @@ export const cardStyles = css`
   .header {
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
+    padding: 12px;
+    border-radius: var(--gi-radius);
+    background: var(--card-background-color);
+    box-shadow: var(--gi-shadow);
   }
 
   h2 {
@@ -44,9 +51,9 @@ export const cardStyles = css`
   }
 
   h3 {
-    margin: 16px 0 8px;
-    font-size: 0.9rem;
-    text-transform: capitalize;
+    margin: 18px 4px 8px;
+    font-size: 0.86rem;
+    font-weight: 600;
   }
 
   .metric-section:first-of-type h3 {
@@ -91,19 +98,27 @@ export const cardStyles = css`
   .repository {
     min-width: 0;
     padding: 12px;
-    border-radius: calc(var(--ha-card-border-radius, 16px) * 0.72);
-    background: var(--gi-soft);
-    border: 1px solid color-mix(in srgb, var(--divider-color) 68%, transparent);
+    border-radius: var(--gi-radius);
+    background: var(--card-background-color);
+    border: 0;
+    box-shadow: var(--gi-shadow);
   }
 
   .metric.prominent {
-    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--divider-color));
-    background: color-mix(in srgb, var(--primary-color) 15%, var(--card-background-color));
+    background: color-mix(in srgb, var(--primary-color) 8%, var(--card-background-color));
   }
 
   .metric-heading {
     gap: 7px;
-    min-height: 24px;
+    min-height: 34px;
+  }
+
+  .metric-heading ha-icon,
+  .header > ha-icon {
+    box-sizing: content-box;
+    padding: 7px;
+    border-radius: 50%;
+    background: color-mix(in srgb, currentColor 13%, transparent);
   }
 
   .metric-link,
@@ -121,8 +136,8 @@ export const cardStyles = css`
 
   .value {
     display: block;
-    margin-top: 7px;
-    font-size: 1.25rem;
+    margin-top: 8px;
+    font-size: 1.12rem;
     font-weight: 650;
     overflow-wrap: anywhere;
   }
@@ -140,7 +155,7 @@ export const cardStyles = css`
   }
 
   .metric.unavailable {
-    opacity: 0.72;
+    opacity: 0.6;
   }
 
   .bar {
@@ -171,9 +186,11 @@ export const cardStyles = css`
 
   .status {
     gap: 8px;
+    margin-bottom: 10px;
     padding: 12px;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--divider-color) 35%, transparent);
+    border-radius: var(--gi-radius);
+    background: var(--card-background-color);
+    box-shadow: var(--gi-shadow);
   }
 
   .status.error,
@@ -187,8 +204,8 @@ export const cardStyles = css`
 
   .repositories {
     display: grid;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 10px;
   }
 
   .repository {
@@ -211,8 +228,11 @@ export const cardStyles = css`
   }
 
   .favorite {
-    width: 1em;
-    color: var(--warning-color, #f5b301);
+    box-sizing: content-box;
+    padding: 7px;
+    border-radius: 50%;
+    color: var(--primary-color);
+    background: color-mix(in srgb, currentColor 13%, transparent);
   }
 
   .repository-metrics {
@@ -317,7 +337,8 @@ export const cardStyles = css`
     border-radius: 999px;
     padding: 0 14px;
     color: var(--primary-text-color);
-    background: var(--gi-soft);
+    background: var(--card-background-color);
+    box-shadow: var(--gi-shadow);
     cursor: pointer;
   }
 

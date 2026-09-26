@@ -18,12 +18,14 @@ views:
           - security
         show_forecast: true
         show_estimated_minutes: true
+        show_unavailable: false
 
       - type: custom:github-insights-repository-card
         title: Repository operations
         repositories: auto
         layout: compact
         group_by: organization
+        show_unavailable: false
         sort:
           - field: workflow_health
             direction: ascending
@@ -41,7 +43,7 @@ views:
           - workflow_health
           - actions_usage_percent
 
-  - title: All entities
+  - title: All available
     path: entities
     icon: mdi:view-list
     cards:
@@ -49,16 +51,14 @@ views:
         show_empty: false
         card:
           type: entities
-          title: Sensors and controls
+          title: Available sensors and controls
           show_header_toggle: false
         filter:
           include:
-            - entity_id: sensor.github_insights_*
-            - entity_id: binary_sensor.github_insights_*
-            - entity_id: number.github_insights_*
-            - entity_id: select.github_insights_*
-            - entity_id: switch.github_insights_*
-            - entity_id: button.github_insights_*
+            - integration: github_insights
+          exclude:
+            - state: unavailable
+            - state: unknown
         sort:
           method: name
           ignore_case: true

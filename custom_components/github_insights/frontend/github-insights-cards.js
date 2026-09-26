@@ -370,22 +370,25 @@ const cardStyles = i$3 `
   :host {
     display: block;
     color: var(--primary-text-color);
-    --gi-gap: 12px;
-    --gi-soft: color-mix(in srgb, var(--primary-color) 11%, transparent);
+    --gi-gap: 10px;
+    --gi-soft: color-mix(in srgb, var(--primary-color) 10%, var(--card-background-color));
     --gi-warning: var(--warning-color, #f59e0b);
     --gi-critical: var(--error-color, #db4437);
     --gi-success: var(--success-color, #43a047);
+    --gi-radius: var(--ha-card-border-radius, 12px);
+    --gi-shadow: var(--ha-card-box-shadow, 0 2px 6px rgba(0, 0, 0, 0.12));
   }
 
   ha-card {
-    overflow: hidden;
-    border-radius: var(--ha-card-border-radius, 16px);
-    box-shadow: var(--ha-card-box-shadow);
-    background: var(--card-background-color);
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
   }
 
   .card {
-    padding: 16px;
+    padding: 4px;
   }
 
   .header,
@@ -400,7 +403,11 @@ const cardStyles = i$3 `
   .header {
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
+    padding: 12px;
+    border-radius: var(--gi-radius);
+    background: var(--card-background-color);
+    box-shadow: var(--gi-shadow);
   }
 
   h2 {
@@ -410,9 +417,9 @@ const cardStyles = i$3 `
   }
 
   h3 {
-    margin: 16px 0 8px;
-    font-size: 0.9rem;
-    text-transform: capitalize;
+    margin: 18px 4px 8px;
+    font-size: 0.86rem;
+    font-weight: 600;
   }
 
   .metric-section:first-of-type h3 {
@@ -457,19 +464,27 @@ const cardStyles = i$3 `
   .repository {
     min-width: 0;
     padding: 12px;
-    border-radius: calc(var(--ha-card-border-radius, 16px) * 0.72);
-    background: var(--gi-soft);
-    border: 1px solid color-mix(in srgb, var(--divider-color) 68%, transparent);
+    border-radius: var(--gi-radius);
+    background: var(--card-background-color);
+    border: 0;
+    box-shadow: var(--gi-shadow);
   }
 
   .metric.prominent {
-    border-color: color-mix(in srgb, var(--primary-color) 45%, var(--divider-color));
-    background: color-mix(in srgb, var(--primary-color) 15%, var(--card-background-color));
+    background: color-mix(in srgb, var(--primary-color) 8%, var(--card-background-color));
   }
 
   .metric-heading {
     gap: 7px;
-    min-height: 24px;
+    min-height: 34px;
+  }
+
+  .metric-heading ha-icon,
+  .header > ha-icon {
+    box-sizing: content-box;
+    padding: 7px;
+    border-radius: 50%;
+    background: color-mix(in srgb, currentColor 13%, transparent);
   }
 
   .metric-link,
@@ -487,8 +502,8 @@ const cardStyles = i$3 `
 
   .value {
     display: block;
-    margin-top: 7px;
-    font-size: 1.25rem;
+    margin-top: 8px;
+    font-size: 1.12rem;
     font-weight: 650;
     overflow-wrap: anywhere;
   }
@@ -506,7 +521,7 @@ const cardStyles = i$3 `
   }
 
   .metric.unavailable {
-    opacity: 0.72;
+    opacity: 0.6;
   }
 
   .bar {
@@ -537,9 +552,11 @@ const cardStyles = i$3 `
 
   .status {
     gap: 8px;
+    margin-bottom: 10px;
     padding: 12px;
-    border-radius: 12px;
-    background: color-mix(in srgb, var(--divider-color) 35%, transparent);
+    border-radius: var(--gi-radius);
+    background: var(--card-background-color);
+    box-shadow: var(--gi-shadow);
   }
 
   .status.error,
@@ -553,8 +570,8 @@ const cardStyles = i$3 `
 
   .repositories {
     display: grid;
-    gap: 8px;
-    margin-top: 12px;
+    gap: 10px;
+    margin-top: 10px;
   }
 
   .repository {
@@ -577,8 +594,11 @@ const cardStyles = i$3 `
   }
 
   .favorite {
-    width: 1em;
-    color: var(--warning-color, #f5b301);
+    box-sizing: content-box;
+    padding: 7px;
+    border-radius: 50%;
+    color: var(--primary-color);
+    background: color-mix(in srgb, currentColor 13%, transparent);
   }
 
   .repository-metrics {
@@ -683,7 +703,8 @@ const cardStyles = i$3 `
     border-radius: 999px;
     padding: 0 14px;
     color: var(--primary-text-color);
-    background: var(--gi-soft);
+    background: var(--card-background-color);
+    box-shadow: var(--gi-shadow);
     cursor: pointer;
   }
 
@@ -806,6 +827,7 @@ function normalizeConfig(value, definition) {
         show_archived: value.show_archived ?? false,
         show_forks: value.show_forks ?? true,
         show_estimated_minutes: value.show_estimated_minutes ?? true,
+        show_unavailable: value.show_unavailable ?? false,
         show_metric_badges: value.show_metric_badges ?? true,
         show_debug: value.show_debug ?? false,
         metric_badges: (value.metric_badges ?? []).map((badge) => ({
@@ -987,6 +1009,7 @@ function buildRepositories(discovered, hass, config) {
         grouped.set(reference.repository, entities);
     }
     const repositories = [...grouped.entries()]
+        .filter(([, entities]) => [...entities.values()].some((entity) => typeof entity.attributes.repository_url === "string"))
         .filter(([name]) => !search || name.toLocaleLowerCase().includes(search))
         .filter(([name]) => included.size === 0 || included.has(name))
         .filter(([name]) => !excluded.has(name))
@@ -1161,6 +1184,8 @@ class GitHubInsightsCard extends i {
         const definition = metricDefinition(key);
         const entity = repositoryScoped ? suppliedEntity : suppliedEntity ?? this.resolveEntity(key);
         const available = entityAvailable(entity);
+        if (!available && this.config?.show_unavailable !== true)
+            return A;
         const value = numericState(entity);
         const severity = definition.format === "percent"
             ? severityClass(value, this.config?.severity)
@@ -1224,6 +1249,13 @@ class GitHubInsightsCard extends i {
         if (this.config.repository) {
             repositories = repositories.filter((repository) => repository.name === this.config?.repository);
         }
+        repositories = repositories.filter((repository) => {
+            const metrics = repository.override?.metrics ??
+                this.config?.metrics ??
+                this.definition.defaultMetrics;
+            return (this.config?.show_unavailable === true ||
+                metrics.some((key) => entityAvailable(repository.entities.get(key))));
+        });
         if (repositories.length === 0)
             return A;
         return b `
@@ -1238,6 +1270,8 @@ class GitHubInsightsCard extends i {
                             ? "compact"
                             : this.config?.view ?? "compact");
             const metrics = repository.override?.metrics ?? this.config?.metrics ?? this.definition.defaultMetrics;
+            const visibleMetrics = metrics.filter((key) => this.config?.show_unavailable === true ||
+                entityAvailable(repository.entities.get(key)));
             const configuredBadges = repository.override?.metric_badges ?? this.config?.metric_badges;
             const badges = configuredBadges?.length
                 ? configuredBadges
@@ -1249,9 +1283,11 @@ class GitHubInsightsCard extends i {
             return b `
             <article class="repository ${view}">
               <div class="repository-heading">
-                <span class="favorite" aria-label=${repository.favorite ? "Favorite repository" : "Repository"}>
-                  ${repository.favorite ? "★" : ""}
-                </span>
+                <ha-icon
+                  class="favorite"
+                  .icon=${repository.favorite ? "mdi:star" : "mdi:source-repository"}
+                  aria-label=${repository.favorite ? "Favorite repository" : "Repository"}
+                ></ha-icon>
                 ${url
                 ? b `<a
                       href=${url}
@@ -1271,7 +1307,7 @@ class GitHubInsightsCard extends i {
                         : "GitHub repository"}</span>
               </div>
               <div class="repository-metrics" aria-label=${`${repository.title} metrics`}>
-                ${metrics.map((key) => this.metricTemplate(key, repository.entities.get(key), badges, true))}
+                ${visibleMetrics.map((key) => this.metricTemplate(key, repository.entities.get(key), badges, true))}
               </div>
             </article>
           `;
@@ -1437,7 +1473,9 @@ class GitHubInsightsCard extends i {
     metricSectionsTemplate(metrics) {
         const sections = this.config?.sections ?? this.definition.defaultSections;
         return sections.map((section) => {
-            const sectionMetrics = metrics.filter((key) => this.sectionForMetric(key) === section);
+            const sectionMetrics = metrics.filter((key) => this.sectionForMetric(key) === section &&
+                (this.config?.show_unavailable === true ||
+                    entityAvailable(this.resolveEntity(key))));
             if (sectionMetrics.length === 0)
                 return A;
             return b `
@@ -1529,7 +1567,9 @@ class GitHubInsightsCard extends i {
         const visibleMetrics = this.definition.kind === "insights"
             ? metrics.filter((key) => this.config?.sections?.includes(this.sectionForMetric(key)))
             : metrics;
-        const anyConfigured = visibleMetrics.some((key) => this.resolveEntity(key));
+        const anyConfigured = visibleMetrics.some((key) => this.config?.show_unavailable === true
+            ? Boolean(this.resolveEntity(key))
+            : entityAvailable(this.resolveEntity(key)));
         const isRepositoryCard = this.definition.kind === "repository";
         const hasRepositories = isRepositoryCard &&
             buildRepositories(this.discovered, this.hass, this.config).some((repository) => !this.config?.repository ||
@@ -1985,6 +2025,7 @@ class GitHubInsightsEditor extends i {
       <fieldset>
         <legend>Display options</legend>
         ${this.checkbox("Show estimated equivalent minutes", this.config.show_estimated_minutes ?? true, (show_estimated_minutes) => this.updateConfig({ show_estimated_minutes }))}
+        ${this.checkbox("Show unavailable metrics", this.config.show_unavailable ?? false, (show_unavailable) => this.updateConfig({ show_unavailable }))}
         ${this.checkbox("Show forecast when supplied by GitHub Insights", this.config.show_forecast ?? true, (show_forecast) => this.updateConfig({ show_forecast }))}
         ${this.checkbox("Show metric attribute badges", this.config.show_metric_badges ?? true, (show_metric_badges) => this.updateConfig({ show_metric_badges }))}
         <label>

@@ -288,14 +288,14 @@ reference_runner: linux_standard
 
 ## Dashboard companions
 
-GitHub Insights does not require another card package. The
+The GitHub Insights cards use compact, rounded, Mushroom-inspired metric
+surfaces without requiring Mushroom itself. The
 [release-candidate dashboard](docs/release-candidate-dashboard.yaml) is an
-exact import template for a user-created, UI-editable storage dashboard; it is
-not a file to install under `dashboards/`. The
-[dashboard examples](docs/dashboard-examples.md) also show polished optional
-layouts using separately installed Mushroom cards for headings/status,
-ApexCharts for history, and Auto Entities for registry views, with native Home
-Assistant fallbacks.
+exact import template for a user-created, UI-editable storage dashboard. The
+cards hide unavailable metrics by default, and the registry view uses Auto
+Entities to apply the same filtering. The template is not a file to install
+under `dashboards/`. The [dashboard examples](docs/dashboard-examples.md) also
+show layouts using Mushroom and ApexCharts as optional companions.
 
 ## Development
 

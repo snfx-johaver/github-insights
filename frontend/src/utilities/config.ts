@@ -81,6 +81,7 @@ export function normalizeConfig(
     show_archived: value.show_archived ?? false,
     show_forks: value.show_forks ?? true,
     show_estimated_minutes: value.show_estimated_minutes ?? true,
+    show_unavailable: value.show_unavailable ?? false,
     show_metric_badges: value.show_metric_badges ?? true,
     show_debug: value.show_debug ?? false,
     metric_badges: (value.metric_badges ?? []).map((badge) => ({
