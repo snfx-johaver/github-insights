@@ -63,6 +63,8 @@ DASHBOARD = ROOT / "docs" / "release-candidate-dashboard.yaml"
 DASHBOARD_SHA256 = "067ab7cc30c4af60c3949f67ac52b411c5f83d8464db7821cfdf523156c0879e"
 RESOURCE_CONFIG = ROOT / "docs" / "release-candidate-lovelace-resources.yaml"
 RESOURCE_EVIDENCE = ROOT / "release-ready.json"
+
+
 def load_json(path: Path) -> dict[str, object]:
     """Load a JSON object."""
     value = json.loads(path.read_text(encoding="utf-8"))
